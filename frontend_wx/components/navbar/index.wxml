@@ -1,0 +1,24 @@
+<view class="nav-bar-wrapper" style="height: {{navBarHeight}}px; {{background !== 'transparent' ? 'background:' + background : ''}}">
+  <!-- 状态栏占位 -->
+  <view style="height: {{statusBarHeight}}px;"></view>
+  
+  <!-- 标题栏内容 -->
+  <view class="title-bar" style="height: {{titleBarHeight}}px; padding-left: 32rpx; padding-right: 32rpx;">
+    
+    <!-- 返回按钮 -->
+    <view wx:if="{{back}}" class="back-btn theme-{{theme}}" bindtap="onBack">
+      <view class="back-icon" style="background-color: {{color}};"></view>
+    </view>
+    
+    <!-- 标题文字容器（带毛玻璃和微光） -->
+    <view class="title-container {{background === 'transparent' ? 'glass-plate' : ''}}" wx:if="{{title}}">
+      <view class="shimmer-effect" wx:if="{{background === 'transparent'}}"></view>
+      <view class="title-text" style="color: {{color}}; font-size: {{fontSize}}; font-weight: {{fontWeight}};">
+        {{title}}
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 撑开高度用的占位符，防止内容被遮挡，可选 -->
+<!-- <view style="height: {{navBarHeight}}px;"></view> -->

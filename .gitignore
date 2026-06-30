@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.vite/
+coverage/
+
+# Runtime logs
+*.log
+logs/
+koaLite/public/logs/
+koaLite/start.log
+
+# Local env and secrets
+.env
+.env.*
+!.env.example
+
+# Local editor / agent / index caches
+.chat/
+.claude/
+.codex/
+.codesight/
+.vscode/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Local databases and temporary runtime state
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+koaLite/db/db.json
+koaLite/db/init_db.js
+
+# Archives generated during handoff/migration
+*.zip
