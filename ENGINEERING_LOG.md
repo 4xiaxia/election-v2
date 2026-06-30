@@ -65,3 +65,56 @@
 
 - 首版 commit 应包含源码、文档、lockfile 和参考资料。
 - `koaLite/db/init_db.js` 因含真实连接信息被排除；如后续需要入库，先改成环境变量版本再加入 Git。
+
+## 2026-06-30 安装本机全局 Codex 技能
+
+### 输入
+
+- 用户请求：全局的，本地电脑的，好的工具给自己安上。
+
+### 动作
+
+- 来源：`E:\duihua\夏夏工作流套件包\3-工具层-趁手技能`。
+- 目标：
+  - `C:\Users\admin\.codex\skills`
+  - `C:\Users\admin\.agents\skills`
+- 策略：
+  - 只安装有顶层 `SKILL.md` 的真实技能目录。
+  - 不整包运行 `还原.ps1`，因为它面向 Claude 旧路径。
+  - 不覆盖已有全局技能。
+  - 对 `*-main` / `*-master` 技能按 Codex 可读名称落盘，例如 `ctx-forge-main` → `ctx-forge`。
+- 已安装/补齐的重点技能：
+  - `case-mode`
+  - `life-mode`
+  - `codex-token-optimizer`
+  - `ctx-forge`
+  - `docvideoer`
+  - `headroom`
+  - `huashu-design`
+  - `motion-design`
+  - `repo-explainer`
+  - `skill-anything`
+  - `sliderule`
+  - `using-codegraph`
+  - `xiaxia-anchor-marking`
+  - `xiaxia-continuity`
+  - `xiaxia-draw`
+  - `zeta-remembering-anchors`
+  - `zhengliu-skill`
+  - `zizek`
+  - 以及若干 `ljg-*` / memory / prompt 工具。
+- 修复：
+  - `conversation_vault` 原本缺 Codex frontmatter，已补 `name` / `description`。
+  - `zeta-remembering-anchors` 的多行中文 `description: |` 让验证器误判，已改成单行 description。
+  - 相关副本存在 UTF-8 BOM，已重写为无 BOM，避免验证器把第一行误判。
+
+### 验证
+
+- 本地检查：所选技能在 `.codex\skills` 与 `.agents\skills` 中均有基础 frontmatter。
+- `python C:\Users\admin\.codex\skills\migrate-to-codex\scripts\migrate-to-codex.py --validate-target C:\Users\admin\.codex | Select-String -Pattern 'error:'` 无输出。
+- 已写缓存：`global:codex-skills-installed`，TTL 24h。
+
+### 接力棒
+
+- 这些全局技能不属于 `election-v2` 仓库，只在项目文档中记录安装事实。
+- 下轮若技能列表未刷新，重开会话即可让全局技能重新发现。
