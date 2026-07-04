@@ -119,6 +119,39 @@
 - 这些全局技能不属于 `election-v2` 仓库，只在项目文档中记录安装事实。
 - 下轮若技能列表未刷新，重开会话即可让全局技能重新发现。
 
+## 2026-07-04 后端 mini 身份入口最小接线
+
+### 输入
+
+- 夏夏判断：前端形态可能从微信小程序转 H5，先攻克后端业务骨架。
+- 目标：给小程序/H5 留身份明线，把管线接到后端“大电箱”。
+
+### 动作
+
+- 新增 `koaLite/api/mini.js`：
+  - `POST /mini/login`：手机号认领/创建村民用户，可保存 `wxOpenid/openid`。
+  - `POST /mini/bind-location`：首次绑定归属地。
+  - `GET /mini/me`：查询当前身份。
+- 更新 `koaLite/db/init_v2.sql`：
+  - `users` 增加 `wx_openid` 字段和索引。
+  - 增加旧库轻迁移 `ALTER TABLE`。
+- 更新 `koaLite/db/db.js`：
+  - 初始化时忽略重复列、重复索引错误，允许迁移重复执行。
+- 新增 `koaLite/scripts/check-mini-identity.js`，压住手机号校验和前端返回结构。
+
+### 验证（真跑）
+
+- `node koaLite/scripts/check-mini-identity.js`
+- `node --check koaLite/api/mini.js`
+- `node --check koaLite/db/db.js`
+- `SHOW COLUMNS FROM users LIKE 'wx_openid'`：已确认字段存在。
+- 直接调用 `GET /mini/me` 处理器：`mini me 0 true false`（接口成功，测试账号存在，尚未绑定归属地）。
+
+### 接力
+
+- 这一刀只做身份线头，不做复杂多商户隔离、不做投票计票。
+- 下一刀可接：母公告/岗位报名接口前，先让需要写操作的入口统一要求 `userId + villageId`。
+
 ## 2026-07-02 Headroom/work模式接力
 
 ### 输入

@@ -12,6 +12,8 @@
 - `admin/`
 - `frontend_wx/`
 - `koaLite/`
+  - `api/mini.js`：微信小程序/H5 共用身份入口（手机号登录、归属地绑定、我的身份）。
+  - `scripts/check-mini-identity.js`：mini 身份入口最小自检。
 - `mini-program/`
 - `scripts/`
 - `vue-cli-lazy/`

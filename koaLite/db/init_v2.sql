@@ -9,6 +9,7 @@
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '用户ID',
   `phone` varchar(11) NOT NULL UNIQUE COMMENT '手机号·压实锚',
+  `wx_openid` varchar(100) DEFAULT '' COMMENT '微信openid/wxid',
   `password` varchar(255) DEFAULT '' COMMENT '密码（管理员用·村民免密走手机号）',
   `role` varchar(20) NOT NULL DEFAULT 'guest' COMMENT 'guest游客/villager村民/超级管理/经办/审核/运营',
   `village_id` int(11) DEFAULT NULL COMMENT '村居ID（管理员限定村居用）',
@@ -19,7 +20,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   `last_login_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_phone` (`phone`),
-  KEY `idx_village_id` (`village_id`)
+  KEY `idx_village_id` (`village_id`),
+  KEY `idx_wx_openid` (`wx_openid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 
 -- ② 村居表（属性·归属标签）
@@ -196,6 +198,9 @@ CREATE TABLE IF NOT EXISTS `logs` (
 -- ============================================================
 -- 种子数据（招聘表单模型·四角色齐全·密码=MD5('123456')）
 -- ============================================================
+ALTER TABLE `users` ADD COLUMN `wx_openid` varchar(100) DEFAULT '' COMMENT '微信openid/wxid' AFTER `phone`;
+ALTER TABLE `users` ADD KEY `idx_wx_openid` (`wx_openid`);
+
 INSERT IGNORE INTO `villages` (`id`, `name`, `type`, `code`) VALUES
 (1, '凤凰社区', '居委会', 'FH001'),
 (2, '幸福村', '村委会', 'XF002');

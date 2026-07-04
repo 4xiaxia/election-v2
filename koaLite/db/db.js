@@ -54,7 +54,7 @@ async function initDatabase() {
         await connection.query(sql);
       } catch (err) {
         // INSERT IGNORE 撞已存在数据是正常的，不刷错误
-        if (!/Duplicate entry/i.test(err.message)) {
+        if (!/Duplicate entry|Duplicate column|Duplicate key name/i.test(err.message)) {
           console.error('Failed to execute query:', sql.slice(0, 60));
           console.error(err.message);
         }

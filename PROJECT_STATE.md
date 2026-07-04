@@ -60,3 +60,13 @@
 2. `选举系统_填空模板 (1).html`：按节点填空、提交材料、发布公告、形成归档。
 
 先画页面/业务 Mermaid，再决定数据库和接口怎么改。
+
+## 2026-07-04 后端身份入口最小线头
+
+- 已新增 `koaLite/api/mini.js`：
+  - `POST /mini/login`：手机号认领/创建村民用户，可记录 `wxOpenid/openid`。
+  - `POST /mini/bind-location`：首次绑定归属地，返回用户与村居。
+  - `GET /mini/me`：按 `userId` 或手机号查询当前身份。
+- 已给 `users` 表补 `wx_openid` 字段和索引；旧库通过 `ALTER TABLE` 轻迁移。
+- 前端形态先不绑定：小程序/H5 都接同一组 `/mini/*` 后端口。
+- 验证已跑：`check-mini-identity`、`node --check`、数据库字段存在检查。
