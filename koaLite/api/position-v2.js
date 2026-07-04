@@ -11,7 +11,19 @@ function parseJSON(str, fallback) {
   try { return JSON.parse(str); } catch { return fallback; }
 }
 
-module.exports = {
+function buildGeneratedPositions(orgType, committeeSize) {
+  if (!['village', 'community'].includes(orgType)) throw new Error('orgType must be village or community');
+  if (![3, 5, 7, 9].includes(Number(committeeSize))) throw new Error('committeeSize must be 3/5/7/9');
+
+  const label = orgType === 'community' ? '居民委员会' : '村民委员会';
+  return [
+    { name: '主任', quota: 1, postCategory: 'director', duty: `${label}主任`, sortWeight: 10 },
+    { name: '副主任', quota: 1, postCategory: 'deputy_director', duty: `${label}副主任`, sortWeight: 20 },
+    { name: '委员', quota: Number(committeeSize) - 2, postCategory: 'member', duty: `${label}委员`, sortWeight: 30 },
+  ];
+}
+
+const api = {
   get: {
     // 某活动下的岗位列表
     async list(ctx) {
@@ -84,6 +96,41 @@ module.exports = {
       }
     },
 
+    async generate(ctx) {
+      try {
+        const { electionId, orgType, committeeSize } = ctx.request.body;
+        if (!electionId) return response.paramError(ctx, '所属选举活动不能为空');
+
+        const positions = buildGeneratedPositions(orgType, committeeSize);
+        const [existing] = await pool.execute(
+          'SELECT id, election_id, name, quota, duty, material_requirements, sort_weight, enabled FROM positions WHERE election_id = ? ORDER BY sort_weight ASC, id ASC',
+          [electionId]
+        );
+        if (existing.length > 0) {
+          return response.success(ctx, { list: existing, inserted: 0 }, '岗位已存在');
+        }
+
+        const values = positions.map(p => [
+          electionId,
+          p.name,
+          p.quota,
+          p.duty,
+          JSON.stringify([]),
+          p.sortWeight,
+          1,
+        ]);
+        await pool.query(
+          `INSERT INTO positions (election_id, name, quota, duty, material_requirements, sort_weight, enabled)
+           VALUES ?`,
+          [values]
+        );
+        response.success(ctx, { list: positions, inserted: positions.length }, '生成岗位成功');
+      } catch (error) {
+        console.error(error);
+        response.paramError(ctx, error.message || '生成岗位失败');
+      }
+    },
+
     // 修改岗位
     async update(ctx) {
       try {
@@ -130,7 +177,12 @@ module.exports = {
   // @@AUTH 岗位管理：增删改限超管/经办，读放开
   config: {
     add: requireRole('超级管理', '经办'),
+    generate: requireRole('超级管理', '经办'),
     update: requireRole('超级管理', '经办'),
     delete: requireRole('超级管理', '经办'),
   }
 };
+
+Object.defineProperty(api, 'buildGeneratedPositions', { value: buildGeneratedPositions });
+
+module.exports = api;
