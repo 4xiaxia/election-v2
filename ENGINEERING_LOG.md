@@ -179,6 +179,24 @@
 - `/api` 只是兼容前缀，不是第二套接口。
 - 后端服务需要重启后，新路由别名才会进入当前运行进程。
 
+## 2026-07-04 codesight 快照校验
+
+### 输入
+
+- 夏夏提醒：检查代码快照 MCP 是否自动更新，避免被旧图谱误导。
+
+### 动作
+
+- 查看 `.codesight` 文件时间：刷新前停在 `2026/7/1 07:38:49`。
+- 执行 `codesight_refresh`。
+- 刷新后 `.codesight/CODESIGHT.md` 时间更新到 `2026/7/4 20:42:21`。
+
+### 结论
+
+- codesight 能看到依赖图里的 `koaLite/api/mini.js`、`koaLite/config/router.js`、`mini-program/utils/api.js`。
+- 但 Routes 仍只识别 `GET /swagger.json`，无法识别当前 Koa 自动路由。
+- 因此 codesight 只能当粗地图；接口真相以后以 `koaLite/config/router.js`、API 文件、自检脚本和实际运行验证为准。
+
 ## 2026-07-02 Headroom/work模式接力
 
 ### 输入
