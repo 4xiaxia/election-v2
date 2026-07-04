@@ -12,6 +12,8 @@
 - `admin/`
 - `frontend_wx/`
 - `koaLite/`
+- `mini-program/`
+- `scripts/`
 - `vue-cli-lazy/`
 - `README.md`
 - `01城厢区华亭镇村委会换届选举流程参考表（霞皋村2021.11.20）.xlsx`
@@ -30,12 +32,23 @@
 
 - `.codesight/` 存在，且 `codesight` MCP 能读出项目摘要。
 - `lean_ctx` 已有外部图谱缓存：12821 files / 90682 symbols / 28667 edges。
+- Codex 主配置：`C:\Users\admin\.codex\config.toml`。
+- Codex hooks：`C:\Users\admin\.codex\hooks.json`。
+- lean-ctx 实际配置：`C:\Users\admin\.config\lean-ctx\config.toml`。
+- 注意：`C:\Users\admin\.lean-ctx\config.toml` 不存在，lean-ctx 报错提示里的路径不是本机实际配置文件位置。
+- 2026-07-02 已修复：Codex SessionStart hook 启用；`hooks.json` 中裸 `bash` 改为 Git Bash 绝对路径；lean-ctx `allow_paths` 和 `shell_allowlist` 已适配本机 Windows 环境。
 
 ## Git 观察
 
 - 本轮已在当前目录初始化独立 `.git/`。
 - 当前分支：`main`。
 - `.gitignore` 已排除依赖、运行日志、本地缓存、数据库运行文件、zip 与含真实连接信息的本地初始化脚本。
+
+## 本机保险箱
+
+- `scripts/Backup-CodexSafety.ps1`：Codex/lean-ctx/hooks/skills 安全备份脚本。
+- `backup-codex-env.cmd`：一键运行入口。
+- 默认输出到 `C:\Users\admin\CodexSafetyBackups`，不放进项目仓库。
 
 ## 本机全局技能观察
 

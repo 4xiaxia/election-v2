@@ -1,32 +1,62 @@
 # PROJECT_STATE
 
-更新时间：2026-06-30
+更新时间：2026-07-04
 
-## 当前状态
+当前窗口上下文接近满，已新增 `上下文压缩摘要-2026-07-04.md` 作为下一轮最小接力入口。
 
-- 本轮任务：检查当前会话是否有可用 MCP。
-- 追加任务：为 `E:\w\0\election-v2` 建立独立 Git 仓库。
-- 已确认可用 MCP：
-  - `mcp__codesight`：可返回项目摘要、路由、环境变量。
-  - `mcp__lean_ctx`：可返回代码图谱状态、搜索结果。
-  - `mcp__memory_cache`：可读写缓存；本轮开始为空，已写入 `project:architecture`。
-- 项目根目录下原本没有 `PROJECT_STATE.md`、`ENGINEERING_LOG.md`、`DECISIONS.md`、`PROJECT_TREE.md`，本轮补齐最小记录。
-- Git 状态：已在 `E:\w\0\election-v2` 内初始化独立仓库，默认分支改为 `main`。
-- 首版仓库边界：纳入源码、文档、lockfile 与参考资料；排除 `node_modules`、日志、AI 本地缓存、数据库运行文件、zip、本地数据库 JSON、带真实连接信息的初始化脚本。
-- 全局工具状态：已从 `E:\duihua\夏夏工作流套件包\3-工具层-趁手技能` 安装 25 个可用技能到本机全局 Codex 技能目录：
-  - `C:\Users\admin\.codex\skills`
-  - `C:\Users\admin\.agents\skills`
-- 全局安装验证：`migrate-to-codex --validate-target C:\Users\admin\.codex` 已无 `error:` 输出；`zeta-remembering-anchors` 的多行 frontmatter 已改成单行 description 并去除 BOM。
+2026-07-04 已完成小惊喜：`POST /position-v2/generate` 岗位自动生成第一刀，附 `koaLite/scripts/check-position-generate.js` 自测。
 
-## 验证结果
+下一轮先读：
 
-- `codesight_get_summary` 返回：koa / mongoose / vue / typescript；1 route；37 components；12 env vars；5 middleware；73 import links。
-- `ctx_graph status` 返回：12821 files；90682 symbols；28667 edges；last scan 2026-06-30 20:08:07。
-- `memory_cache get_cache_stats` 返回：缓存服务可用，本轮开始 `totalEntries = 0`。
+1. `上下文压缩摘要-2026-07-04.md`
+2. `小Claude船长-下一段施工单.md`
+3. `交接单-岗位自动生成-给codex.md`
+4. `DECISIONS.md`
 
-## 下轮接力棒
+更新时间：2026-07-02
 
-- 如果继续工程分析，优先使用 `lean_ctx` / `codesight` 做增量定位，再按需读文件。
-- 缓存键 `project:architecture` 已写入 MCP 可用性摘要，TTL 24h。
-- 如果继续 Git 管理，先在 `E:\w\0\election-v2` 内操作，不碰上层 `E:\w\0` 的大仓库状态。
-- 如果下轮要用全局技能，重开会话后应能直接从全局技能列表发现；本轮已缓存 `global:codex-skills-installed`，TTL 24h。
+## 当前阶段
+
+当前不急着写代码，正在把第666届村委会/社区居委会换届系统的一期业务骨架掰开揉碎。
+
+核心方向：
+
+- 不是多商户 SaaS。
+- **不做数据隔离，只做分级**：城厢区统一系统下，122 个村+社区各是一个小管理单元。
+- 口径钉死：不做隔离就是不做。超管看全部，经办登录后列表默认带自己归属地过滤，不写"看不到别村"的隔离逻辑，不做复杂权限树。
+- `villages` 是归属地筛选根。
+- `elections` 是一场换届的大母档案。
+- `positions`、`candidates`、`materials`、`notices` 必须挂到 `election_id` 下。
+
+## 当前参考材料
+
+- `业务梳理-第666届换届起点.md`
+- `工程责任表-一期P0.md`
+- `选举系统_逻辑展示_甲方版 (1).html`
+- `选举系统_填空模板 (1).html`
+
+## 下一步
+
+### Codex 配置已修
+
+- `C:\Users\admin\.codex\config.toml` 中两个 `SessionStart` hook 已从 `enabled = false` 改为 `enabled = true`。
+- `C:\Users\admin\.codex\hooks.json` 中裸 `bash` 已改为明确的 Git Bash 路径，node hook 已改为 PowerShell 可直接执行的命令形式。
+- `C:\Users\admin\.config\lean-ctx\config.toml` 已补 `allow_paths`，允许读取本机全局技能/配置目录与当前工作区。
+- `shell_allowlist` 已改为 `[]`，避免 Windows PowerShell 命令被 Linux 白名单误拦截。
+- 已执行 `lean-ctx restart`，命令行验证通过；当前会话内嵌 MCP transport 已断开，重开 Codex 会话后会重新连接。
+- `codex doctor` 仍提示自定义网关 reachability 超时；单独请求 `/models` 可在约 2.6 秒返回，且包含 `gpt-5.5`。
+
+### 本机环境备份法宝
+
+- 已新增 `scripts/Backup-CodexSafety.ps1` 和 `backup-codex-env.cmd`。
+- 默认备份位置：`C:\Users\admin\CodexSafetyBackups`。
+- 本轮已生成安全备份：`C:\Users\admin\CodexSafetyBackups\codex-env-20260702-202029.zip`。
+- 默认跳过 `auth.json`、`.credentials.json`，避免把 API key 混进普通备份。
+- 备份包内含 `Restore-CodexSafety.ps1`，用于回滚 Codex/lean-ctx/hooks/skills 配置。
+
+继续分析两份 HTML：
+
+1. `选举系统_逻辑展示_甲方版 (1).html`：登录后归属地、岗位在任、哪些岗位要换届、点击对应岗位。
+2. `选举系统_填空模板 (1).html`：按节点填空、提交材料、发布公告、形成归档。
+
+先画页面/业务 Mermaid，再决定数据库和接口怎么改。

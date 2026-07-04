@@ -40,3 +40,4 @@ koaLite/db/init_db.js
 
 # Archives generated during handoff/migration
 *.zip
+.ctx/cache/
