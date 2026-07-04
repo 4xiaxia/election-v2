@@ -1,0 +1,15 @@
+# golden.yaml — ctx-forge verification questions for election-v2
+# Run: .ctx/ctx selftest
+
+- name: map shows admin package
+  command: map
+  query:
+  expect: admin
+- name: find finds router
+  command: find
+  query: router
+  expect: router
+- name: find finds election
+  command: find
+  query: election
+  expect: election
