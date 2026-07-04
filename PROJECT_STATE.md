@@ -70,3 +70,10 @@
 - 已给 `users` 表补 `wx_openid` 字段和索引；旧库通过 `ALTER TABLE` 轻迁移。
 - 前端形态先不绑定：小程序/H5 都接同一组 `/mini/*` 后端口。
 - 验证已跑：`check-mini-identity`、`node --check`、数据库字段存在检查。
+
+## 2026-07-04 `/api` 路由明线
+
+- 已更新 `koaLite/config/router.js`：自动路由同时注册原路径和 `/api` 前缀路径。
+- 例：`/mini/login` 与 `/api/mini/login` 同时可挂载。
+- 原因：后台 Vite 会 rewrite `/api`，但小程序直连时没有 rewrite；后端保留 `/api` 别名更稳。
+- 验证已跑：`node koaLite/scripts/check-router-api-prefix.js`、`node --check koaLite/config/router.js`。

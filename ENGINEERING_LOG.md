@@ -152,6 +152,33 @@
 - 这一刀只做身份线头，不做复杂多商户隔离、不做投票计票。
 - 下一刀可接：母公告/岗位报名接口前，先让需要写操作的入口统一要求 `userId + villageId`。
 
+## 2026-07-04 后端 `/api` 路由兼容线
+
+### 输入
+
+- 继续前进时检查前后端线头：`admin` 使用 `baseURL: '/api'`，小程序 `mini-program/utils/api.js` 也直连 `/api/mini/*`。
+- 后台 Vite 有 rewrite，但小程序直连后端时没有 rewrite。
+
+### 动作
+
+- 更新 `koaLite/config/router.js`：
+  - 自动路由同时注册 `/xxx/yyy` 和 `/api/xxx/yyy`。
+  - 没有新增第二套路由文件，没有改前端调用。
+- 新增 `koaLite/scripts/check-router-api-prefix.js`：
+  - 自检 `mini.js/login` 生成 `/mini/login` 与 `/api/mini/login`。
+  - 自检 `position-v2.js/generate` 生成 `/position-v2/generate` 与 `/api/position-v2/generate`。
+
+### 验证（真跑）
+
+- `node koaLite/scripts/check-router-api-prefix.js`
+- `node --check koaLite/config/router.js`
+- `node --check koaLite/api/mini.js`
+
+### 接力
+
+- `/api` 只是兼容前缀，不是第二套接口。
+- 后端服务需要重启后，新路由别名才会进入当前运行进程。
+
 ## 2026-07-02 Headroom/work模式接力
 
 ### 输入

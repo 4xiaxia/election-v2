@@ -21,6 +21,7 @@
 - 区级/超级管理员看全部 122 个归属地；村/社区经办账号默认聚焦自己的归属地和换届母档案。
 - 普通微信用户首次参与前必须绑定微信身份、手机号和归属地；游客可浏览公开内容。
 - 小程序/H5 共用后端身份入口：`POST /mini/login`、`POST /mini/bind-location`、`GET /mini/me`。这里负责身份线头和归属地绑定，不扩展成多商户隔离。
+- 后端自动路由保留双路径：`/xxx/yyy` 与 `/api/xxx/yyy` 都可用。`/api` 是前端直连兼容前缀，不是第二套接口。
 - `villages` 是归属地筛选根；`elections` 是一场换届的大母档案。
 - `positions`、`candidates`、`materials`、`notices`、`notifications` 都应围绕 `election_id` 归属到具体换届活动。
 - 一期竞选岗位只做主任、副主任、委员。
