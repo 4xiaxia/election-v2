@@ -13,8 +13,11 @@
 - `frontend_wx/`
 - `koaLite/`
   - `api/mini.js`：微信小程序/H5 共用身份入口（手机号登录、归属地绑定、我的身份）。
+  - `api/notice-v2.js`：公告 CRUD + 公告模板预览/保存草稿。
   - `config/router.js`：自动路由；同一接口同时挂 `/xxx/yyy` 和 `/api/xxx/yyy`。
+  - `config/noticeTemplates.js`：18 条公告填空模板配置。
   - `scripts/check-mini-identity.js`：mini 身份入口最小自检。
+  - `scripts/check-notice-template.js`：公告模板渲染最小自检。
   - `scripts/check-router-api-prefix.js`：`/api` 路由别名最小自检。
 - `mini-program/`
 - `scripts/`

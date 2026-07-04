@@ -17,6 +17,12 @@
         <el-tag effect="plain">📅 {{ ctxElection.date }} {{ ctxElection.timeRange }}</el-tag>
         <el-tag effect="plain">📍 {{ ctxElection.village }}</el-tag>
       </div>
+      <el-button
+        v-if="currentElectionId"
+        type="primary"
+        plain
+        @click="openTemplateDrawer"
+      >📝 从模板生成公告</el-button>
     </section>
 
     <!-- 未选活动时的提示 -->
@@ -65,6 +71,13 @@
         </el-form-item>
       </template>
     </CrudPage>
+
+    <!-- 18公告填空模板抽屉 -->
+    <NoticeTemplateDrawer
+      ref="tplDrawer"
+      :election-id="currentElectionId"
+      @saved="crud?.refresh()"
+    />
   </div>
 </template>
 
@@ -73,6 +86,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { getNotices, createNotice, updateNotice, deleteNotice, publishNotice, getElections } from '@/api/api';
 import CrudPage from '@/components/CrudPage.vue';
+import NoticeTemplateDrawer from './NoticeTemplateDrawer.vue';
 import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -160,6 +174,12 @@ onMounted(async () => {
 
 function onElectionChange() {
   crud.value?.refresh();
+}
+
+/* —— 填空模板抽屉 —— */
+const tplDrawer = ref();
+function openTemplateDrawer() {
+  tplDrawer.value?.open();
 }
 
 async function handlePublish(row: any) {

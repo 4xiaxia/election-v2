@@ -26,6 +26,14 @@ export function deleteNotice(id: string) {
 export function publishNotice(id: string) {
   return http.post('/notice-v2/publish', { id, status: '已发布' });
 }
+// 18公告填空模板：不传 seq → {commonFields, list}；传 seq → {commonFields, template}
+export function getNoticeTemplates(seq?: number) {
+  return http.get('/notice-v2/templates', { params: seq ? { seq } : {} });
+}
+// 填空生成：save=false 预览，save=true 存草稿进 notices
+export function generateNotice(data: { seq: number; orgType: string; fields: Record<string, any>; save?: boolean; electionId?: string }) {
+  return http.post('/notice-v2/generate', data);
+}
 
 // 选举 election-v2
 export function getElections(params?: any) { return http.get('/election-v2/list', { params }).then(normalizeResponse); }

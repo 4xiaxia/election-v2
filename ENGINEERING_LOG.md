@@ -197,6 +197,37 @@
 - 但 Routes 仍只识别 `GET /swagger.json`，无法识别当前 Koa 自动路由。
 - 因此 codesight 只能当粗地图；接口真相以后以 `koaLite/config/router.js`、API 文件、自检脚本和实际运行验证为准。
 
+## 2026-07-04 公告模板半成品收口
+
+### 输入
+
+- 夏夏反馈后台打开像进不去，怀疑上下文压缩或快照误导。
+
+### 判断
+
+- 不是上下文压缩导致。代码真相是 `koaLite/api/notice-v2.js` 在公告模板生成半成品状态下可能让后端加载失败。
+
+### 动作
+
+- 重写收口 `koaLite/api/notice-v2.js`：
+  - 保留公告 CRUD。
+  - 接上 `GET /notice-v2/templates`。
+  - 接上 `POST /notice-v2/generate`，支持预览和保存草稿。
+  - 导出 `_private` 给自检脚本使用，不让自检路由暴露出去。
+- 保留并接入 Claude 船长留下的前端模板抽屉和模板配置。
+- 新增 `koaLite/scripts/check-notice-template.js`。
+
+### 验证（真跑）
+
+- `node --check koaLite/api/notice-v2.js`
+- `node --check koaLite/config/noticeTemplates.js`
+- `node koaLite/scripts/check-notice-template.js`
+- `npx vite build`（在 `admin` 目录）：通过。
+
+### 备注
+
+- `npm --prefix admin run build` 仍会在 Node 24 下因 `vue-tsc` 自身兼容问题失败；Vite 直接构建已证明 Vue 模板和前端打包链路可过。
+
 ## 2026-07-02 Headroom/work模式接力
 
 ### 输入

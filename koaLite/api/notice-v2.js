@@ -1,130 +1,194 @@
-// @@API-NOTICE-V2 公告管理（公开门面·全村可见·≠通知）
 // 4类固定字典：村民组通知/议事会通知/村监会通知/村务通知
-// 套路对齐 village-v2.js
 const response = require('../config/response');
 const { pool } = require('../db/db');
 const { requireRole } = require('../config/requireRole');
+const { COMMON_FIELDS, TEMPLATES } = require('../config/noticeTemplates');
 
 const NOTICE_TYPES = ['村民组通知', '议事会通知', '村监会通知', '村务通知'];
+const NOTICE_STATUS = ['草稿', '已发布', '已下线'];
 
-module.exports = {
-  get: {
-    // 公告分页列表（置顶优先·按时间倒序）
-    async list(ctx) {
-      try {
-        const { page = 1, pageSize = 10, electionId, type, status, title } = ctx.query;
-        const limit = Number(pageSize);
-        const offset = (Number(page) - 1) * limit;
+function orgWords(orgType) {
+  const isCommunity = orgType === 'community';
+  return {
+    orgResident: isCommunity ? '居民' : '村民',
+    orgUnit: isCommunity ? '社区' : '村',
+    orgCommittee: isCommunity ? '居民委员会' : '村民委员会',
+    orgElectionCommittee: isCommunity ? '居民选举委员会' : '村民选举委员会',
+  };
+}
 
-        let sql = `SELECT id, election_id, title, type, status, is_top,
-                          DATE_FORMAT(start_time,"%Y-%m-%d") as start_time,
-                          DATE_FORMAT(end_time,"%Y-%m-%d") as end_time,
-                          DATE_FORMAT(created_at,"%Y-%m-%d %H:%i") as created_at
-                   FROM notices WHERE 1=1`;
-        let countSql = 'SELECT COUNT(1) as total FROM notices WHERE 1=1';
-        const params = [];
-        const countParams = [];
+function renderTemplate(body, data) {
+  return body.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+    const value = data[key];
+    return value === undefined || value === null || value === '' ? '____' : String(value);
+  });
+}
 
-        if (electionId) { sql += ' AND election_id=?'; countSql += ' AND election_id=?'; params.push(electionId); countParams.push(electionId); }
-        if (type)       { sql += ' AND type=?';        countSql += ' AND type=?';        params.push(type);       countParams.push(type); }
-        if (status)     { sql += ' AND status=?';      countSql += ' AND status=?';      params.push(status);     countParams.push(status); }
-        if (title)      { sql += ' AND title LIKE ?';  countSql += ' AND title LIKE ?';  params.push(`%${title}%`); countParams.push(`%${title}%`); }
+function buildNoticeFromTemplate({ seq, orgType, fields = {} }) {
+  const tpl = TEMPLATES.find(t => String(t.seq) === String(seq));
+  if (!tpl) return null;
+  const data = { ...orgWords(orgType), ...fields };
+  const content = renderTemplate(tpl.body, data);
+  const title = `${data.villageName || '____'}关于${tpl.name.replace(/^关于/, '')}`;
+  return { seq: tpl.seq, docNo: tpl.docNo, name: tpl.name, title, content };
+}
 
-        sql += ' ORDER BY is_top DESC, id DESC LIMIT ? OFFSET ?';
-        params.push(limit, offset);
+async function list(ctx) {
+  try {
+    const { page = 1, pageSize = 10, electionId, type, status, title } = ctx.query;
+    const limit = Number(pageSize);
+    const offset = (Number(page) - 1) * limit;
+    const params = [];
+    const countParams = [];
+    let sql = `SELECT id, election_id, title, type, status, is_top,
+                      DATE_FORMAT(start_time,"%Y-%m-%d") as start_time,
+                      DATE_FORMAT(end_time,"%Y-%m-%d") as end_time,
+                      DATE_FORMAT(created_at,"%Y-%m-%d %H:%i") as created_at
+               FROM notices WHERE 1=1`;
+    let countSql = 'SELECT COUNT(1) as total FROM notices WHERE 1=1';
 
-        const [rows] = await pool.query(sql, params);
-        const [totalRow] = await pool.query(countSql, countParams);
-        response.pageSuccess(ctx, rows, totalRow[0].total, page, pageSize);
-      } catch (e) { console.error(e); response.serverError(ctx, '查询公告列表失败'); }
-    },
+    if (electionId) { sql += ' AND election_id=?'; countSql += ' AND election_id=?'; params.push(electionId); countParams.push(electionId); }
+    if (type) { sql += ' AND type=?'; countSql += ' AND type=?'; params.push(type); countParams.push(type); }
+    if (status) { sql += ' AND status=?'; countSql += ' AND status=?'; params.push(status); countParams.push(status); }
+    if (title) { sql += ' AND title LIKE ?'; countSql += ' AND title LIKE ?'; params.push(`%${title}%`); countParams.push(`%${title}%`); }
 
-    // 公告详情（含富文本内容）
-    async detail(ctx) {
-      try {
-        const { id } = ctx.query;
-        if (!id) return response.paramError(ctx, '公告ID不能为空');
-        const [rows] = await pool.query('SELECT * FROM notices WHERE id=?', [id]);
-        if (rows.length === 0) return response.notFound(ctx, '公告不存在');
-        response.success(ctx, rows[0]);
-      } catch (e) { console.error(e); response.serverError(ctx, '查询公告详情失败'); }
-    },
+    sql += ' ORDER BY is_top DESC, id DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
 
-    // 公告类型字典（前端下拉用）
-    async types(ctx) {
-      response.success(ctx, NOTICE_TYPES);
-    }
-  },
-
-  post: {
-    // 新增公告
-    async add(ctx) {
-      try {
-        const b = ctx.request.body;
-        const { title, type = '村务通知', content = '', electionId = null } = b;
-        if (!title) return response.paramError(ctx, '公告标题不能为空');
-        if (!NOTICE_TYPES.includes(type)) {
-          return response.businessError(ctx, `公告类型必须是：${NOTICE_TYPES.join('/')}`);
-        }
-        const createdBy = ctx.state.user ? ctx.state.user.userId : null;
-        const [r] = await pool.execute(
-          `INSERT INTO notices (election_id, title, content, type, start_time, end_time, status, is_top, created_by)
-           VALUES (?,?,?,?,?,?, ?, ?, ?)`,
-          [electionId, title, content, type, b.startTime || null, b.endTime || null,
-           b.status || '草稿', b.isTop ? 1 : 0, createdBy]
-        );
-        response.success(ctx, { id: r.insertId }, '添加公告成功');
-      } catch (e) { console.error(e); response.serverError(ctx, '添加公告失败'); }
-    },
-
-    // 修改公告
-    async update(ctx) {
-      try {
-        const b = ctx.request.body;
-        if (!b.id) return response.paramError(ctx, '公告ID不能为空');
-        if (!b.title) return response.paramError(ctx, '公告标题不能为空');
-        if (b.type && !NOTICE_TYPES.includes(b.type)) {
-          return response.businessError(ctx, `公告类型必须是：${NOTICE_TYPES.join('/')}`);
-        }
-        await pool.execute(
-          `UPDATE notices SET title=?, content=?, type=?, start_time=?, end_time=?, status=?, is_top=?, election_id=? WHERE id=?`,
-          [b.title, b.content || '', b.type || '村务通知', b.startTime || null, b.endTime || null,
-           b.status || '草稿', b.isTop ? 1 : 0, b.electionId || null, b.id]
-        );
-        response.success(ctx, null, '修改公告成功');
-      } catch (e) { console.error(e); response.serverError(ctx, '修改公告失败'); }
-    },
-
-    // 上下架（改 status）
-    async publish(ctx) {
-      try {
-        const { id, status } = ctx.request.body;
-        if (!id) return response.paramError(ctx, '公告ID不能为空');
-        const allowed = ['草稿', '待发布', '已发布', '已下架'];
-        if (!allowed.includes(status)) {
-          return response.paramError(ctx, `status 必须是：${allowed.join('/')}`);
-        }
-        await pool.execute('UPDATE notices SET status=? WHERE id=?', [status, id]);
-        response.success(ctx, null, `公告已${status}`);
-      } catch (e) { console.error(e); response.serverError(ctx, '上下架失败'); }
-    },
-
-    // 删除公告
-    async delete(ctx) {
-      try {
-        const { id } = ctx.request.body;
-        if (!id) return response.paramError(ctx, '公告ID不能为空');
-        await pool.execute('DELETE FROM notices WHERE id=?', [id]);
-        response.success(ctx, null, '删除公告成功');
-      } catch (e) { console.error(e); response.serverError(ctx, '删除公告失败'); }
-    }
-  },
-
-  // @@AUTH 公告：增删改上下架限超管/运营，读放开（公开门面）
-  config: {
-    add: requireRole('超级管理', '运营'),
-    update: requireRole('超级管理', '运营'),
-    publish: requireRole('超级管理', '运营'),
-    delete: requireRole('超级管理', '运营'),
+    const [rows] = await pool.query(sql, params);
+    const [totalRow] = await pool.query(countSql, countParams);
+    response.pageSuccess(ctx, rows, totalRow[0].total, page, pageSize);
+  } catch (err) {
+    console.error(err);
+    response.serverError(ctx, '公告列表加载失败');
   }
+}
+
+async function detail(ctx) {
+  try {
+    const { id } = ctx.query;
+    if (!id) return response.paramError(ctx, 'id 必填');
+    const [rows] = await pool.query('SELECT * FROM notices WHERE id=?', [id]);
+    if (!rows[0]) return response.notFound(ctx, '公告不存在');
+    response.success(ctx, rows[0]);
+  } catch (err) {
+    console.error(err);
+    response.serverError(ctx, '公告详情加载失败');
+  }
+}
+
+function types(ctx) {
+  response.success(ctx, NOTICE_TYPES);
+}
+
+function templates(ctx) {
+  const { seq } = ctx.query;
+  if (seq) {
+    const template = TEMPLATES.find(t => String(t.seq) === String(seq));
+    return response.success(ctx, { commonFields: COMMON_FIELDS, template });
+  }
+  const list = TEMPLATES.map(({ seq, docNo, name, category, hasEnding, fields }) => ({
+    seq, docNo, name, category, hasEnding, fieldCount: fields.length,
+  }));
+  response.success(ctx, { commonFields: COMMON_FIELDS, list });
+}
+
+async function generate(ctx) {
+  try {
+    const body = ctx.request.body || {};
+    const notice = buildNoticeFromTemplate(body);
+    if (!notice) return response.paramError(ctx, '模板 seq 无效');
+    if (!body.save) return response.success(ctx, notice);
+
+    const createdBy = ctx.state.user ? ctx.state.user.userId : null;
+    const [result] = await pool.execute(
+      `INSERT INTO notices (election_id, title, content, type, status, is_top, created_by)
+       VALUES (?, ?, ?, ?, '草稿', 0, ?)`,
+      [body.electionId || null, notice.title, notice.content, body.type || '村务通知', createdBy]
+    );
+    response.success(ctx, { id: result.insertId, ...notice });
+  } catch (err) {
+    console.error(err);
+    response.serverError(ctx, '生成公告失败');
+  }
+}
+
+async function add(ctx) {
+  try {
+    const body = ctx.request.body || {};
+    const { electionId, title, content, type } = body;
+    if (!title || !type) return response.paramError(ctx, 'title、type 必填');
+    if (!NOTICE_TYPES.includes(type)) return response.paramError(ctx, '公告类型不合法');
+    const createdBy = ctx.state.user ? ctx.state.user.userId : null;
+    const [result] = await pool.execute(
+      `INSERT INTO notices (election_id, title, content, type, start_time, end_time, status, is_top, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [electionId || null, title, content || '', type, body.startTime || null, body.endTime || null,
+        body.status || '草稿', body.isTop ? 1 : 0, createdBy]
+    );
+    response.success(ctx, { id: result.insertId });
+  } catch (err) {
+    console.error(err);
+    response.serverError(ctx, '新增公告失败');
+  }
+}
+
+async function update(ctx) {
+  try {
+    const body = ctx.request.body || {};
+    if (!body.id) return response.paramError(ctx, 'id 必填');
+    if (body.type && !NOTICE_TYPES.includes(body.type)) return response.paramError(ctx, '公告类型不合法');
+    await pool.execute(
+      `UPDATE notices SET title=?, content=?, type=?, start_time=?, end_time=?, status=?, is_top=?, election_id=? WHERE id=?`,
+      [body.title || '', body.content || '', body.type || '村务通知', body.startTime || null, body.endTime || null,
+        body.status || '草稿', body.isTop ? 1 : 0, body.electionId || null, body.id]
+    );
+    response.success(ctx);
+  } catch (err) {
+    console.error(err);
+    response.serverError(ctx, '更新公告失败');
+  }
+}
+
+async function publish(ctx) {
+  try {
+    const { id, status } = ctx.request.body || {};
+    if (!id) return response.paramError(ctx, 'id 必填');
+    if (!NOTICE_STATUS.includes(status)) return response.paramError(ctx, '公告状态不合法');
+    await pool.execute('UPDATE notices SET status=? WHERE id=?', [status, id]);
+    response.success(ctx);
+  } catch (err) {
+    console.error(err);
+    response.serverError(ctx, '更新公告状态失败');
+  }
+}
+
+async function remove(ctx) {
+  try {
+    const { id } = ctx.request.body || {};
+    if (!id) return response.paramError(ctx, 'id 必填');
+    await pool.execute('DELETE FROM notices WHERE id=?', [id]);
+    response.success(ctx);
+  } catch (err) {
+    console.error(err);
+    response.serverError(ctx, '删除公告失败');
+  }
+}
+
+const api = {
+  get: { list, detail, types, templates },
+  post: { generate, add, update, publish, delete: remove },
+  config: {
+    generate: requireRole('超级管理', '经办'),
+    add: requireRole('超级管理', '经办'),
+    update: requireRole('超级管理', '经办'),
+    publish: requireRole('超级管理', '经办'),
+    delete: requireRole('超级管理', '经办'),
+  },
 };
+
+Object.defineProperty(api, '_private', {
+  value: { NOTICE_TYPES, NOTICE_STATUS, orgWords, renderTemplate, buildNoticeFromTemplate },
+});
+
+module.exports = api;

@@ -77,3 +77,13 @@
 - 例：`/mini/login` 与 `/api/mini/login` 同时可挂载。
 - 原因：后台 Vite 会 rewrite `/api`，但小程序直连时没有 rewrite；后端保留 `/api` 别名更稳。
 - 验证已跑：`node koaLite/scripts/check-router-api-prefix.js`、`node --check koaLite/config/router.js`。
+
+## 2026-07-04 公告模板生成收口
+
+- 已收口 Claude 船长留下的公告模板半成品：
+  - `koaLite/config/noticeTemplates.js`：18 条公告模板配置。
+  - `GET /notice-v2/templates`：模板列表/详情。
+  - `POST /notice-v2/generate`：按填空字段预览，或保存为公告草稿。
+  - `admin/src/views/notices/NoticeTemplateDrawer.vue`：公告模板填空抽屉。
+- 后台“进不去”的直接风险已排除：`notice-v2.js` 语法检查通过，`admin` 的 Vite build 通过。
+- `vue-tsc` 在 Node 24 下仍有工具兼容报错，不作为页面代码失败判断。
