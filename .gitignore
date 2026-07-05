@@ -42,7 +42,8 @@ dist/
 build/
 .vite/
 coverage/
-logs/
+/logs/
+koaLite/logs/
 koaLite/public/logs/
 koaLite/start.log
 .chat/

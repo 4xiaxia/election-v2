@@ -313,22 +313,22 @@ const crudConfig = computed(() => ({
   desc: ctxElection.value ? `${ctxElection.value.name} — 职位设置` : '',
   addLabel: '+ 新增职位',
   columns: [
-    { prop: 'name', label: '职位名称', minWidth: '110' },
-    { prop: 'quota', label: '应选名额', width: '90', align: 'center' as const,
+    { prop: 'name', label: '职位名称', minWidth: '110', fieldHint: 'positions.name' },
+    { prop: 'quota', label: '应选名额', width: '90', align: 'center' as const, fieldHint: 'positions.quota',
       render: (row: any) => `${row.quota || 0} 位` },
-    { prop: 'duty', label: '职责概述', minWidth: '180', tooltip: true },
-    { prop: '_enroll', label: '报名时间', minWidth: '180',
+    { prop: 'duty', label: '职责概述', minWidth: '180', tooltip: true, fieldHint: 'positions.duty' },
+    { prop: '_enroll', label: '报名时间', minWidth: '180', fieldHint: 'elections.enroll_start/end_at',
       render: () => {
         const e = ctxElection.value;
         if (!e?.enrollStartAt && !e?.enrollEndAt) return '— 活动未设报名时间';
         return `${fmt(e.enrollStartAt)} ~ ${fmt(e.enrollEndAt)}`;
       } },
-    { prop: 'electedCandidates', label: '当选人', minWidth: '120',
+    { prop: 'electedCandidates', label: '当选人', minWidth: '120', fieldHint: 'positions.elected_candidates',
       render: (row: any) => {
         const arr = Array.isArray(row.electedCandidates) ? row.electedCandidates : [];
         return arr.length ? arr.join('、') : '— 未公布';
       } },
-    { prop: 'enabled', label: '状态', width: '70', align: 'center' as const, tagMap: { 1: { type: 'success', text: '启用' }, 0: { type: 'info', text: '停用' } } as any },
+    { prop: 'enabled', label: '状态', width: '70', align: 'center' as const, fieldHint: 'positions.enabled', tagMap: { 1: { type: 'success', text: '启用' }, 0: { type: 'info', text: '停用' } } as any },
   ],
   api: {
     list: async () => {
