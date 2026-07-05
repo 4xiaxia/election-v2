@@ -4,6 +4,7 @@
 const response = require('../config/response');
 const { pool } = require('../db/db');
 const { requireRole } = require('../config/requireRole');
+const { villageWhere } = require('../config/villageScope');
 
 module.exports = {
   get: {
@@ -28,6 +29,13 @@ module.exports = {
         if (source)        { base += ' AND c.source=?';          params.push(source); }
         if (status)        { base += ' AND c.status=?';          params.push(status); }
         if (name)          { base += ' AND c.name LIKE ?';       params.push(`%${name}%`); }
+
+        // @@村级隔离：非超管强制限定只看自己村
+        const { wherePart: vw, params: vp } = villageWhere(ctx);
+        if (vw) {
+          base += vw.replace('village_id', 'e.village_id');
+          params.push(...vp);
+        }
 
         const listSql = `SELECT c.id, c.name, c.phone, c.gender, c.politics, c.source, c.recommend_type,
                                 c.status, c.elected, c.votes, c.review_comment,

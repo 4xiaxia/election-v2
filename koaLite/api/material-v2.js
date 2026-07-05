@@ -4,6 +4,7 @@
 const response = require('../config/response');
 const { pool } = require('../db/db');
 const { requireRole } = require('../config/requireRole');
+const { villageWhere } = require('../config/villageScope');
 
 function parseJSON(str, fallback) {
   if (!str) return fallback;
@@ -56,7 +57,8 @@ async function listMaterials(ctx, defaultStatus) {
                     m.applicant_phone, m.applicant_name, m.status, m.reject_reason,
                     m.scope, m.stage_key, m.material_no, m.file_url,
                     m.candidate_id, DATE_FORMAT(m.created_at,"%Y-%m-%d %H:%i") as created_at
-             FROM materials m LEFT JOIN positions p ON m.position_id=p.id WHERE 1=1`;
+             FROM materials m LEFT JOIN positions p ON m.position_id=p.id
+             LEFT JOIN elections e ON m.election_id=e.id WHERE 1=1`;
   const params = [];
   if (electionId) { sql += ' AND m.election_id=?'; params.push(electionId); }
   if (positionId) { sql += ' AND m.position_id=?'; params.push(positionId); }
@@ -64,6 +66,14 @@ async function listMaterials(ctx, defaultStatus) {
   if (scope)      { sql += ' AND m.scope=?';       params.push(scope); }
   if (stageKey)   { sql += ' AND m.stage_key=?';   params.push(stageKey); }
   if (materialNo) { sql += ' AND m.material_no=?'; params.push(materialNo); }
+
+  // @@村级隔离：非超管强制限定只看自己村
+  const { wherePart: vw, params: vp } = villageWhere(ctx);
+  if (vw) {
+    sql += vw.replace('village_id', 'e.village_id');
+    params.push(...vp);
+  }
+
   sql += ' ORDER BY m.created_at DESC';
   const [rows] = await pool.query(sql, params);
   // 统一返回 {list,total} 形状

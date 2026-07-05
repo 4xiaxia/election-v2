@@ -1,6 +1,7 @@
 const response = require('../config/response');
 const { pool } = require('../db/db');
 const { requireRole } = require('../config/requireRole');
+const { villageWhere } = require('../config/villageScope');
 
 function parseJSON(str, fallback) {
   if (!str) return fallback;
@@ -50,16 +51,25 @@ const api = {
         if (!electionId) return response.paramError(ctx, '选举活动ID不能为空');
 
         const params = [electionId];
-        let sql = `SELECT id, election_id, name, quota, duty, material_requirements,
-                  sort_weight, enabled, elected_candidates,
-                  DATE_FORMAT(enroll_start_at,"%Y-%m-%d") as enroll_start_at,
-                  DATE_FORMAT(enroll_end_at,"%Y-%m-%d") as enroll_end_at
-           FROM positions WHERE election_id = ?`;
+        let sql = `SELECT p.id, p.election_id, p.name, p.quota, p.duty, p.material_requirements,
+                  p.sort_weight, p.enabled, p.elected_candidates,
+                  DATE_FORMAT(p.enroll_start_at,"%Y-%m-%d") as enroll_start_at,
+                  DATE_FORMAT(p.enroll_end_at,"%Y-%m-%d") as enroll_end_at
+           FROM positions p JOIN elections e ON p.election_id = e.id
+           WHERE p.election_id = ?`;
+        
+        // @@村级隔离：非超管只能查自己村的 election 对应的岗位
+        const { wherePart: vw, params: vp } = villageWhere(ctx);
+        if (vw) {
+          sql += vw.replace('village_id', 'e.village_id');
+          params.push(...vp);
+        }
+
         if (includeAll !== '1') {
-          sql += ' AND name IN (?, ?, ?)';
+          sql += ' AND p.name IN (?, ?, ?)';
           params.push(...P0_POSITION_NAMES);
         }
-        sql += ' ORDER BY sort_weight ASC, id ASC';
+        sql += ' ORDER BY p.sort_weight ASC, p.id ASC';
 
         const [rows] = await pool.query(sql, params);
         rows.forEach(r => {

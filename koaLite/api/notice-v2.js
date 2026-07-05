@@ -2,6 +2,7 @@
 const response = require('../config/response');
 const { pool } = require('../db/db');
 const { requireRole } = require('../config/requireRole');
+const { villageWhere } = require('../config/villageScope');
 const { COMMON_FIELDS, TEMPLATES } = require('../config/noticeTemplates');
 
 const NOTICE_TYPES = ['村民组通知', '议事会通知', '村监会通知', '村务通知'];
@@ -40,20 +41,28 @@ async function list(ctx) {
     const offset = (Number(page) - 1) * limit;
     const params = [];
     const countParams = [];
-    let sql = `SELECT id, election_id, title, type, status, is_top,
-                      notice_no, stage_key, template_key,
-                      DATE_FORMAT(start_time,"%Y-%m-%d") as start_time,
-                      DATE_FORMAT(end_time,"%Y-%m-%d") as end_time,
-                      DATE_FORMAT(created_at,"%Y-%m-%d %H:%i") as created_at
-               FROM notices WHERE 1=1`;
-    let countSql = 'SELECT COUNT(1) as total FROM notices WHERE 1=1';
+    let sql = `SELECT n.id, n.election_id, n.title, n.type, n.status, n.is_top,
+                      n.notice_no, n.stage_key, n.template_key,
+                      DATE_FORMAT(n.start_time,"%Y-%m-%d") as start_time,
+                      DATE_FORMAT(n.end_time,"%Y-%m-%d") as end_time,
+                      DATE_FORMAT(n.created_at,"%Y-%m-%d %H:%i") as created_at
+               FROM notices n JOIN elections e ON n.election_id=e.id WHERE 1=1`;
+    let countSql = 'SELECT COUNT(1) as total FROM notices n JOIN elections e ON n.election_id=e.id WHERE 1=1';
 
-    if (electionId) { sql += ' AND election_id=?'; countSql += ' AND election_id=?'; params.push(electionId); countParams.push(electionId); }
-    if (type) { sql += ' AND type=?'; countSql += ' AND type=?'; params.push(type); countParams.push(type); }
-    if (status) { sql += ' AND status=?'; countSql += ' AND status=?'; params.push(status); countParams.push(status); }
-    if (title) { sql += ' AND title LIKE ?'; countSql += ' AND title LIKE ?'; params.push(`%${title}%`); countParams.push(`%${title}%`); }
+    if (electionId) { sql += ' AND n.election_id=?'; countSql += ' AND n.election_id=?'; params.push(electionId); countParams.push(electionId); }
+    if (type) { sql += ' AND n.type=?'; countSql += ' AND n.type=?'; params.push(type); countParams.push(type); }
+    if (status) { sql += ' AND n.status=?'; countSql += ' AND n.status=?'; params.push(status); countParams.push(status); }
+    if (title) { sql += ' AND n.title LIKE ?'; countSql += ' AND n.title LIKE ?'; params.push(`%${title}%`); countParams.push(`%${title}%`); }
 
-    sql += ' ORDER BY is_top DESC, id DESC LIMIT ? OFFSET ?';
+    // @@村级隔离：非超管强制限定只看自己村
+    const { wherePart: vw, params: vp } = villageWhere(ctx);
+    if (vw) {
+      const vwScoped = vw.replace('village_id', 'e.village_id');
+      sql += vwScoped; countSql += vwScoped;
+      params.push(...vp); countParams.push(...vp);
+    }
+
+    sql += ' ORDER BY n.is_top DESC, n.id DESC LIMIT ? OFFSET ?';
     params.push(limit, offset);
 
     const [rows] = await pool.query(sql, params);
