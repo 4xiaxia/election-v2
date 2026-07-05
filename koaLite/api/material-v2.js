@@ -10,9 +10,21 @@ function parseJSON(str, fallback) {
   try { return JSON.parse(str); } catch { return fallback; }
 }
 
+function pickItemValue(items, keys) {
+  const list = Array.isArray(items) ? items : parseJSON(items, []);
+  for (const item of list) {
+    const label = item && (item.key || item.name || item.label || item.field);
+    if (label && keys.some(k => String(label).includes(k))) {
+      return item.value || item.text || item.content || '';
+    }
+  }
+  return '';
+}
+
 // @@BLOOD-FLIP 血缘翻转：一份材料通过 → 生成/复用候选人
 // 业务铁律：一人一场一岗位 → 按 election+position+phone 查重
 async function promoteToCandidate(conn, m) {
+  if (m.scope === 'archive') return null;
   const [exist] = await conn.execute(
     'SELECT id FROM candidates WHERE election_id=? AND position_id=? AND phone=?',
     [m.election_id, m.position_id, m.applicant_phone]
@@ -23,11 +35,12 @@ async function promoteToCandidate(conn, m) {
     // 复用旧候选人，补回 material_id
     await conn.execute('UPDATE candidates SET material_id=? WHERE id=?', [m.id, candidateId]);
   } else {
+    const gender = pickItemValue(m.items, ['性别']);
     const [r] = await conn.execute(
       `INSERT INTO candidates
-        (election_id, position_id, phone, user_id, material_id, name, source, recommend_type, status)
-       VALUES (?,?,?,?,?,?, 'material', '村民自荐', '报名中')`,
-      [m.election_id, m.position_id, m.applicant_phone, m.applicant_user_id || null, m.id, m.applicant_name || '']
+        (election_id, position_id, phone, user_id, material_id, name, gender, source, recommend_type, status)
+       VALUES (?,?,?,?,?,?,?, 'material', '村民自荐', '报名中')`,
+      [m.election_id, m.position_id, m.applicant_phone, m.applicant_user_id || null, m.id, m.applicant_name || '', gender]
     );
     candidateId = r.insertId;
   }
@@ -38,15 +51,19 @@ async function promoteToCandidate(conn, m) {
 
 // 列表查询（admin/reviewer 共用，默认 status 不同）
 async function listMaterials(ctx, defaultStatus) {
-  const { electionId, positionId, status = defaultStatus } = ctx.query;
+  const { electionId, positionId, status = defaultStatus, scope, stageKey, materialNo } = ctx.query;
   let sql = `SELECT m.id, m.election_id, m.position_id, p.name AS position_name,
                     m.applicant_phone, m.applicant_name, m.status, m.reject_reason,
+                    m.scope, m.stage_key, m.material_no, m.file_url,
                     m.candidate_id, DATE_FORMAT(m.created_at,"%Y-%m-%d %H:%i") as created_at
              FROM materials m LEFT JOIN positions p ON m.position_id=p.id WHERE 1=1`;
   const params = [];
   if (electionId) { sql += ' AND m.election_id=?'; params.push(electionId); }
   if (positionId) { sql += ' AND m.position_id=?'; params.push(positionId); }
   if (status)     { sql += ' AND m.status=?';      params.push(status); }
+  if (scope)      { sql += ' AND m.scope=?';       params.push(scope); }
+  if (stageKey)   { sql += ' AND m.stage_key=?';   params.push(stageKey); }
+  if (materialNo) { sql += ' AND m.material_no=?'; params.push(materialNo); }
   sql += ' ORDER BY m.created_at DESC';
   const [rows] = await pool.query(sql, params);
   // 统一返回 {list,total} 形状
@@ -98,22 +115,29 @@ module.exports = {
     async submit(ctx) {
       try {
         const b = ctx.request.body;
-        const { electionId, positionId, applicantPhone, applicantName = '', items = [] } = b;
-        if (!electionId || !positionId || !applicantPhone) {
+        const { electionId, positionId, applicantPhone, applicantName = '', items = [],
+                scope = 'candidate', stageKey = '', materialNo = '', fileUrl = '' } = b;
+        if (!electionId) return response.paramError(ctx, 'electionId 必填');
+        if (scope !== 'archive' && (!positionId || !applicantPhone)) {
           return response.paramError(ctx, 'electionId、positionId、applicantPhone 必填');
         }
         // 铁律：一人一场选举只能报一个岗位
-        const [dup] = await pool.execute(
-          'SELECT id FROM materials WHERE election_id=? AND applicant_phone=?',
-          [electionId, applicantPhone]
-        );
-        if (dup.length > 0) return response.businessError(ctx, '您在本场选举已报名，一人只能报一个岗位');
+        if (scope !== 'archive') {
+          const [dup] = await pool.execute(
+            'SELECT id FROM materials WHERE election_id=? AND applicant_phone=? AND scope<>?',
+            [electionId, applicantPhone, 'archive']
+          );
+          if (dup.length > 0) return response.businessError(ctx, '您在本场选举已报名，一人只能报一个岗位');
+        }
 
         const itemsJSON = typeof items === 'string' ? items : JSON.stringify(items);
         const [r] = await pool.execute(
-          `INSERT INTO materials (election_id, position_id, applicant_phone, applicant_user_id, applicant_name, items, status)
-           VALUES (?,?,?,?,?,?, '待审核')`,
-          [electionId, positionId, applicantPhone, b.applicantUserId || null, applicantName, itemsJSON]
+          `INSERT INTO materials
+            (election_id, position_id, applicant_phone, applicant_user_id, applicant_name, items, status,
+             scope, stage_key, material_no, file_url)
+           VALUES (?,?,?,?,?,?, '待审核', ?, ?, ?, ?)`,
+          [electionId, positionId || null, applicantPhone || '', b.applicantUserId || null, applicantName, itemsJSON,
+           scope, stageKey, materialNo, fileUrl]
         );
         response.success(ctx, { id: r.insertId }, '材料提交成功，待审核');
       } catch (e) { console.error(e); response.serverError(ctx, '提交材料失败'); }
@@ -160,19 +184,21 @@ module.exports = {
           [reviewerId || null, actorName,
            action === 'approve' ? '通过' : '驳回',
            action === 'approve'
-             ? `材料#${id} ${m.applicant_name}(${m.applicant_phone}) 审核通过，生成候选人#${candidateId}`
+             ? `材料#${id} ${m.applicant_name}(${m.applicant_phone}) 审核通过${candidateId ? `，生成候选人#${candidateId}` : ''}`
              : `材料#${id} ${m.applicant_name}(${m.applicant_phone}) 驳回，原因：${rejectReason}`]
         );
         // ④ 发结果通知给上报人（站内信，按手机号定向）
-        await conn.execute(
-          `INSERT INTO notifications (title, content, type, target_phones, send_mode, status)
-           VALUES (?, ?, '结果通知', ?, '即时', '已发送')`,
-          [action === 'approve' ? '材料审核通过' : '材料审核未通过',
-           action === 'approve'
-             ? `您报名提交的材料已审核通过，已进入候选人名单。`
-             : `您报名提交的材料未通过审核。原因：${rejectReason}`,
-           m.applicant_phone]
-        );
+        if (m.applicant_phone) {
+          await conn.execute(
+            `INSERT INTO notifications (title, content, type, target_phones, send_mode, status)
+             VALUES (?, ?, '结果通知', ?, '即时', '已发送')`,
+            [action === 'approve' ? '材料审核通过' : '材料审核未通过',
+             action === 'approve'
+               ? (candidateId ? `您报名提交的材料已审核通过，已进入候选人名单。` : `您提交的归档材料已审核通过。`)
+               : `您报名提交的材料未通过审核。原因：${rejectReason}`,
+             m.applicant_phone]
+          );
+        }
 
         await conn.commit();
         response.success(ctx, { candidateId }, action === 'approve' ? '审核通过，已生成候选人' : '已驳回');
@@ -186,8 +212,8 @@ module.exports = {
     }
   },
 
-  // @@AUTH 材料：review审核限审核人/超管；submit村民提交放开(村民端无管理token)
+  // @@AUTH 材料：review给超管/经办/审核；submit村民提交放开(村民端无管理token)
   config: {
-    review: requireRole('超级管理', '审核'),
+    review: requireRole('超级管理', '经办', '审核'),
   }
 };

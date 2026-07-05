@@ -29,6 +29,12 @@
 
     <!-- 选中活动后展示列表 -->
     <CrudPage v-else ref="crud" :config="crudConfig">
+      <template #toolbar>
+        <el-button type="success" plain :disabled="!currentElectionId" @click="openGenerateDialog">
+          一键生成岗位
+        </el-button>
+      </template>
+
       <template #form="{ form }">
         <el-form-item label="所属选举">
           <el-input :value="ctxElection?.name || ''" disabled />
@@ -98,6 +104,30 @@
       </template>
     </CrudPage>
 
+    <el-dialog v-model="generateDialog" title="生成主任/副主任/委员" width="420px">
+      <el-form :model="generateForm" label-width="96px">
+        <el-form-item label="村居类型">
+          <el-select v-model="generateForm.orgType" style="width:100%" @change="onGenerateOrgTypeChange">
+            <el-option label="行政村 / 村委会" value="village" />
+            <el-option label="社区 / 居委会" value="community" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="班子人数">
+          <el-select v-model="generateForm.committeeSize" style="width:100%" @change="onGenerateCommitteeSizeChange">
+            <el-option v-for="n in generateSizeOptions" :key="n" :label="`${n} 人`" :value="n" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="副主任数">
+          <el-input-number v-model="generateForm.deputyCount" :min="0" :max="generateDeputyMax" />
+        </el-form-item>
+      </el-form>
+      <p class="generate-tip">只生成一期竞选岗位，不删除旧岗位；已有主任/副主任/委员时后端会阻止重复生成。</p>
+      <template #footer>
+        <el-button @click="generateDialog=false">取消</el-button>
+        <el-button type="primary" :loading="generating" @click="handleGeneratePositions">生成</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 材料要求预览弹窗（关联小程序前端候选人提交时看到的明细） -->
     <el-dialog v-model="reqDialog" :title="`${reqRow?.name || ''} — 材料提交要求`" width="560px">
       <p class="req-tip">📱 这是该职位候选人在小程序端报名时，需要按项提交的材料明细。</p>
@@ -136,13 +166,83 @@
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useRouter } from 'vue-router';
-import { getElections, getPositions, createPosition, updatePosition, deletePosition } from '@/api/api';
+import { getElections, getPositions, createPosition, updatePosition, deletePosition, generatePositions } from '@/api/api';
 import CrudPage from '@/components/CrudPage.vue';
 
 const router = useRouter();
 const elections = ref<any[]>([]);
 const currentElectionId = ref('');
 const ctxElection = computed(() => elections.value.find((e: any) => e.id === currentElectionId.value));
+
+type GenerateOrgType = 'village' | 'community';
+const generateDialog = ref(false);
+const generating = ref(false);
+const generateForm = ref<{ orgType: GenerateOrgType; committeeSize: number; deputyCount: number }>({
+  orgType: 'village',
+  committeeSize: 3,
+  deputyCount: 0,
+});
+const generateSizeOptions = computed(() => generateForm.value.orgType === 'community' ? [5, 7, 9] : [3, 5, 7]);
+const generateDeputyMax = computed(() => Math.min(2, Math.max(0, generateForm.value.committeeSize - 2)));
+
+function inferOrgType(): GenerateOrgType {
+  const e = ctxElection.value || {};
+  const raw = String(e.orgType ?? e.unitType ?? e.type ?? e.villageType ?? e.electionType ?? e.election_type ?? '').toLowerCase();
+  return raw.includes('community') || raw.includes('居') || raw.includes('社区') ? 'community' : 'village';
+}
+
+function defaultDeputyCount(orgType: GenerateOrgType, committeeSize: number) {
+  return orgType === 'village' && committeeSize === 3 ? 0 : 1;
+}
+
+function resetGenerateForm() {
+  const orgType = inferOrgType();
+  const committeeSize = orgType === 'community' ? 5 : 3;
+  generateForm.value = {
+    orgType,
+    committeeSize,
+    deputyCount: defaultDeputyCount(orgType, committeeSize),
+  };
+}
+
+function onGenerateOrgTypeChange() {
+  const committeeSize = generateForm.value.orgType === 'community' ? 5 : 3;
+  generateForm.value.committeeSize = committeeSize;
+  generateForm.value.deputyCount = defaultDeputyCount(generateForm.value.orgType, committeeSize);
+}
+
+function onGenerateCommitteeSizeChange() {
+  generateForm.value.deputyCount = defaultDeputyCount(generateForm.value.orgType, generateForm.value.committeeSize);
+}
+
+function openGenerateDialog() {
+  if (!currentElectionId.value) {
+    ElMessage.warning('请先选择选举活动');
+    return;
+  }
+  resetGenerateForm();
+  generateDialog.value = true;
+}
+
+async function handleGeneratePositions() {
+  if (!currentElectionId.value) return;
+  generating.value = true;
+  try {
+    await generatePositions({
+      electionId: currentElectionId.value,
+      orgType: generateForm.value.orgType,
+      committeeSize: generateForm.value.committeeSize,
+      deputyCount: generateForm.value.deputyCount,
+    });
+    ElMessage.success('岗位生成成功');
+    generateDialog.value = false;
+    (crud.value as any)?.refresh?.();
+  } catch (err: any) {
+    ElMessage.error(err?.msg || err?.message || '岗位生成失败');
+  } finally {
+    generating.value = false;
+  }
+}
 
 // 时间格式化：只取 日期+时分，没值显示占位
 function fmt(t: string) {

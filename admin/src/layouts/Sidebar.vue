@@ -15,13 +15,14 @@
 
       <!-- 二、选举办理主流程 -->
       <el-menu-item-group title="选举办理">
+        <el-menu-item index="/election-methods" v-if="canSee('election-methods')"><el-icon><CircleCheck /></el-icon><span>选举提案审批</span></el-menu-item>
         <el-menu-item index="/election" v-if="canSee('election')"><el-icon><Tickets /></el-icon><span>选举管理</span></el-menu-item>
-        <el-menu-item index="/positions" v-if="canSee('positions')"><el-icon><Postcard /></el-icon><span>职位管理</span></el-menu-item>
-        <el-menu-item index="/materials" v-if="canSee('materials')"><el-icon><Document /></el-icon><span>材料审核</span></el-menu-item>
+        <el-menu-item index="/positions" v-if="canSee('positions')"><el-icon><Postcard /></el-icon><span>岗位管理</span></el-menu-item>
+        <el-menu-item index="/materials" v-if="canSee('materials')"><el-icon><Document /></el-icon><span>材料提交审核</span></el-menu-item>
         <el-menu-item index="/candidates" v-if="canSee('candidates')"><el-icon><User /></el-icon><span>候选人管理</span></el-menu-item>
         <el-menu-item index="/approvals" v-if="canSee('approvals')"><el-icon><CircleCheck /></el-icon><span>审批管理</span></el-menu-item>
-        <el-menu-item index="/notices" v-if="canSee('notices')"><el-icon><Bell /></el-icon><span>公告管理</span></el-menu-item>
-        <el-menu-item index="/notifications" v-if="canSee('notifications')"><el-icon><ChatLineRound /></el-icon><span>通知设置</span></el-menu-item>
+        <el-menu-item index="/notices" v-if="canSee('notices')"><el-icon><Bell /></el-icon><span>子公告管理</span></el-menu-item>
+        <el-menu-item index="/notifications" v-if="canSee('notifications')"><el-icon><ChatLineRound /></el-icon><span>通知管理</span></el-menu-item>
       </el-menu-item-group>
 
       <!-- 三、选举完成后的归档 -->
@@ -31,9 +32,9 @@
 
       <!-- 四、系统管理 -->
       <el-menu-item-group title="系统管理" v-if="canSee('admins') || canSee('roles') || canSee('settings') || canSee('logs')">
-        <el-menu-item index="/admins" v-if="canSee('admins')"><el-icon><UserFilled /></el-icon><span>系统人员</span></el-menu-item>
-        <el-menu-item index="/roles" v-if="canSee('roles')"><el-icon><Key /></el-icon><span>角色权限</span></el-menu-item>
-        <el-menu-item index="/settings" v-if="canSee('settings')"><el-icon><Setting /></el-icon><span>系统设置</span></el-menu-item>
+        <el-menu-item index="/admins" v-if="canSee('admins')"><el-icon><UserFilled /></el-icon><span>管理员</span></el-menu-item>
+        <el-menu-item index="/roles" v-if="canSee('roles')"><el-icon><Key /></el-icon><span>用户管理</span></el-menu-item>
+        <el-menu-item index="/settings" v-if="canSee('settings')"><el-icon><Setting /></el-icon><span>系统配置</span></el-menu-item>
         <el-menu-item index="/logs" v-if="canSee('logs')"><el-icon><List /></el-icon><span>操作日志</span></el-menu-item>
       </el-menu-item-group>
     </el-menu>
@@ -49,10 +50,39 @@ const route = useRoute();
 
 // 角色 → 可见菜单映射
 const roleMenuMap: Record<string, string[]> = {
-  '超级管理': ['dashboard', 'villages', 'election', 'positions', 'materials', 'candidates', 'approvals', 'notices', 'notifications'],
-  '经办': ['dashboard', 'villages', 'election', 'positions', 'materials', 'candidates', 'approvals', 'notices', 'notifications'],
-  '审核': ['dashboard', 'election', 'materials', 'candidates', 'approvals', 'notices'],
-  '运营': ['dashboard', 'election', 'candidates', 'notices', 'notifications'],
+  '超级管理': [
+    'dashboard',
+    'villages',
+    'election-methods',
+    'election',
+    'positions',
+    'materials',
+    'candidates',
+    'approvals',
+    'notices',
+    'notifications',
+    'archives',
+    'admins',
+    'roles',
+    'settings',
+    'logs',
+  ],
+  '经办': [
+    'dashboard',
+    'villages',
+    'election-methods',
+    'election',
+    'positions',
+    'materials',
+    'candidates',
+    'approvals',
+    'notices',
+    'notifications',
+    'archives',
+    'logs',
+  ],
+  '审核': ['dashboard', 'election', 'materials', 'candidates', 'approvals'],
+  '运营': ['dashboard', 'election', 'candidates', 'notices', 'notifications', 'archives'],
 };
 
 const userRole = computed(() => {

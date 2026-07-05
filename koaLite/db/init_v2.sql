@@ -180,6 +180,31 @@ CREATE TABLE IF NOT EXISTS `message_reads` (
   KEY `idx_message_user` (`message_id`, `user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='站内消息已读表';
 
+-- ⑨-1 选民登记关系表（用户/线下名册人员 × 某届选举）
+-- 说明：users 只管账号，不能表达“这个人登记参加哪一届”；本表是唯一必要新增关系表。
+CREATE TABLE IF NOT EXISTS `election_voters` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '选民登记ID',
+  `election_id` int(11) NOT NULL COMMENT '哪场选举',
+  `village_id` int(11) DEFAULT NULL COMMENT '所属村居',
+  `user_id` int(11) DEFAULT NULL COMMENT '线上用户ID（可空）',
+  `phone` varchar(20) DEFAULT '' COMMENT '手机号（可空，线下名册可能没有）',
+  `name` varchar(100) NOT NULL COMMENT '姓名',
+  `gender` varchar(10) DEFAULT '' COMMENT '性别',
+  `birth_date` varchar(30) DEFAULT '' COMMENT '出生年月',
+  `id_card` varchar(50) DEFAULT '' COMMENT '身份证号码',
+  `household_address` varchar(255) DEFAULT '' COMMENT '户口所在地',
+  `group_name` varchar(100) DEFAULT '' COMMENT '所在村/居民小组',
+  `register_source` varchar(30) DEFAULT 'manual' COMMENT 'mini线上登记/import名册导入/manual人工录入',
+  `status` varchar(20) DEFAULT '有效' COMMENT '有效/待确认/无效',
+  `remark` varchar(500) DEFAULT '' COMMENT '备注',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_election_id` (`election_id`),
+  KEY `idx_village_id` (`village_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_phone` (`phone`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='选民登记关系表';
+
 -- ⑩ 日志表（三合一·kind区分·规范书硬要求）
 CREATE TABLE IF NOT EXISTS `logs` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '日志ID',
@@ -200,6 +225,26 @@ CREATE TABLE IF NOT EXISTS `logs` (
 -- ============================================================
 ALTER TABLE `users` ADD COLUMN `wx_openid` varchar(100) DEFAULT '' COMMENT '微信openid/wxid' AFTER `phone`;
 ALTER TABLE `users` ADD KEY `idx_wx_openid` (`wx_openid`);
+
+-- ============================================================
+-- 一期字段扩展（2026-07-05 字段矩阵诊断：旧表优先，只补承接字段）
+-- ============================================================
+ALTER TABLE `elections` ADD COLUMN `session_no` varchar(20) DEFAULT '第十五届' COMMENT '届次';
+ALTER TABLE `elections` ADD COLUMN `committee_size` int(4) DEFAULT NULL COMMENT '班子总人数';
+ALTER TABLE `elections` ADD COLUMN `deputy_count` int(4) DEFAULT NULL COMMENT '副主任名额';
+
+ALTER TABLE `candidates` ADD COLUMN `gender` varchar(10) DEFAULT '' COMMENT '性别';
+
+ALTER TABLE `notices` ADD COLUMN `notice_no` varchar(20) DEFAULT '' COMMENT '公告编号/号次';
+ALTER TABLE `notices` ADD COLUMN `stage_key` varchar(50) DEFAULT '' COMMENT '所属时间线阶段';
+ALTER TABLE `notices` ADD COLUMN `template_key` varchar(50) DEFAULT '' COMMENT '公告模板键';
+
+ALTER TABLE `materials` ADD COLUMN `scope` varchar(20) DEFAULT 'candidate' COMMENT 'candidate候选人材料/archive阶段归档材料';
+ALTER TABLE `materials` ADD COLUMN `stage_key` varchar(50) DEFAULT '' COMMENT '所属时间线阶段';
+ALTER TABLE `materials` ADD COLUMN `material_no` varchar(20) DEFAULT '' COMMENT '材料编号';
+ALTER TABLE `materials` ADD COLUMN `file_url` varchar(500) DEFAULT '' COMMENT '上传文件地址';
+ALTER TABLE `materials` MODIFY COLUMN `position_id` int(11) DEFAULT NULL COMMENT '报哪个岗位；阶段归档材料可空';
+ALTER TABLE `materials` MODIFY COLUMN `applicant_phone` varchar(20) DEFAULT '' COMMENT '上报人手机号；阶段归档材料可空';
 
 INSERT IGNORE INTO `villages` (`id`, `name`, `type`, `code`) VALUES
 (1, '凤凰社区', '居委会', 'FH001'),

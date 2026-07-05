@@ -1,76 +1,37 @@
 # PROJECT_TREE
 
-更新时间：2026-06-30
+## 根目录真相源
 
-## 根目录顶层
-
-- `.chat/`
-- `.claude/`
-- `.codesight/`
-- `.codex/`
-- `.vscode/`
-- `admin/`
-- `frontend_wx/`
-- `koaLite/`
-  - `api/mini.js`：微信小程序/H5 共用身份入口（手机号登录、归属地绑定、我的身份）。
-  - `api/notice-v2.js`：公告 CRUD + 公告模板预览/保存草稿。
-  - `config/router.js`：自动路由；同一接口同时挂 `/xxx/yyy` 和 `/api/xxx/yyy`。
-  - `config/noticeTemplates.js`：18 条公告填空模板配置。
-  - `scripts/check-mini-identity.js`：mini 身份入口最小自检。
-  - `scripts/check-notice-template.js`：公告模板渲染最小自检。
-  - `scripts/check-router-api-prefix.js`：`/api` 路由别名最小自检。
-- `mini-program/`
-- `scripts/`
-- `vue-cli-lazy/`
-- `README.md`
-- `01城厢区华亭镇村委会换届选举流程参考表（霞皋村2021.11.20）.xlsx`
-- `20城厢区华亭镇居委会换届选举流程参考表（涧口社区2021.11.20）.xlsx`
-- `2021年选举公告 村民 18种（批注版）.pdf`
-- `阿圆与夏夏-历史足迹总览.md`
-- `搬家进度-主线地图.md`
-- `船务动态地图.md`
-- `后端探索地图.md`
-- `前端探索地图.md`
-- `全局快照-前后端契约对照总图.md`
-- `权限设计-灵感航海图.md`
-- `新建文件夹.zip`
-
-## 当前接力锚点
-
-- `副船长的航海接力日志/`：副船长低 token 接力目录，包含图入口、文件索引和 2026-07-04 资料快照。
-- `上下文压缩摘要-2026-07-04.md`：下一轮最小接力入口；2026-07-04 已追加双 sub 历史上下文打捞结论。
-- `一期骨架找回-2026-07-04.md`：一期业务骨架准绳；2026-07-04 已并入旧真相打捞后的纠偏口径。
-- `.ctx/`：项目本地 ctx 工具；2026-07-04 已 renew，`ctx.cmd selftest` 为 3/3 通过，但仍未纳入 git。
+- `工程责任表-一期P0.md`：一期树根参数责任表；字段来源、去向、用途、关联和不负责边界。
 - `PROJECT_STATE.md`：当前状态。
-- `ENGINEERING_LOG.md`：工作记录和接力棒。
-- `DECISIONS.md`：已确认边界。
+- `ENGINEERING_LOG.md`：工作记录与验证。
+- `DECISIONS.md`：已定边界。
 
-## MCP 观察
+## 接力入口
 
-- `.codesight/` 存在，且 `codesight` MCP 能读出项目摘要。
-- `lean_ctx` 已有外部图谱缓存：12821 files / 90682 symbols / 28667 edges。
-- Codex 主配置：`C:\Users\admin\.codex\config.toml`。
-- Codex hooks：`C:\Users\admin\.codex\hooks.json`。
-- lean-ctx 实际配置：`C:\Users\admin\.config\lean-ctx\config.toml`。
-- 注意：`C:\Users\admin\.lean-ctx\config.toml` 不存在，lean-ctx 报错提示里的路径不是本机实际配置文件位置。
-- 2026-07-02 已修复：Codex SessionStart hook 启用；`hooks.json` 中裸 `bash` 改为 Git Bash 绝对路径；lean-ctx `allow_paths` 和 `shell_allowlist` 已适配本机 Windows 环境。
+- `副船长的航海接力日志/当前接力图.md`：低 token 施工图入口。
+- `副船长的航海接力日志/文件索引.md`：航海日志目录。
+- `副船长的航海接力日志/留言板.md`：小 sub 卡点和提醒。
 
-## Git 观察
+## 根目录业务证据
 
-- 本轮已在当前目录初始化独立 `.git/`。
-- 当前分支：`main`。
-- `.gitignore` 已排除依赖、运行日志、本地缓存、数据库运行文件、zip 与含真实连接信息的本地初始化脚本。
+- `选举系统_填空模板 (1).html`
+- `选举材料_时间线对照表 ——大招聘动态公告栏-下面小公告按照时间轴走.md`
+- `其他附件材料/`
 
-## 本机保险箱
+## 当前代码锚点
 
-- `scripts/Backup-CodexSafety.ps1`：Codex/lean-ctx/hooks/skills 安全备份脚本。
-- `backup-codex-env.cmd`：一键运行入口。
-- 默认输出到 `C:\Users\admin\CodexSafetyBackups`，不放进项目仓库。
+- `koaLite/db/init_v2.sql`：主表与新增字段。
+- `koaLite/api/election-v2.js`：母档案增改查、选举方式规则。
+- `koaLite/api/position-v2.js`：主任/副主任/委员岗位生成。
+- `koaLite/api/candidate-v2.js`：候选人导入、审核、结果。
+- `koaLite/api/material-v2.js`：candidate/archive 材料分流与审核。
+- `koaLite/api/notice-v2.js`：18 公告模板生成与公告归档字段。
+- `koaLite/scripts/seed-election-timeline.js`：给演示活动写入 11 阶段母表，并把 18 公告挂回阶段。
+- `admin/src/views/dashboard/index.vue`：村/社区运营工作台，活动日历优先读取 `elections.content.timeline`。
 
-## 本机全局技能观察
+## 下一刀
 
-- 全局 Codex 技能目录：
-  - `C:\Users\admin\.codex\skills`
-  - `C:\Users\admin\.agents\skills`
-- 已从 `E:\duihua\夏夏工作流套件包\3-工具层-趁手技能` 补齐一批全局可用工具。
-- 不纳入项目树管理，只在本文件记录路径与状态。
+```text
+让 archive 材料上传按 elections.content.timeline 的 stage_key/material_no 挂回阶段。
+```

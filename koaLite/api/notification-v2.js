@@ -108,9 +108,9 @@ module.exports = {
     }
   },
 
-  // @@AUTH 通知：发送/删除限超管/运营；read村民标已读放开(村民端无管理token)
+  // @@AUTH 通知：发送/删除给超管/经办/运营；read村民标已读放开(村民端无管理token)
   config: {
-    send: requireRole('超级管理', '运营'),
-    delete: requireRole('超级管理', '运营'),
+    send: requireRole('超级管理', '经办', '运营'),
+    delete: requireRole('超级管理', '经办', '运营'),
   }
 };

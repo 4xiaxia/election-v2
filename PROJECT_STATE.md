@@ -1,5 +1,40 @@
 # PROJECT_STATE
 
+- 2026-07-05 基础权限补齐：超级管理/经办/运营/审核四角色已做最小对齐；经办补 `election-methods/archives/logs` 菜单，运营补 `archives` 菜单，审核移除公告菜单；后端 `position/material/notice/notification` 写操作已补基础 RBAC；候选人页对审核员隐藏新增工具栏。未完成断点：归档/日志/选举提案/管理员/角色/设置仍有无后端接口，审批页未接 `election-v2/approve`。
+- 2026-07-05 超级管理侧栏补齐：`admin/src/layouts/Sidebar.vue` 已把超级管理可访问路由补进侧栏菜单，覆盖 `election-methods/archives/admins/roles/settings/logs` 等 key，并把文案贴近当前业务稿；本轮只做静态覆盖检查，未跑 build。
+- 2026-07-05 上下文保护卡增量刷新：`副船长的航海接力日志/上下文保护接力卡-2026-07-05.md` 已从旧“写 timeline”断点更新为当前真实断点：timeline/公告/仪表盘已做，下一刀只做 archive 材料按 `stage_key/material_no` 挂阶段。
+- 2026-07-05 仪表盘母表接线：`admin/src/views/dashboard/index.vue` 已从硬编码 8 段改为优先读取 `getElection(id).content.timeline` 的 11 阶段；无 timeline 时保留旧 8 段兜底。本轮未跑完整 build，下一刀转向 archive 材料按 `stage_key/material_no` 上传归档。
+- 2026-07-05 母表时间线落库：新增 `koaLite/scripts/seed-election-timeline.js`，已给 `election_id=1` 写入 `elections.content.timeline` 11 阶段 JSON，并把 18 条公告补齐 `notice_no/stage_key/template_key`；验证 `stages=11`、`notices=18`、`staged=18`、`numbered=18`、`templated=18`，未跑完整 build。
+- 2026-07-05 能力蒸馏：使用 `zhengliu-skill` 将本轮“真相保护/上下文保护/作业监督/禁止浪费”蒸馏成 workflow skill，源路径 `E:\duihua\skills\xiaxia-truth-guard`；只建 `meta.json` + `SKILL.md`，不复制到项目 `.codex/skills`，避免两套真相。
+- 2026-07-05 记忆技能试跑：`xiaxia-context-compression` 已用于增量更新 `副船长的航海接力日志/上下文保护接力卡-2026-07-05.md`；`learn-from-sessions` 已只读扫描本项目旧 Claude 会话，未写外部 memory，规则仍以项目本地 `AGENTS.md` 为准。
+- 2026-07-05 作业监督规则：尝试拉“宝妈小sub”失败（subagent slot 满）；已把监督清单写入 `AGENTS.md`，以后若 sub 满，团队长本地执行 Stop Hook 作业检查。
+- 2026-07-05 旧线索纠偏：`副船长的航海接力日志/文件索引.md` 中“岗位生成前端未接”的旧状态已改为“后端主干与前端入口已接”，下一刀转向 `elections.content.timeline`。
+- 2026-07-05 树根参数下潜：6 个小 sub 分别 cos 归属地/母档案、11阶段母表、公告、材料、岗位候选人、用户选民登记；结果已合并进 `工程责任表-一期P0.md`，按“来源/去向/用途/关联/不负责”压实字段边界。
+- 2026-07-05 接力图瘦身：重写 `副船长的航海接力日志/当前接力图.md`，只保留树根主线、11阶段母表、下一刀和硬边界，避免多段碎图污染判断。
+- 2026-07-05 live schema 复核：`villages/elections/positions/candidates/materials/notices/election_voters` 当前列已打印确认；下一刀不是加表，而是落 `elections.content.timeline` 的 11 阶段 JSON。
+
+2026-07-05 树根层接住：`副船长的航海接力日志/当前接力图.md` 已补“树根层”，`上下文保护接力卡-2026-07-05.md` 已从旧岗位断点更新为当前真实断点；下一棒不再从旧上下文重走，直接按 11 阶段 timeline 下钻。
+
+2026-07-05 结构树地图更新：`副船长的航海接力日志/当前接力图.md` 已改成系统结构树、母表 11 阶段下钻图、sub 下路认领图；下一刀按图补 `elections.content.timeline` 结构化数据。
+
+2026-07-05 表诊断与最小扩展：基于附件字段和 live schema，复用旧表为主；仅新增 `election_voters` 表承接“用户/线下名册人员 × 某届选举”关系；`elections/candidates/notices/materials` 只补承接字段。已跑最小 smoke：选举增改查、公告增改查、候选人导入查、候选人材料审核生成候选人、阶段归档材料审核不生成候选人，均通过；未跑完整 build。
+
+2026-07-05 公告种子填实：已把 `election_id=1` 的 18 条公告从挖空内容更新为涧口社区第十五届完整演示数据；数据库验证 `____=0`、`{{字段}}=0`、`镇镇（街道）=0`；本轮未启动后端，HTTP 1116 未开。
+
+2026-07-05 村级运营仪表盘第一刀：`admin/src/views/dashboard/index.vue` 已从泛统计首页改成村/社区运营人员工作台，接现有选举、公告、材料、岗位接口，展示系统消息、活动日历、最新公告、档案入口和当前岗位一览；`npx vite build` 通过。
+
+2026-07-05 岗位生成真实接口验收：本机后端 1116、前端 3000 已启动；对活动 `id=1` 调用 `/api/position-v2/generate` 成功生成居委会主任/副主任/委员 3 条，前端代理 `/api/position-v2/list?electionId=1` 已返回 3 条岗位。
+
+2026-07-05 岗位自动生成前端接线：`admin/src/api/api.ts` 已补 `generatePositions`；`admin/src/views/positions/index.vue` 已补“一键生成岗位”入口，生成时选择村居类型、班子人数、副主任数，提交给后端 `/position-v2/generate` 后刷新列表。后端自检通过，`vite build` 通过；`npm run build` 仍卡在既有 `vue-tsc` 与 Node 24 兼容问题。
+
+- 2026-07-05 上下文保护：新增 `副船长的航海接力日志/上下文保护接力卡-2026-07-05.md`，用 L3 方式保留当前主线、已压实决策、断点和下一刀，防止窗口压缩丢线。
+
+- 2026-07-05 小 sub 检查落盘：`副船长的航海接力日志/岗位自动生成检查-2026-07-05.md` 确认岗位自动生成“后端主干已做、前端未接、扩展字段未全落”；`根目录MD整理清单-2026-07-05.md` 已补根目录一级 md 分类和存疑项。
+
+2026-07-05 根目录可见规则已补齐：新增 `AGENTS.md`，把 Windows 环境、SessionStart 顺序、永久保留层、工程铁律和一期业务边界放到最容易被新 agent 看到的位置。
+
+2026-07-05 职位主线收窄开始落地：`koaLite/api/position-v2.js` 已修复岗位生成函数，默认只返回主任/副主任/委员；`check-position-generate.js` 已覆盖副主任、小村不设副主任、村/社区班子人数边界。
+
 2026-07-04 副船长航海接力目录已整理：`副船长的航海接力日志/` 现在有图入口、文件索引、资料快照。小 sub 接力先看 `当前接力图.md`，再看 `文件索引.md`，最后按需下钻快照和根目录原件。
 
 2026-07-04 四份接力资料巡检：`一期清单压实-接力总表.md` 已把“数据隔离”纠偏为“分级默认过滤”；`船务动态地图.md` 已移除明文数据库口令；`交接单-18公告模板文件.md` 和 `业务梳理-第666届换届起点.md` 保留为公告施工铁律与产品起点说明。

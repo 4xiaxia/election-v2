@@ -41,6 +41,7 @@ async function list(ctx) {
     const params = [];
     const countParams = [];
     let sql = `SELECT id, election_id, title, type, status, is_top,
+                      notice_no, stage_key, template_key,
                       DATE_FORMAT(start_time,"%Y-%m-%d") as start_time,
                       DATE_FORMAT(end_time,"%Y-%m-%d") as end_time,
                       DATE_FORMAT(created_at,"%Y-%m-%d %H:%i") as created_at
@@ -102,9 +103,11 @@ async function generate(ctx) {
 
     const createdBy = ctx.state.user ? ctx.state.user.userId : null;
     const [result] = await pool.execute(
-      `INSERT INTO notices (election_id, title, content, type, status, is_top, created_by)
-       VALUES (?, ?, ?, ?, '草稿', 0, ?)`,
-      [body.electionId || null, notice.title, notice.content, body.type || '村务通知', createdBy]
+      `INSERT INTO notices
+        (election_id, title, content, type, status, is_top, created_by, notice_no, stage_key, template_key)
+       VALUES (?, ?, ?, ?, '草稿', 0, ?, ?, ?, ?)`,
+      [body.electionId || null, notice.title, notice.content, body.type || '村务通知', createdBy,
+       notice.docNo || String(notice.seq || ''), body.stageKey || '', body.templateKey || `notice_${notice.seq}`]
     );
     response.success(ctx, { id: result.insertId, ...notice });
   } catch (err) {
@@ -121,10 +124,13 @@ async function add(ctx) {
     if (!NOTICE_TYPES.includes(type)) return response.paramError(ctx, '公告类型不合法');
     const createdBy = ctx.state.user ? ctx.state.user.userId : null;
     const [result] = await pool.execute(
-      `INSERT INTO notices (election_id, title, content, type, start_time, end_time, status, is_top, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO notices
+        (election_id, title, content, type, start_time, end_time, status, is_top, created_by,
+         notice_no, stage_key, template_key)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [electionId || null, title, content || '', type, body.startTime || null, body.endTime || null,
-        body.status || '草稿', body.isTop ? 1 : 0, createdBy]
+        body.status || '草稿', body.isTop ? 1 : 0, createdBy,
+        body.noticeNo || '', body.stageKey || '', body.templateKey || '']
     );
     response.success(ctx, { id: result.insertId });
   } catch (err) {
@@ -139,9 +145,11 @@ async function update(ctx) {
     if (!body.id) return response.paramError(ctx, 'id 必填');
     if (body.type && !NOTICE_TYPES.includes(body.type)) return response.paramError(ctx, '公告类型不合法');
     await pool.execute(
-      `UPDATE notices SET title=?, content=?, type=?, start_time=?, end_time=?, status=?, is_top=?, election_id=? WHERE id=?`,
+      `UPDATE notices SET title=?, content=?, type=?, start_time=?, end_time=?, status=?, is_top=?, election_id=?,
+         notice_no=?, stage_key=?, template_key=? WHERE id=?`,
       [body.title || '', body.content || '', body.type || '村务通知', body.startTime || null, body.endTime || null,
-        body.status || '草稿', body.isTop ? 1 : 0, body.electionId || null, body.id]
+        body.status || '草稿', body.isTop ? 1 : 0, body.electionId || null,
+        body.noticeNo || '', body.stageKey || '', body.templateKey || '', body.id]
     );
     response.success(ctx);
   } catch (err) {
@@ -179,11 +187,11 @@ const api = {
   get: { list, detail, types, templates },
   post: { generate, add, update, publish, delete: remove },
   config: {
-    generate: requireRole('超级管理', '经办'),
-    add: requireRole('超级管理', '经办'),
-    update: requireRole('超级管理', '经办'),
-    publish: requireRole('超级管理', '经办'),
-    delete: requireRole('超级管理', '经办'),
+    generate: requireRole('超级管理', '经办', '运营'),
+    add: requireRole('超级管理', '经办', '运营'),
+    update: requireRole('超级管理', '经办', '运营'),
+    publish: requireRole('超级管理', '经办', '运营'),
+    delete: requireRole('超级管理', '经办', '运营'),
   },
 };
 

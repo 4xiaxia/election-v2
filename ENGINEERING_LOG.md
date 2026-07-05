@@ -765,6 +765,118 @@
 
 - 下一刀：admin 前端18公告填空页（选模板→填空→预览→下载），或岗位自动生成端点。
 
+## 2026-07-05 根目录 AGENTS.md 与职位主线修复
+
+### 输入
+
+- 用户要求：把 AGENTS/SessionStart/work 模式规则写在“最自己能看到的地方”，并明确是 Windows 环境。
+- 接力棒提示：下一刀是收窄职位主线，只让一期竞选显示主任、副主任、委员。
+
+### 动作
+
+- 新增根目录 `AGENTS.md`，记录 Windows PowerShell 施工纪律、开工顺序、永久保留层、工作循环、工程铁律和一期业务边界。
+- 修复 `koaLite/api/position-v2.js`：
+  - `buildGeneratedPositions` 不再使用未定义 `label`。
+  - 按 `orgType` 限制班子人数：村 3/5/7，社区 5/7/9。
+  - 支持副主任 0/1/2 名；小村 3 人默认不设副主任。
+  - 岗位列表默认只返回主任/副主任/委员；旧岗位不删，`includeAll=1` 可查全量。
+- 更新 `koaLite/scripts/check-position-generate.js` 覆盖岗位生成边界。
+- 在 `一期清单压实-接力总表.md` 增加职位主线责任表。
+
+### 验证
+
+- `node --check koaLite/api/position-v2.js`
+- `node koaLite/scripts/check-position-generate.js`
+- `node -e ...` 直接验证生成函数：P0 岗位名数量 3；村 5 人配额 1/1/3；小村 3 人配额 1/2；社区 9 人配额 1/1/7。
+
+### 接力棒
+
+- 下一步可继续前端职位/候选人页面巡检，确认所有下拉和详情页都消费默认三岗位列表；不要删除旧岗位数据，必要时用 `includeAll=1` 做历史查看入口。
+
+## 2026-07-05 小 sub 边界 review：本期目标/不做/断点
+
+### 输入
+
+- 用户要求：请小 sub 一起 review 本期目标、本期不做，压实边界、巡逻断点，避免上下文溢出。
+
+### 已回收结论
+
+- 本期目标一致：城厢区统一系统 + 分级默认过滤 + 换届母档案主线。
+- 业务主线一致：母档案、母公告/子公告、选民登记、主任/副主任/委员报名、材料审核、候选确认/结果、通知/已读/归档。
+- 保留资产一致：后台导入、材料审核、私信通知、已读记录、候选人列表/筛选/结果登记不能删，只能补强。
+- 不做边界一致：不做多租户/数据隔离/复杂权限树/线上投票计票/完整45天自动化/完整47材料/监会/代表/小组长/楼栋长/党组织岗位/镇聘社工。
+
+### 巡逻断点
+
+- `一期清单压实-接力总表.md` 里仍有部分空白占位，后续要补“业务主线/关键表意/活动流程/参与竞选入口”的细化。
+- `副船长的航海接力日志/当前接力图.md` 过薄，仍需回根目录原件确认，不可单独当完整真相。
+- `一期骨架材料优化标注.md` 在当前仓库未找到；若下轮需要它，先确认是否被移动到快照、旧目录或未提交文件。
+
+## 2026-07-05 小 sub 检查：岗位自动生成与根目录 md 整理
+
+### 输入
+
+- 用户要求：找小 sub 检查 `交接单-岗位自动生成-给codex.md` 是否已经做了；另找小 sub 整理根目录一级 md，能合并的合并，存疑的写留言板。
+
+### 结论
+
+- 岗位自动生成：没完全做完。
+  - 已做：后端 `POST /position-v2/generate`、路由双前缀、自检、默认三岗位过滤、`includeAll=1`。
+  - 未做：前端 API 封装/按钮/自动调用；交接单扩展字段未全落到 `positions` 表。
+  - 风险：旧交接单要求 3 人村也有副主任，但后续新决策允许小村不设副主任；应以新决策为准，同时标注旧交接单被覆盖。
+- 根目录 md：已生成整理清单，不删原件；README、权限灵感图、前后端探索图、全局快照等进入存疑/历史快照处理。
+
+### 动作
+
+- 新增 `副船长的航海接力日志/岗位自动生成检查-2026-07-05.md`。
+- 更新 `副船长的航海接力日志/文件索引.md`。
+- 更新 `副船长的航海接力日志/根目录MD整理清单-2026-07-05.md`。
+- 更新 `副船长的航海接力日志/留言板.md`。
+- 更新 `PROJECT_STATE.md`。
+
+### 验证
+
+- 小 sub 只读检查已返回；下一步运行 `git diff --check` 和 `git status --short`。
+
+### 接力棒
+
+- 下一刀若继续岗位自动生成：先补前端 `generatePosition` API 与职位页/详情页入口；字段扩展另开责任表，不要混在按钮接线里。
+- `PROJECT_TREE.md` 未完整列出当前多份一期文档，树记录落后于实际文件，需要补齐。
+
+### 接力棒
+
+- 下一步先做前端职位/候选人页面巡检，确认默认三岗位贯通；同时补厚接力图和 `PROJECT_TREE.md`，不要让下轮只看薄图误判。
+
+## 2026-07-05 岗位自动生成前端接线
+
+### 输入
+
+- 用户要求：停止反复原地踏步，所有小 sub 带上 `xiaxia-context-compression`、`xiaxia-anchor-marking`、`xiaxia-draw`，按业务组件 cos 查清出入参字段流。
+
+### 小 sub 结论
+
+- 选举活动组件：`committeeSize`、`deputyCount` 当前没有持久字段；`orgType` 可从选举/村居类型语义推断，但生成入口仍需人工确认。
+- 岗位生成 API：`POST /position-v2/generate` 接 `electionId/orgType/committeeSize/deputyCount`；后端负责生成规则和重复保护；`includeAll=1` 只用于历史岗位查看。
+- 职位管理页面：已有 `currentElectionId`、`CrudPage` toolbar 插槽和刷新链路，适合放“一键生成岗位”按钮。
+- 审核巡逻员：前端不能计算岗位名额，不能清空重建旧岗位，不能把字段扩展和按钮接线混做。
+
+### 动作
+
+- `admin/src/api/api.ts`：新增 `generatePositions()`，封装 `POST /position-v2/generate`。
+- `admin/src/views/positions/index.vue`：新增“一键生成岗位”按钮和生成弹窗；前端只收集 `orgType/committeeSize/deputyCount`，提交给后端后刷新岗位列表。
+
+### 验证
+
+- `node --check koaLite/api/position-v2.js`：通过。
+- `node koaLite/scripts/check-position-generate.js`：通过。
+- `node koaLite/scripts/check-router-api-prefix.js`：通过。
+- `npx vite build`：通过。
+- `npm run build`：未通过，失败点是既有 `vue-tsc` 与 Node 24 的兼容错误 `Search str not found: /supportedTSExtensions = .*(?=;)/`，未跑到本次业务代码。
+
+### 接力棒
+
+- 下一刀可做浏览器实测：进入职位管理，选择活动，点“一键生成岗位”，确认成功后列表刷新；如已有三岗位，确认后端业务错误提示能展示。
+
 ### 补验完成（2026-07-03，MySQL80 起来后）
 
 - MySQL 真实服务名 = `MySQL80`（不是 mysql）。夏夏手动 net start 后服务 RUNNING。
@@ -778,3 +890,290 @@
 - notices/index.vue：ctx-bar 加「📝 从模板生成公告」按钮，末尾挂抽屉，@saved 刷新列表。不新增路由，复用现有活动选择器。
 - 验证：npx vite build ✓ built in 7.86s（SFC 编译通过）。vue-tsc 因 bin patch 与当前 TS 不兼容跑不了，改用 vite build 验证，非本次改动问题。
 - 待补：seq1 村委会"村"字缺失、seq3"本村"未随居委会自适应——文案 polish，演示前若甲方在意再修。
+
+## 2026-07-05 岗位生成真实接口验收
+
+### 动作
+
+- 启动后端 `koaLite`，监听 `1116`。
+- 启动前端 `admin`，监听 `3000`。
+- 通过原生 PowerShell 直接调用真实接口，不走 ctx 压缩层。
+
+### 验证
+
+- `POST http://127.0.0.1:1116/api/position-v2/generate`：对活动 `id=1`，按 `orgType=community`、`committeeSize=5`、`deputyCount=1` 生成成功。
+- 返回岗位：主任 1、副主任 1、委员 3。
+- `GET http://127.0.0.1:3000/api/position-v2/list?electionId=1`：前端代理返回 3 条岗位，说明代理链路可用。
+
+### 接力棒
+
+- 浏览器进入 `http://127.0.0.1:3000/`，职位管理页面应能看到当前活动 3 条岗位。
+- 重复点击生成应走后端重复保护，不应清空或覆盖旧岗位。
+
+## 2026-07-05 涧口社区 18 公告种子填实
+
+- 动作：直接更新 `notices.election_id=1` 现有 18 条公告，使用涧口社区第十五届演示字段渲染模板，不改表结构、不新增 md。
+- 验证：数据库检查 `total=18`、`LOCATE('____', content)=0`、`LOCATE('{{', content)=0`、`镇镇（街道）=0`；样例标题为“涧口社区关于确定选举日的公告”，状态为“已发布”。
+- 边界：本轮未启动后端，`http://127.0.0.1:1116` 未开，所以 HTTP 接口验证未跑；页面连上服务后应读取已填实公告。
+
+## 2026-07-05 表诊断与最小扩展
+
+- 输入：`其他附件材料` 表格字段已转换/抽取，要求先诊断旧表能否承接；如无必要不新增表，旧字段不删，前台不用就隐藏。
+- 结论：复用 `elections/positions/candidates/materials/notices/users`；代表/小组长/监会仅归档隐藏，不建 P0 结构表。
+- 唯一新增表：`election_voters`，用于表达“用户/线下名册人员 × 某届选举”的选民登记关系；`users` 只管账号，不能替代。
+- 字段扩展：
+  - `elections`: `session_no/committee_size/deputy_count`
+  - `candidates`: `gender`
+  - `notices`: `notice_no/stage_key/template_key`
+  - `materials`: `scope/stage_key/material_no/file_url`，并允许阶段归档材料不绑定岗位。
+- API 兼容：
+  - 候选人列表/导入接 `gender`。
+  - 公告生成/新增/更新接公告号、阶段键、模板键。
+  - 材料用 `scope=candidate/archive` 区分候选人材料和阶段归档材料；归档材料审核通过不生成候选人。
+- 验证：
+  - `node --check koaLite/api/election-v2.js`
+  - `node --check koaLite/api/material-v2.js`
+  - `node --check koaLite/api/notice-v2.js`
+  - `node --check koaLite/api/candidate-v2.js`
+  - live DB DDL 已执行并确认新增列/表存在。
+  - mock ctx smoke 通过：选举增改查、公告增改查、候选人导入查、候选人材料审核生成候选人、阶段归档材料审核不生成候选人。
+- 边界：未跑完整 build；本轮为后端字段承接与 DB 验证，不处理前端展示。
+
+## 2026-07-05 树根参数下潜
+
+### 输入
+
+- 用户要求：继续下钻到每个参数都能说清“哪儿来、去哪儿、干嘛、关联谁”；用小 sub cos 关键模块，全员摸清板块家底。
+
+### 动作
+
+- 6 个小 sub 只读勘探：归属地/母档案、11阶段母表、公告、材料、岗位/候选人、用户/选民登记。
+- 合并结果到唯一旧文件 `工程责任表-一期P0.md`，没有新增散文档。
+- 重写 `副船长的航海接力日志/当前接力图.md`，压成树根主线、11阶段、下一刀三张图。
+- 更新 `PROJECT_TREE.md` 与 `PROJECT_STATE.md`。
+
+### 关键结论
+
+- `elections.content.timeline` 是当前最重的运输枢纽：阶段挂公告 `notices.stage_key/notice_no`，也挂材料 `materials.stage_key/material_no/scope`。
+- `materials.scope` 是材料道岔：`candidate` 通过审核才生成/绑定候选人；`archive` 只归档，不进候选人。
+- `users` 只管账号身份；`election_voters` 才表达“这个人登记参加某一届”。
+- `positions` live schema 比当前 API/页面厚：现任、自荐、票面、换届字段已有，后续可接，不要新造表。
+
+### 验证
+
+- 直接打印 live schema：`villages/elections/positions/candidates/materials/notices/election_voters` 当前列已确认。
+- 本轮没有跑完整 build；符合 Windows 环境“未收口不 build”的规则。
+
+### 接力棒
+
+- 下一刀：按 `工程责任表-一期P0.md`，给 `election_id=1` 写入 `content.timeline` 的 11 阶段 JSON，再让公告和材料按 `stage_key` 接上母表。
+
+## 2026-07-05 作业监督规则
+
+### 输入
+
+- 用户要求：找一个“宝妈小sub”监督我们和其他 sub 有没有忘记写作业，维护真相文件，保护不绕路。
+
+### 动作
+
+- 尝试 spawn 只读监督 sub，系统返回 `agent thread limit reached`。
+- 未等待、未阻塞主线；改为把监督清单写进 `AGENTS.md`，作为本地 Stop Hook。
+- 巡检 `副船长的航海接力日志/文件索引.md`，发现“岗位生成前端未接”已过期，已改为当前真实状态。
+
+### 接力棒
+
+- 后续若 subagent slots 可用，宝妈小sub只做只读检查：状态、日志、tree、接力图、文件索引、最小验证、ctx 禁用。
+- 如果 slots 仍满，团队长本地执行 `AGENTS.md` 的 Homework Guard 清单。
+
+## 2026-07-05 记忆技能试跑
+
+### 输入
+
+- 用户要求：对话要满了，试试 `learn-from-sessions` 和 `xiaxia-context-compression`，通过多用巩固记忆。
+
+### 动作
+
+- 只读确认两个技能路径：
+  - `E:\duihua\skills\xiaxia-context-compression`
+  - `E:\duihua\skills\learn-from-sessions`
+- 运行 `learn-from-sessions` 扫描器：`python E:\duihua\skills\learn-from-sessions\skills\learn-from-sessions\scan.py --project E:\w\0\election-v2 --max-tokens 6000`。
+- 按 `xiaxia-context-compression` L3 方式增量更新 `副船长的航海接力日志/上下文保护接力卡-2026-07-05.md`。
+
+### 结论
+
+- `learn-from-sessions` 发现旧 Claude 会话中存在 `.ctx` 相关轨迹；本轮没有写外部 memory，也没有执行 `--commit`。
+- 当前项目规则仍以 `AGENTS.md` 为准：禁用 `ctx/lean-ctx/.ctx`，需要长上下文保护时用 L3 接力卡。
+
+### 接力棒
+
+- 后续若要把 learn-from-sessions 的规则写进外部 memory，必须先给夏夏看提案并得到批准。
+
+## 2026-07-05 能力蒸馏：xiaxia-truth-guard
+
+### 输入
+
+- 用户触发 `/zhengliu-skill`，要求把我们用过的真相保护、上下文保护、作业监督等方式固化成一个能力。
+
+### 动作
+
+- 按 `zhengliu-skill` 归类为 `workflow` pack。
+- 读取输出蓝图、质量标尺、抽取框架。
+- 创建最小能力包：
+  - `E:\duihua\skills\xiaxia-truth-guard\meta.json`
+  - `E:\duihua\skills\xiaxia-truth-guard\SKILL.md`
+- 更新 `AGENTS.md`，把该能力列入 Memory Skills。
+
+### 结论
+
+- 能力内容覆盖：真相文件顺序、L3 接力、Homework Guard、参数责任表、sub 喊麦、Stop Hook、no md sprawl、no build spam。
+- 为避免两套真相，没有复制到项目 `.codex/skills`；当前 canonical source 是 `E:\duihua\skills\xiaxia-truth-guard`。
+
+### 验证
+
+- `meta.json` 已用 Node JSON.parse 验证可读。
+- `SKILL.md` 已检查包含 `Homework Guard`、`Parameter Responsibility`、`Stop Hook`、`No second truth`、`No md sprawl`。
+
+## 2026-07-05 母表时间线落库
+
+### 输入
+
+- 用户要求：数据先填充起来，母公告面板和子公告必须沿着法定流程下钻；不要只停在表面，按模板和时间线把字段扎下去。
+
+### 动作
+
+- 新增可重复 seed 脚本：`koaLite/scripts/seed-election-timeline.js`。
+- 写入 `election_id=1` 的 `elections.content.timeline`：
+  - 11 阶段：`S1-S11`；
+  - 每阶段包含 `stageKey/stageName/dayRange/dateRange/startDate/endDate/days/work/noticeNos/materialNos/materials/visible/archiveOnly/stageStatus`；
+  - `materials` 带材料号、名称、模板文件名、模板状态。
+- 更新 `election_id=1` 的 18 条公告：
+  - 补 `notice_no`；
+  - 补 `stage_key`；
+  - 补 `template_key`。
+
+### 验证
+
+- `node --check koaLite/scripts/seed-election-timeline.js`
+- `node koaLite/scripts/seed-election-timeline.js 1`
+  - 输出：`election_id=1 stages=11 notices=18 staged=18 numbered=18 templated=18`
+- DB 回查：
+  - `content.timeline` 长度为 11；
+  - `timelineVersion = p0-2026-07-05`；
+  - 第一阶段 `stageKey = S1`；
+  - S6 提名阶段材料数为 5；
+  - 18 条公告全部挂上 `notice_no/stage_key/template_key`。
+
+### 接力棒
+
+- 下一刀不是再造表：让仪表盘/母公告页面读取 `elections.content.timeline`，并让阶段材料上传使用 `scope=archive + stage_key + material_no` 挂回母表。
+- 本轮未跑完整 build，符合 Windows 规则：开发未收口只跑最小验证。
+
+## 2026-07-05 仪表盘读取母表时间线
+
+### 输入
+
+- 用户确认 DeepSeek/Archive Scout 只读任务已收尾，建议第一刀只做：`admin/src/views/dashboard/index.vue` 读取 `getElection(id).content.timeline`，把活动日历从硬编码 8 段改为 11 阶段。
+
+### 动作
+
+- `dashboard/index.vue` 导入 `getElection`。
+- 列表拿到当前活动后，再调用详情接口获取完整 `content`。
+- 活动日历优先解析 `currentElection.content.timeline`：
+  - `stageName/stageKey` -> 阶段；
+  - `dateRange/startDate/endDate` -> 日期；
+  - `days` -> 天数；
+  - `work` -> 核心工作；
+  - `stageStatus/status` -> UI 状态。
+- 保留旧 8 段 `fallbackStages()`，避免没有 `timeline` 的活动空屏。
+
+### 验证
+
+- 只跑最小静态检查：
+  - 检查 `getElection/parseElectionContent/stageLinkMap/fallbackStages/detailRes` 均已落在 `dashboard/index.vue`。
+  - `git diff --check` 无空白错误，仅有既有 LF/CRLF 警告。
+- HTTP 详情接口验证未跑通：`127.0.0.1:1116` 当前拒绝连接，未启动后端服务。
+- 未跑完整 build，遵守 Windows 规则：开发未收口不反复 build。
+
+### 接力棒
+
+- 下一刀：archive 材料上传页/材料入口读取 `content.timeline[].materials`，提交时带 `scope=archive + stageKey + materialNo + fileUrl`。
+
+## 2026-07-05 超级管理侧栏菜单补齐
+
+### 输入
+
+- 用户截图反馈：用超级管理登录后侧边栏少菜单；路由允许访问 `admins/roles/settings/logs/archives/election-methods`，但菜单可见性缺 key。
+
+### 动作
+
+- 修改 `admin/src/layouts/Sidebar.vue`：
+  - `roleMenuMap['超级管理']` 补齐 `election-methods/archives/admins/roles/settings/logs`；
+  - 侧栏补 `选举提案审批` 和 `历史归档` 入口；
+  - 菜单命名贴近业务稿：岗位管理、材料提交审核、子公告管理、通知管理、管理员、用户管理、系统配置。
+- 未改接口、未改路由守卫、未改权限逻辑。
+
+### 验证
+
+- 静态覆盖检查通过：`Sidebar contains all expected admin menu keys.`
+- 核对登录页、种子数据、后端登录接口，超级管理角色值均为 `超级管理`。
+- 未跑完整 build；截图问题若浏览器仍复现，优先刷新前端 dev server/重新登录清 localStorage。
+
+## 2026-07-05 四角色基础权限补齐
+
+### 输入
+
+- 用户要求：把之前没做完的待办与权限关联起来，不然后面会绕回来；拉小 sub 分别扮演超级管理、村级经办/运营、审核人员，检查他们少什么。
+
+### 小 sub 结论
+
+- 超级管理：菜单已基本齐；缺口集中在无后端 TODO 页面和 `position-v2` 写操作未设角色闸。
+- 经办/运营：经办缺 `election-methods/archives/logs` 菜单，材料审核/通知发送后端没放经办；运营缺 `archives` 菜单，公告写接口没放运营。
+- 审核：侧栏给过 `notices` 但路由不允许，属于菜单/守卫冲突；候选人页露出新增按钮但后端不允许。
+
+### 动作
+
+- `admin/src/layouts/Sidebar.vue`
+  - 经办补 `election-methods/archives/logs`。
+  - 运营补 `archives`。
+  - 审核移除 `notices`。
+- `admin/src/router/index.ts`
+  - 菜单文案与路由 title 对齐：岗位管理、材料提交审核、子公告管理、通知管理、选举提案审批、管理员、用户管理、系统配置。
+- `koaLite/api/position-v2.js`
+  - `add/generate/update/delete` 补 `requireRole('超级管理','经办')`。
+- `koaLite/api/material-v2.js`
+  - `review` 补经办：`超级管理/经办/审核`。
+- `koaLite/api/notice-v2.js`
+  - `generate/add/update/publish/delete` 补运营：`超级管理/经办/运营`。
+- `koaLite/api/notification-v2.js`
+  - `send/delete` 补经办：`超级管理/经办/运营`。
+- `admin/src/views/candidates/index.vue`
+  - 审核角色隐藏 CrudPage 工具栏，避免“能看但不能新增”的假动作。
+- `工程责任表-一期P0.md`
+  - 追加“页面改动表达格式”，用于夏夏之后按“页面/组件/字段/现在/应该/来源/边界”直接指出页面细节。
+
+### 验证
+
+- `node --check koaLite/api/position-v2.js`
+- `node --check koaLite/api/material-v2.js`
+- `node --check koaLite/api/notice-v2.js`
+- `node --check koaLite/api/notification-v2.js`
+- 静态检查通过：
+  - 经办菜单包含 `election-methods/archives/logs`；
+  - 运营菜单包含 `archives`；
+  - 审核菜单不再包含 `notices`；
+  - 候选人页包含 `toolbar: userRole.value === '审核' ? false : undefined`。
+- `git diff --check`：无空白错误，仅既有 LF/CRLF 警告。
+- 未跑完整 build，遵守 Windows 规则：未收口不反复 build。
+
+### 未完成待办
+
+- `archives` 页面仍调用 `/admin/archives*` 假接口；下一刀应接 `material-v2/list?scope=archive` 与 `material-v2/submit scope=archive`。
+- `logs` 页面调用 `/log-v2/list`，后端暂无 `log-v2.js`。
+- `election-methods` 仍是“选举方式/提案审批”历史 TODO，需决定接 `elections` 字段还是补最小后端。
+- `admins/roles/settings` 菜单已可见，但 API 仍是 `/admin/*` 无后端；本期若要演示，需补最小 users/roles/settings 接口或临时隐藏。
+- `approvals` 页面还没接 `election-v2/approve` 的选举审批闭环。
+- 候选人审批页使用 `待初审/待终审`，与后端当前候选人状态仍需对齐。
+
+### 接力棒
+
+- 下一刀建议不要再扩权限树；先修“归档页假接口”，把归档页接到 `materials.scope='archive'` 这条已确认主线。

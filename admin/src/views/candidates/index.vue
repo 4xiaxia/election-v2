@@ -194,6 +194,7 @@ const crudConfig = computed(() => ({
   title: '候选人管理',
   desc: ctxElection.value ? `${ctxElection.value.name} — 候选人列表` : '',
   addLabel: '+ 新增候选人',
+  toolbar: userRole.value === '审核' ? false : undefined,
   columns: [
     { prop: 'name', label: '姓名', width: '100' },
     { prop: 'position', label: '参选职位', width: '140', formatter: (row: any) => {
@@ -221,6 +222,15 @@ const crudConfig = computed(() => ({
   showEdit: false,
   showDelete: false,
 }));
+
+const userRole = computed(() => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    return user?.role || '';
+  } catch {
+    return '';
+  }
+});
 </script>
 
 <style scoped>

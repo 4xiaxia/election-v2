@@ -29,7 +29,8 @@ module.exports = {
         const offset = (Number(page) - 1) * limit;
 
         let sql = `SELECT e.id, e.name, e.village_id, v.name AS village_name,
-                          e.election_type, e.election_method, e.status, e.approval_status,
+                          e.election_type, e.election_method, e.session_no, e.committee_size, e.deputy_count,
+                          e.status, e.approval_status,
                           DATE_FORMAT(e.enroll_start_at, "%Y-%m-%d") as enroll_start_at,
                           DATE_FORMAT(e.enroll_end_at, "%Y-%m-%d") as enroll_end_at,
                           DATE_FORMAT(e.created_at, "%Y-%m-%d %H:%i:%s") as created_at
@@ -91,7 +92,8 @@ module.exports = {
     async add(ctx) {
       try {
         const b = ctx.request.body;
-        const { villageId, name, electionType = '村委会选举', electionMethod = '', content = '' } = b;
+        const { villageId, name, electionType = '村委会选举', electionMethod = '', content = '',
+                sessionNo = '第十五届', committeeSize = null, deputyCount = null } = b;
         if (!villageId) return response.paramError(ctx, '所属村居不能为空');
         if (!name) return response.paramError(ctx, '选举名称不能为空');
         // 选举方式法定校验
@@ -101,12 +103,12 @@ module.exports = {
 
         const [result] = await pool.execute(
           `INSERT INTO elections
-            (village_id, name, election_type, election_method, content,
+            (village_id, name, election_type, election_method, content, session_no, committee_size, deputy_count,
              enroll_start_at, enroll_end_at, review_start_at, review_end_at,
              publicity_start_at, publicity_end_at, election_end_date,
              status, approval_status, created_by)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'draft', '待审批', ?)`,
-          [villageId, name, electionType, electionMethod, content,
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'draft', '待审批', ?)`,
+          [villageId, name, electionType, electionMethod, content, sessionNo, committeeSize, deputyCount,
            b.enrollStartAt || null, b.enrollEndAt || null, b.reviewStartAt || null, b.reviewEndAt || null,
            b.publicityStartAt || null, b.publicityEndAt || null, b.electionEndDate || null,
            b.createdBy || null]
@@ -129,9 +131,11 @@ module.exports = {
 
         await pool.execute(
           `UPDATE elections SET village_id=?, name=?, election_type=?, election_method=?, content=?,
+             session_no=?, committee_size=?, deputy_count=?,
              enroll_start_at=?, enroll_end_at=?, review_start_at=?, review_end_at=?,
              publicity_start_at=?, publicity_end_at=?, election_end_date=? WHERE id=?`,
           [b.villageId, b.name, b.electionType, b.electionMethod, b.content || '',
+           b.sessionNo || '第十五届', b.committeeSize || null, b.deputyCount ?? null,
            b.enrollStartAt || null, b.enrollEndAt || null, b.reviewStartAt || null, b.reviewEndAt || null,
            b.publicityStartAt || null, b.publicityEndAt || null, b.electionEndDate || null, b.id]
         );

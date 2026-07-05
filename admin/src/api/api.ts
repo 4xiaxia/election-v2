@@ -200,6 +200,15 @@ export function updatePosition(id: string, data: any) {
 export function deletePosition(id: string) {
   return http.post('/position-v2/delete', { id });
 }
+export function generatePositions(data: {
+  electionId: string;
+  orgType: 'village' | 'community';
+  committeeSize: number;
+  deputyCount?: number;
+  hasDeputy?: boolean;
+}) {
+  return http.post('/position-v2/generate', data);
+}
 
 // 档案
 // @@TODO-无后端

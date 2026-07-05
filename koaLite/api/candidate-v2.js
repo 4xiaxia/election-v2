@@ -29,7 +29,7 @@ module.exports = {
         if (status)        { base += ' AND c.status=?';          params.push(status); }
         if (name)          { base += ' AND c.name LIKE ?';       params.push(`%${name}%`); }
 
-        const listSql = `SELECT c.id, c.name, c.phone, c.politics, c.source, c.recommend_type,
+        const listSql = `SELECT c.id, c.name, c.phone, c.gender, c.politics, c.source, c.recommend_type,
                                 c.status, c.elected, c.votes, c.review_comment,
                                 c.election_id, e.name AS election_name, e.election_type, e.election_method,
                                 c.position_id, p.name AS position_name,
@@ -85,9 +85,9 @@ module.exports = {
         if (dup.length > 0) return response.businessError(ctx, '该手机号在本场选举已是候选人');
 
         const [r] = await pool.execute(
-          `INSERT INTO candidates (election_id, position_id, phone, name, politics, intro, source, recommend_type, status)
-           VALUES (?,?,?,?,?,?, 'import', ?, '未审核')`,
-          [electionId, positionId, phone, name, b.politics || '', b.intro || '', recommendType]
+          `INSERT INTO candidates (election_id, position_id, phone, name, gender, politics, intro, source, recommend_type, status)
+           VALUES (?,?,?,?,?,?,?, 'import', ?, '未审核')`,
+          [electionId, positionId, phone, name, b.gender || '', b.politics || '', b.intro || '', recommendType]
         );
         response.success(ctx, { id: r.insertId }, '导入候选人成功，待资格审查');
       } catch (e) { console.error(e); response.serverError(ctx, '导入候选人失败'); }

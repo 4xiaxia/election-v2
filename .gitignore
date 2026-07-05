@@ -23,6 +23,7 @@ koaLite/start.log
 .claude/
 .codex/
 .codesight/
+.reasonix/
 .vscode/
 
 # OS noise
@@ -41,3 +42,12 @@ koaLite/db/init_db.js
 # Archives generated during handoff/migration
 *.zip
 .ctx/cache/
+
+# Local reference assets and screenshots kept outside git
+backup-codex-env.cmd
+codemap-windsurf.png
+mini-program/
+其他附件材料/
+船长文件夹/
+副船长的航海接力日志/*.PNG
+副船长的航海接力日志/*.png

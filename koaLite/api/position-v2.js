@@ -1,50 +1,71 @@
-// @@API-POSITION-V2 岗位管理（招聘比喻=职位设置）
-// 核心：material_requirements JSON = 村民端报名表单（金山表单三层）
-// 岗位时间默认空=跟活动走；填了=特招覆盖
 const response = require('../config/response');
 const { pool } = require('../db/db');
 const { requireRole } = require('../config/requireRole');
 
-// 安全解析 JSON 字段
 function parseJSON(str, fallback) {
   if (!str) return fallback;
   try { return JSON.parse(str); } catch { return fallback; }
 }
 
-function buildGeneratedPositions(orgType, committeeSize) {
-  if (!['village', 'community'].includes(orgType)) throw new Error('orgType must be village or community');
-  if (![3, 5, 7, 9].includes(Number(committeeSize))) throw new Error('committeeSize must be 3/5/7/9');
+const P0_POSITION_NAMES = ['主任', '副主任', '委员'];
 
-  const label = orgType === 'community' ? '居民委员会' : '村民委员会';
-  return [
+function normalizeDeputyCount(orgType, committeeSize, opts = {}) {
+  if (opts.deputyCount !== undefined && opts.deputyCount !== null && opts.deputyCount !== '') {
+    return Number(opts.deputyCount);
+  }
+  if (opts.hasDeputy === false) return 0;
+  if (opts.hasDeputy === true) return 1;
+  return orgType === 'village' && Number(committeeSize) === 3 ? 0 : 1;
+}
+
+function buildGeneratedPositions(orgType, committeeSize, opts = {}) {
+  if (!['village', 'community'].includes(orgType)) throw new Error('orgType must be village or community');
+
+  const size = Number(committeeSize);
+  const allowedSizes = orgType === 'village' ? [3, 5, 7] : [5, 7, 9];
+  if (!allowedSizes.includes(size)) throw new Error(`${orgType} committeeSize must be ${allowedSizes.join('/')}`);
+
+  const deputyCount = normalizeDeputyCount(orgType, size, opts);
+  if (![0, 1, 2].includes(deputyCount)) throw new Error('deputyCount must be 0/1/2');
+
+  const memberQuota = size - 1 - deputyCount;
+  if (memberQuota < 1) throw new Error('committeeSize leaves no member quota');
+
+  const label = orgType === 'village' ? '村委会' : '居委会';
+  const positions = [
     { name: '主任', quota: 1, postCategory: 'director', duty: `${label}主任`, sortWeight: 10 },
-    { name: '副主任', quota: 1, postCategory: 'deputy_director', duty: `${label}副主任`, sortWeight: 20 },
-    { name: '委员', quota: Number(committeeSize) - 2, postCategory: 'member', duty: `${label}委员`, sortWeight: 30 },
   ];
+  if (deputyCount > 0) {
+    positions.push({ name: '副主任', quota: deputyCount, postCategory: 'deputy_director', duty: `${label}副主任`, sortWeight: 20 });
+  }
+  positions.push({ name: '委员', quota: memberQuota, postCategory: 'member', duty: `${label}委员`, sortWeight: 30 });
+  return positions;
 }
 
 const api = {
   get: {
-    // 某活动下的岗位列表
     async list(ctx) {
       try {
-        const { electionId } = ctx.query;
+        const { electionId, includeAll } = ctx.query;
         if (!electionId) return response.paramError(ctx, '选举活动ID不能为空');
 
-        const [rows] = await pool.query(
-          `SELECT id, election_id, name, quota, duty, material_requirements,
+        const params = [electionId];
+        let sql = `SELECT id, election_id, name, quota, duty, material_requirements,
                   sort_weight, enabled, elected_candidates,
                   DATE_FORMAT(enroll_start_at,"%Y-%m-%d") as enroll_start_at,
                   DATE_FORMAT(enroll_end_at,"%Y-%m-%d") as enroll_end_at
-           FROM positions WHERE election_id = ? ORDER BY sort_weight ASC, id ASC`,
-          [electionId]
-        );
-        // JSON 字段解析回对象
+           FROM positions WHERE election_id = ?`;
+        if (includeAll !== '1') {
+          sql += ' AND name IN (?, ?, ?)';
+          params.push(...P0_POSITION_NAMES);
+        }
+        sql += ' ORDER BY sort_weight ASC, id ASC';
+
+        const [rows] = await pool.query(sql, params);
         rows.forEach(r => {
           r.material_requirements = parseJSON(r.material_requirements, []);
           r.elected_candidates = parseJSON(r.elected_candidates, []);
         });
-        // 统一返回 {list,total} 形状（与其他列表端点一致·前端不用猜两种）
         response.pageSuccess(ctx, rows, rows.length);
       } catch (error) {
         console.error(error);
@@ -52,14 +73,12 @@ const api = {
       }
     },
 
-    // 岗位详情（含材料要求·村民端渲染报名表单用）
     async detail(ctx) {
       try {
         const { id } = ctx.query;
-        if (!id) return response.paramError(ctx, '岗位ID不能为空');
         const [rows] = await pool.query('SELECT * FROM positions WHERE id = ?', [id]);
-        if (rows.length === 0) return response.notFound(ctx, '岗位不存在');
         const p = rows[0];
+        if (!p) return response.paramError(ctx, '岗位不存在');
         p.material_requirements = parseJSON(p.material_requirements, []);
         p.elected_candidates = parseJSON(p.elected_candidates, []);
         response.success(ctx, p);
@@ -71,17 +90,12 @@ const api = {
   },
 
   post: {
-    // 新增岗位
     async add(ctx) {
       try {
         const b = ctx.request.body;
         const { electionId, name, quota = 1, duty = '', materialRequirements = [], sortWeight = 99 } = b;
-        if (!electionId) return response.paramError(ctx, '所属选举活动不能为空');
+        if (!electionId) return response.paramError(ctx, '选举活动ID不能为空');
         if (!name) return response.paramError(ctx, '岗位名称不能为空');
-
-        // 校验活动存在且已审批通过（前置锁：没批不让配岗位）
-        const [elec] = await pool.execute('SELECT approval_status FROM elections WHERE id = ?', [electionId]);
-        if (elec.length === 0) return response.businessError(ctx, '选举活动不存在');
 
         const reqJSON = typeof materialRequirements === 'string' ? materialRequirements : JSON.stringify(materialRequirements);
         const [result] = await pool.execute(
@@ -98,16 +112,16 @@ const api = {
 
     async generate(ctx) {
       try {
-        const { electionId, orgType, committeeSize } = ctx.request.body;
-        if (!electionId) return response.paramError(ctx, '所属选举活动不能为空');
+        const { electionId, orgType, committeeSize, deputyCount, hasDeputy } = ctx.request.body;
+        if (!electionId) return response.paramError(ctx, '选举活动ID不能为空');
 
-        const positions = buildGeneratedPositions(orgType, committeeSize);
+        const positions = buildGeneratedPositions(orgType, committeeSize, { deputyCount, hasDeputy });
         const [existing] = await pool.execute(
-          'SELECT id, election_id, name, quota, duty, material_requirements, sort_weight, enabled FROM positions WHERE election_id = ? ORDER BY sort_weight ASC, id ASC',
-          [electionId]
+          'SELECT id, name FROM positions WHERE election_id = ? AND name IN (?, ?, ?) ORDER BY sort_weight ASC, id ASC',
+          [electionId, ...P0_POSITION_NAMES]
         );
         if (existing.length > 0) {
-          return response.success(ctx, { list: existing, inserted: 0 }, '岗位已存在');
+          return response.businessError(ctx, '该选举活动已存在主任/副主任/委员岗位，请勿重复生成');
         }
 
         const values = positions.map(p => [
@@ -124,19 +138,17 @@ const api = {
            VALUES ?`,
           [values]
         );
-        response.success(ctx, { list: positions, inserted: positions.length }, '生成岗位成功');
+        response.success(ctx, positions, '生成岗位成功');
       } catch (error) {
         console.error(error);
-        response.paramError(ctx, error.message || '生成岗位失败');
+        response.serverError(ctx, '生成岗位失败');
       }
     },
 
-    // 修改岗位
     async update(ctx) {
       try {
         const b = ctx.request.body;
         if (!b.id) return response.paramError(ctx, '岗位ID不能为空');
-        if (!b.name) return response.paramError(ctx, '岗位名称不能为空');
 
         const reqJSON = typeof b.materialRequirements === 'string'
           ? b.materialRequirements
@@ -154,16 +166,16 @@ const api = {
       }
     },
 
-    // 删除岗位（校验有无材料/候选人）
     async delete(ctx) {
       try {
         const { id } = ctx.request.body;
         if (!id) return response.paramError(ctx, '岗位ID不能为空');
 
         const [mat] = await pool.execute('SELECT 1 FROM materials WHERE position_id = ? LIMIT 1', [id]);
-        if (mat.length > 0) return response.businessError(ctx, '该岗位已有人报名材料，不允许删除');
         const [cand] = await pool.execute('SELECT 1 FROM candidates WHERE position_id = ? LIMIT 1', [id]);
-        if (cand.length > 0) return response.businessError(ctx, '该岗位已有候选人，不允许删除');
+        if (mat.length > 0 || cand.length > 0) {
+          return response.businessError(ctx, '该岗位已有材料或候选人，不允许删除');
+        }
 
         await pool.execute('DELETE FROM positions WHERE id = ?', [id]);
         response.success(ctx, null, '删除岗位成功');
@@ -174,7 +186,6 @@ const api = {
     }
   },
 
-  // @@AUTH 岗位管理：增删改限超管/经办，读放开
   config: {
     add: requireRole('超级管理', '经办'),
     generate: requireRole('超级管理', '经办'),
@@ -184,5 +195,6 @@ const api = {
 };
 
 Object.defineProperty(api, 'buildGeneratedPositions', { value: buildGeneratedPositions });
+Object.defineProperty(api, 'P0_POSITION_NAMES', { value: P0_POSITION_NAMES });
 
 module.exports = api;
