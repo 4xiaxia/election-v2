@@ -18,28 +18,42 @@ function onSelect(rows: any[]) { selected.value = rows; }
 
 const c = {
   title: '历史归档',
-  desc: '管理历年选举档案，可按年份/类型筛选，导出 Excel 台账',
-  addLabel: '+ 新增档案',
+  desc: '管理历年换届归档材料（scope=archive），按阶段/材料编号上传',
+  addLabel: '+ 上传归档材料',
   columns: [
-    { prop: 'name', label: '档案名称', minWidth: '240' },
-    { prop: 'year', label: '年份', width: '100', render: (r: any) => r.year },
-    { prop: 'type', label: '类型', width: '100', tagMap: { election: { type: 'primary', text: '选举' }, candidate: { type: 'success', text: '候选' }, material: { type: 'info', text: '材料' } } },
-    { prop: 'fileCount', label: '文件数', width: '90', align: 'center' },
-    { prop: 'date', label: '归档日期', width: '130' },
+    { prop: 'stage_key',   label: '阶段',     width: '120' },
+    { prop: 'material_no', label: '材料编号', width: '120' },
+    { prop: 'applicant_name', label: '上报人', width: '100' },
+    { prop: 'file_url',    label: '文件链接', minWidth: '200',
+      render: (r: any) => r.file_url
+        ? `<a href="${r.file_url}" target="_blank" class="el-link el-link--primary">查看文件</a>`
+        : '—'
+    },
+    { prop: 'status',      label: '状态',     width: '90',
+      tagMap: { '待审核': { type: 'warning', text: '待审核' }, '通过': { type: 'success', text: '已通过' }, '驳回': { type: 'danger', text: '已驳回' } }
+    },
+    { prop: 'created_at',  label: '上传时间', width: '150' },
   ],
   api: { list: getArchives, create: createArchive, update: updateArchive, delete: deleteArchive },
   searchFields: [
-    { field: 'year', type: 'select', placeholder: '年份', options: [
-      { label: '2025', value: '2025' }, { label: '2022', value: '2022' }, { label: '2019', value: '2019' }, { label: '2016', value: '2016' },
+    { field: 'electionId', placeholder: '换届ID' },
+    { field: 'stageKey',   placeholder: '阶段 key，如 S1' },
+    { field: 'materialNo', placeholder: '材料编号，如 材料1' },
+    { field: 'status', type: 'select', placeholder: '状态', options: [
+      { label: '待审核', value: '待审核' }, { label: '通过', value: '通过' }, { label: '驳回', value: '驳回' },
     ]},
-    { field: 'type', type: 'select', placeholder: '类型', options: [
-      { label: '选举', value: 'election' }, { label: '候选', value: 'candidate' }, { label: '材料', value: 'material' },
-    ]},
-    { field: 'keyword', placeholder: '搜索档案名...' },
+  ],
+  formFields: [
+    { field: 'electionId',   label: '换届ID',   required: true, placeholder: '例：1' },
+    { field: 'stageKey',     label: '阶段Key',  required: true, placeholder: '例：S1' },
+    { field: 'materialNo',   label: '材料编号', required: true, placeholder: '例：材料1' },
+    { field: 'fileUrl',      label: '文件URL',  required: true, placeholder: 'https://...' },
+    { field: 'applicantName', label: '上报人姓名', placeholder: '可选' },
+    { field: 'applicantPhone', label: '上报人手机', placeholder: '可选' },
   ],
   selectable: true,
   showIndex: true,
-  dialogWidth: '40%',
+  dialogWidth: '480px',
 };
 
 function downloadBlob(blob: any, name: string) {
@@ -51,9 +65,9 @@ function downloadBlob(blob: any, name: string) {
 
 async function exportSelected() {
   try {
-    const year = selected.value[0]?.year;
-    const blob: any = await exportArchives({ year });
-    downloadBlob(blob, `归档台账${year ? '_' + year : ''}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    const electionId = selected.value[0]?.election_id;
+    const blob: any = await exportArchives({ electionId });
+    downloadBlob(blob, `归档台账${electionId ? '_' + electionId : ''}_${new Date().toISOString().slice(0,10)}.xlsx`);
     ElMessage.success(`已导出 ${selected.value.length} 条`);
   } catch (err: any) { ElMessage.error(err?.message || '导出失败'); }
 }
@@ -62,7 +76,7 @@ async function exportFull() {
   try {
     const blob: any = await exportFullArchives();
     downloadBlob(blob, `综合台账_${new Date().toISOString().slice(0,10)}.xlsx`);
-    ElMessage.success('已导出综合台账（含档案/选举/候选人/材料/公告 5 个 Sheet）');
+    ElMessage.success('已导出综合台账');
   } catch (err: any) { ElMessage.error(err?.message || '导出失败'); }
 }
 </script>

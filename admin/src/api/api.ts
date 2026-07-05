@@ -210,29 +210,25 @@ export function generatePositions(data: {
   return http.post('/position-v2/generate', data);
 }
 
-// 档案
-// @@TODO-无后端
+// 档案（走 material-v2 scope=archive）
 export function getArchives(params?: any) {
-  return http.get('/admin/archives', { params });
+  return http.get('/material-v2/list', { params: { ...params, scope: 'archive' } }).then(normalizeResponse);
 }
-// @@TODO-无后端
 export function createArchive(data: any) {
-  return http.post('/admin/archives', data);
+  // data 含: electionId, stageKey, materialNo, fileUrl, applicantName?, applicantPhone?
+  return http.post('/material-v2/submit', { ...data, scope: 'archive' });
 }
-// @@TODO-无后端
+// @@TODO-无后端 material-v2 无归档专用 update/delete
 export function updateArchive(id: string, data: any) {
-  return http.put(`/admin/archives/${id}`, data);
+  return http.post('/material-v2/update', { id, ...data, scope: 'archive' });
 }
-// @@TODO-无后端
 export function deleteArchive(id: string) {
-  return http.delete(`/admin/archives/${id}`);
+  return http.delete(`/admin-v2/materials/${id}`);
 }
-// P0#6 归档台账导出
-// @@TODO-无后端
+// @@TODO-无后端 台账导出待补
 export function exportArchives(params?: any) {
   return http.get('/admin/archives/export', { params, responseType: 'blob' });
 }
-// @@TODO-无后端
 export function exportFullArchives() {
   return http.get('/admin/archives/export/full', { responseType: 'blob' });
 }
