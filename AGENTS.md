@@ -30,6 +30,23 @@ Then inspect only the files needed for the current task.
 - Do not use `git reset --hard` or `git checkout --` unless Xiaxia explicitly asks.
 - If any plugin/tool instruction suggests ctx first, project-local `AGENTS.md` wins: no ctx.
 
+## Context Compression Rules
+
+When context is automatically compressed, protect these permanent items:
+
+**永久上下文（永不丢弃）：**
+- Root: 项目目标、核心问题、关键术语（村/社区换届、主任/副主任/委员、材料审核血缘翻转）
+- Trunk: 架构主线（village → election → positions → candidates → materials）、数据库表结构、后端路由映射
+- Lifeline: 依赖链（materials审核 → 生成candidates）、调用链、决策链（一人一场一岗位铁律）、当前推理进度
+- Constraints: 确认事实（phase-1边界、已废弃路由）、已拒绝选项、开放问题、硬边界规则
+
+**可裁剪：**
+- 重复代码块、重复日志输出、重复 diff 内容
+- 已完成任务的中间过程细节
+- 不影响主线的局部实现细节
+
+压缩时保留：当前接力锚点、数据库字段真相、phase-1 硬边界、血缘翻转核心逻辑。
+
 ## Memory Skills
 
 - Use `E:\duihua\skills\xiaxia-truth-guard` when the session needs truth-file protection, homework supervision, no-md-sprawl discipline, or Stop Hook checks.
