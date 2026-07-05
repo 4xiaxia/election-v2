@@ -1,36 +1,62 @@
-# Dependencies
-node_modules/
+# Git intake gate
+# Default: do not show newly created files unless they match the project allowlist.
+# Tracked files are unaffected. To intentionally add a blocked artifact, use `git add -f <path>`.
 
-# Build outputs
+*
+!*/
+
+# Root truth files
+!.gitignore
+!AGENTS.md
+!PROJECT_STATE.md
+!ENGINEERING_LOG.md
+!DECISIONS.md
+!PROJECT_TREE.md
+!工程责任表-一期P0.md
+!一期清单压实-接力总表.md
+!package.json
+!package-lock.json
+!pnpm-lock.yaml
+!yarn.lock
+
+# Source and schema folders
+!admin/**/*.vue
+!admin/**/*.ts
+!admin/**/*.js
+!admin/**/*.json
+!admin/**/*.css
+!admin/**/*.scss
+!admin/**/*.html
+
+!koaLite/**/*.js
+!koaLite/**/*.json
+!koaLite/**/*.sql
+!koaLite/**/*.md
+
+# Relay log keeps markdown only.
+!副船长的航海接力日志/**/*.md
+
+# Always block dependency/build/runtime/caches even though directories are traversable.
+node_modules/
 dist/
 build/
 .vite/
 coverage/
-
-# Runtime logs
-*.log
 logs/
 koaLite/public/logs/
 koaLite/start.log
-
-# Local env and secrets
-.env
-.env.*
-!.env.example
-
-# Local editor / agent / index caches
 .chat/
 .claude/
 .codex/
 .codesight/
 .reasonix/
+.ctx/cache/
 .vscode/
 
-# OS noise
-.DS_Store
-Thumbs.db
-
-# Local databases and temporary runtime state
+# Secrets and local runtime state.
+.env
+.env.*
+!.env.example
 *.db
 *.sqlite
 *.sqlite3
@@ -39,15 +65,29 @@ Thumbs.db
 koaLite/db/db.json
 koaLite/db/init_db.js
 
-# Archives generated during handoff/migration
+# Binary/reference/material artifacts stay local by default.
 *.zip
-.ctx/cache/
-
-# Local reference assets and screenshots kept outside git
-backup-codex-env.cmd
-codemap-windsurf.png
+*.png
+*.PNG
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.bmp
+*.ico
+*.xlsx
+*.xls
+*.docx
+*.doc
+*.pptx
+*.pdf
+*.rar
+*.7z
+*.cmd
 mini-program/
 其他附件材料/
 船长文件夹/
-副船长的航海接力日志/*.PNG
-副船长的航海接力日志/*.png
+
+# OS noise
+.DS_Store
+Thumbs.db
