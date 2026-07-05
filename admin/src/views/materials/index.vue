@@ -159,11 +159,25 @@
     </el-dialog>
 
     <!-- 驳回原因弹窗 -->
-    <el-dialog v-model="rejectDialogVisible" title="驳回原因" width="500px">
-      <el-input v-model="rejectReason" type="textarea" :rows="4" placeholder="请输入驳回原因" />
+    <el-dialog v-model="rejectDialogVisible" title="驳回材料" width="500px">
+      <div class="reject-form">
+        <p class="reject-label">快速选择原因：</p>
+        <div class="reject-presets">
+          <el-tag
+            v-for="r in REJECT_PRESETS" :key="r"
+            class="preset-tag" effect="plain" type="warning"
+            @click="rejectReason = r" style="cursor:pointer;margin:4px 4px 4px 0"
+          >{{ r }}</el-tag>
+        </div>
+        <el-input
+          v-model="rejectReason" type="textarea" :rows="3"
+          placeholder="选择上方预设或自行填写驳回原因（必填）"
+          style="margin-top:10px"
+        />
+      </div>
       <template #footer>
         <el-button @click="rejectDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmReject">确认驳回</el-button>
+        <el-button type="danger" @click="confirmReject">确认驳回</el-button>
       </template>
     </el-dialog>
   </div>
@@ -198,6 +212,16 @@ const detailApplicant = ref(null)
 // ========== 驳回弹窗 ==========
 const rejectDialogVisible = ref(false)
 const rejectReason = ref('')
+
+// 预设驳回理由（审核员一键选择）
+const REJECT_PRESETS = [
+  '学历不符合要求',
+  '缺少身份证扫描件',
+  '附件照片不清晰，请重新上传',
+  '材料信息与身份证不一致',
+  '缺少必填材料，请补交',
+  '附件上传错误（文件与要求不符）',
+]
 const pendingRejectApplicant = ref(null)
 
 // ========== 生命周期 ==========
@@ -398,6 +422,11 @@ function viewApplicantDetails(applicant) {
 .block-head { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
 .block-title { font-family: 'Noto Serif SC', serif; font-size: 16px; font-weight: 600; margin: 0; }
 .block-title em { font-style: normal; font-size: 13px; color: var(--ink-light, #a8a29e); font-weight: 400; }
+
+/* 驳回弹窗 */
+.reject-label { font-size: 13px; color: #666; margin: 0 0 8px; }
+.reject-presets { display: flex; flex-wrap: wrap; gap: 0; }
+.preset-tag:hover { opacity: 0.8; }
 .block-actions { display: flex; align-items: center; gap: 8px; }
 
 /* 表格内容 */
