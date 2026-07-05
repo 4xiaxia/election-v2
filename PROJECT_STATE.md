@@ -1,5 +1,6 @@
 # PROJECT_STATE
 
+- 2026-07-06 开发环境降噪：全局 `C:\Users\admin\.codex\config.toml` 中失效的 `[mcp_servers.node_repl]` 已删除，停止会话启动时报 `MCP client for node_repl failed to start`；已自动备份为 `config.toml.bak-node-repl-20260706-034901`。本轮不改项目代码，只清理工具噪音。
 - 2026-07-05 基础权限补齐：超级管理/经办/运营/审核四角色已做最小对齐；经办补 `election-methods/archives/logs` 菜单，运营补 `archives` 菜单，审核移除公告菜单；后端 `position/material/notice/notification` 写操作已补基础 RBAC；候选人页对审核员隐藏新增工具栏。未完成断点：归档/日志/选举提案/管理员/角色/设置仍有无后端接口，审批页未接 `election-v2/approve`。
 - 2026-07-05 超级管理侧栏补齐：`admin/src/layouts/Sidebar.vue` 已把超级管理可访问路由补进侧栏菜单，覆盖 `election-methods/archives/admins/roles/settings/logs` 等 key，并把文案贴近当前业务稿；本轮只做静态覆盖检查，未跑 build。
 - 2026-07-05 上下文保护卡增量刷新：`副船长的航海接力日志/上下文保护接力卡-2026-07-05.md` 已从旧“写 timeline”断点更新为当前真实断点：timeline/公告/仪表盘已做，下一刀只做 archive 材料按 `stage_key/material_no` 挂阶段。

@@ -1177,3 +1177,31 @@
 ### 接力棒
 
 - 下一刀建议不要再扩权限树；先修“归档页假接口”，把归档页接到 `materials.scope='archive'` 这条已确认主线。
+
+## 2026-07-06 全局 Codex `node_repl` 启动报错清理
+
+### 输入
+
+- 用户反馈：会话启动持续出现 `MCP client for node_repl failed to start` / `MCP startup incomplete (failed: node_repl)`，想直接删掉。
+- 用户补充：这轮不要再读取与本项目无关的 skills 介绍，只处理实际报错源。
+
+### 动作
+
+- 按项目 SessionStart 顺序先读 `副船长的航海接力日志/当前接力图.md`、`文件索引.md`、`PROJECT_STATE.md`、`ENGINEERING_LOG.md` 末条、`DECISIONS.md`，确认本轮边界是“修工具噪音，不动业务代码”。
+- 先在项目内搜索 `node_repl|mcp`，确认项目代码与本地 `.codex/` 工作区副本都没有 `node_repl` 启动配置。
+- 定位全局配置 `C:\Users\admin\.codex\config.toml`，确认其中存在失效的 `[mcp_servers.node_repl]` 配置，命令指向：
+  - `C:\Users\admin\AppData\Local\OpenAI\Codex\bin\3c238e29bbc930ff\node_repl.exe`
+- 备份全局配置为：
+  - `C:\Users\admin\.codex\config.toml.bak-node-repl-20260706-034901`
+- 从全局 `config.toml` 删除整段 `[mcp_servers.node_repl]` 与其 `.env` 配置，保留其他 MCP（如 `lean-ctx`、`memory-cache`）不动。
+
+### 验证
+
+- 读取 `C:\Users\admin\.codex\config.toml`，确认已不存在 `[mcp_servers.node_repl]` 段。
+- 项目内搜索结果未发现 `node_repl` 本地配置残留；本轮无需改项目仓库代码。
+- 备注：该报错源于全局 Codex 启动配置，需重开下一次 Codex 会话后彻底不再出现；本轮未强行重启当前会话。
+
+### 接力棒
+
+- 若下轮仍出现相同报错，优先检查 `C:\Users\admin\.codex\config.toml` 是否被外部程序重新写回 `node_repl` 段。
+- 若后续想继续降噪，可再盘点全局 `.codex/skills` 与缺失软链接项，但不要在本项目工作流里主动展开无关 skills 说明。
