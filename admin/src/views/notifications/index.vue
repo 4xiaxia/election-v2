@@ -42,24 +42,33 @@
     </div>
 
     <el-table :data="tableData" v-loading="loading">
-      <el-table-column prop="title" label="通知标题" min-width="200" show-overflow-tooltip />
+      <el-table-column prop="title" label="通知标题" min-width="200" show-overflow-tooltip>
+        <template #header>通知标题<span class="field-hint">notifications.title</span></template>
+      </el-table-column>
       <el-table-column prop="type" label="类型" width="100">
+        <template #header>类型<span class="field-hint">notifications.type</span></template>
         <template #default="{ row }"><el-tag effect="plain">{{ row.type }}</el-tag></template>
       </el-table-column>
-      <el-table-column prop="target" label="接收对象" min-width="160" show-overflow-tooltip />
+      <el-table-column prop="target" label="接收对象" min-width="160" show-overflow-tooltip>
+        <template #header>接收对象<span class="field-hint">notifications.target_phones/target_role</span></template>
+      </el-table-column>
       <el-table-column label="发送方式" width="100">
+        <template #header>发送方式<span class="field-hint">notifications.send_mode</span></template>
         <template #default="{ row }">
           <el-tag v-if="row.sendMode==='定时'" effect="plain" type="warning">定时</el-tag>
           <el-tag v-else effect="plain" type="info">即时</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="定时发送时间" width="180">
+        <template #header>定时发送时间<span class="field-hint">notifications.scheduled_at</span></template>
         <template #default="{ row }"><span v-if="row.scheduledAt" class="num num-blue">{{ row.scheduledAt }}</span><span v-else class="dim">-</span></template>
       </el-table-column>
       <el-table-column prop="createdAt" label="发送时间" width="160">
+        <template #header>发送时间<span class="field-hint">notifications.created_at</span></template>
         <template #default="{ row }">{{ (row.createdAt || '').slice(0, 16).replace('T', ' ') || '-' }}</template>
       </el-table-column>
       <el-table-column label="状态" width="100">
+        <template #header>状态<span class="field-hint">notifications.status</span></template>
         <template #default="{ row }">
           <el-tag :type="row.status==='已发送'?'success':row.status==='待发送'?'warning':'info'" effect="plain">{{ row.status }}</el-tag>
         </template>
@@ -283,4 +292,7 @@ function handleView(row: any) { currentItem.value = row; viewVisible.value = tru
 .empty-icon { font-size: 40px; margin: 0 0 12px; }
 .empty-text { font-size: 16px; font-weight: 600; color: var(--ink-black); margin: 0 0 6px; }
 .empty-sub { font-size: 13px; margin: 0; }
+
+/* 字段来源标注 */
+.field-hint { display:block; font-size:10px; color:#bbb; font-weight:400; font-family:Consolas,monospace; line-height:1.2; margin-top:2px; }
 </style>

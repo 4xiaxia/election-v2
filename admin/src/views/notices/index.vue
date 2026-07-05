@@ -192,11 +192,11 @@ async function handlePublish(row: any) {
 const c = {
   title: '公告管理', desc: '',
   columns: [
-    { prop: 'title', label: '标题', minWidth: '200' },
-    { prop: 'type', label: '类型', width: '110', tagMap: { '村民组通知': { type: 'primary', text: '村民组' }, '议事会通知': { type: 'success', text: '议事会' }, '村监会通知': { type: 'warning', text: '村监会' }, '村务通知': { type: 'info', text: '村务' } } },
-    { prop: 'startTime', label: '开始', width: '110' },
-    { prop: 'endTime', label: '结束', width: '110' },
-    { prop: 'status', label: '状态', width: '90', tagMap: { '已发布': { type: 'success', text: '已发布' }, '草稿': { type: 'info', text: '草稿' }, '待发布': { type: 'warning', text: '待发布' }, '已下架': { type: 'danger', text: '已下架' } } },
+    { prop: 'title', label: '标题', minWidth: '200', fieldHint: 'notices.title' },
+    { prop: 'type', label: '类型', width: '110', fieldHint: 'notices.type', tagMap: { '村民组通知': { type: 'primary', text: '村民组' }, '议事会通知': { type: 'success', text: '议事会' }, '村监会通知': { type: 'warning', text: '村监会' }, '村务通知': { type: 'info', text: '村务' } } },
+    { prop: 'startTime', label: '开始', width: '110', fieldHint: 'notices.start_time' },
+    { prop: 'endTime', label: '结束', width: '110', fieldHint: 'notices.end_time' },
+    { prop: 'status', label: '状态', width: '90', fieldHint: 'notices.status', tagMap: { '已发布': { type: 'success', text: '已发布' }, '草稿': { type: 'info', text: '草稿' }, '待发布': { type: 'warning', text: '待发布' }, '已下架': { type: 'danger', text: '已下架' } } },
   ],
   api: {
     list: (params?: any) => getNotices(params),

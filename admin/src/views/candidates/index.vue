@@ -196,18 +196,18 @@ const crudConfig = computed(() => ({
   addLabel: '+ 新增候选人',
   toolbar: userRole.value === '审核' ? false : undefined,
   columns: [
-    { prop: 'name', label: '姓名', width: '100' },
-    { prop: 'position', label: '参选职位', width: '140', formatter: (row: any) => {
+    { prop: 'name', label: '姓名', width: '100', fieldHint: 'candidates.name' },
+    { prop: 'position', label: '参选职位', width: '140', fieldHint: 'positions.name(关联)', formatter: (row: any) => {
       // 内链展示：有 positionId 显示关联职位名，否则显示 position 文本
       const p = positions.value.find((x: any) => x.id === row.positionId);
       return p ? p.name : (row.position || '-');
     } },
-    { prop: 'source', label: '来源', width: '90', align: 'center' as const, tagMap: { 'material': { type: 'success', text: '材料晋升' }, 'import': { type: 'info', text: '导入' } } as any },
-    { prop: 'village', label: '所属村居', width: '120' },
-    { prop: 'recommendType', label: '推荐方式', width: '120', formatter: (row: any) => row.recommendType || '-' },
-    { prop: 'phone', label: '手机号', width: '130' },
-    { prop: 'politics', label: '政治面貌', width: '110', formatter: (row: any) => row.politics || '-' },
-    { prop: 'status', label: '状态', width: '100', align: 'center' as const, tagMap: { '报名中': { type: 'warning', text: '报名中' }, '已公示': { type: 'primary', text: '已公示' }, '资格作废': { type: 'danger', text: '资格作废' } } as any },
+    { prop: 'source', label: '来源', width: '90', align: 'center' as const, fieldHint: 'candidates.source', tagMap: { 'material': { type: 'success', text: '材料晋升' }, 'import': { type: 'info', text: '导入' } } as any },
+    { prop: 'village', label: '所属村居', width: '120', fieldHint: 'villages.name(关联)' },
+    { prop: 'recommendType', label: '推荐方式', width: '120', fieldHint: 'candidates.recommend_type', formatter: (row: any) => row.recommendType || '-' },
+    { prop: 'phone', label: '手机号', width: '130', fieldHint: 'candidates.phone' },
+    { prop: 'politics', label: '政治面貌', width: '110', fieldHint: 'candidates.politics', formatter: (row: any) => row.politics || '-' },
+    { prop: 'status', label: '状态', width: '100', align: 'center' as const, fieldHint: 'candidates.status', tagMap: { '报名中': { type: 'warning', text: '报名中' }, '已公示': { type: 'primary', text: '已公示' }, '资格作废': { type: 'danger', text: '资格作废' } } as any },
 
   ],
   api: {
