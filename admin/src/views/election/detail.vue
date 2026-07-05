@@ -106,7 +106,21 @@
               </el-table>
             </div>
             <!-- 空态 -->
-            <div v-if="!stageNotices(stage).length && !stageMaterials(stage).length" class="empty">本阶段暂无公告和归档材料</div>
+            <div v-if="!stageNotices(stage).length && !stageMaterials(stage).length && !stageTemplateMaterials(stage).filter(m=>m.file).length" class="empty">本阶段暂无公告和归档材料</div>
+
+            <!-- 本阶段应交材料 + 模板下载 -->
+            <div v-if="stageTemplateMaterials(stage).length" class="stage-section">
+              <h4>📋 应交材料（{{ stageTemplateMaterials(stage).length }} 项）</h4>
+              <div class="tmpl-list">
+                <div v-for="m in stageTemplateMaterials(stage)" :key="m.no" class="tmpl-row">
+                  <span class="tmpl-no">{{ String(m.no).padStart(2,'0') }}</span>
+                  <span class="tmpl-name">{{ m.name }}</span>
+                  <a v-if="m.file" :href="`/templates/${encodeURIComponent(m.file)}`"
+                     target="_blank" download class="tmpl-dl">⬇ 下载模板</a>
+                  <span v-else class="tmpl-tip">{{ m.status }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </el-collapse-item>
       </el-collapse>
@@ -440,6 +454,7 @@ import {
   getNotices, createNotice, updateNotice, deleteNotice, publishNotice as pubNotice,
   getNotifications, createNotification,
 } from '@/api/api';
+import { STAGE_TEMPLATE_MAP } from '@/data/stageTemplates';
 
 const route = useRoute();
 const router = useRouter();
@@ -475,6 +490,10 @@ function stageNotices(stage: any) {
 }
 function stageMaterials(stage: any) {
   return archiveMaterials.value.filter((m: any) => m.stage_key === stage.stageKey);
+}
+// 本阶段应交材料清单 + 模板下载（来自对照表静态数据）
+function stageTemplateMaterials(stage: any) {
+  return STAGE_TEMPLATE_MAP[stage.stageKey]?.materials || [];
 }
 
 const statusMap: Record<string, any> = {
@@ -1098,5 +1117,14 @@ onMounted(loadAll);
 .req-line { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .material-reqs { margin-bottom: 8px; }
 .req-item { margin-bottom: 8px; }
+
+/* 阶段模板材料清单 */
+.tmpl-list { display:flex; flex-direction:column; gap:4px; margin-top:6px; }
+.tmpl-row { display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid #f5f5f5; font-size:12px; }
+.tmpl-no { color:#aaa; font-family:Consolas,monospace; min-width:24px; }
+.tmpl-name { flex:1; color:#444; }
+.tmpl-dl { color:#0066cc; text-decoration:none; white-space:nowrap; font-size:11px; }
+.tmpl-dl:hover { text-decoration:underline; }
+.tmpl-tip { color:#aaa; font-size:11px; white-space:nowrap; }
 .req-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 </style>
