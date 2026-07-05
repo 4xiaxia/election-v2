@@ -4,6 +4,7 @@
 const response = require('../config/response');
 const { pool } = require('../db/db');
 const { requireRole } = require('../config/requireRole');
+const { villageWhere, checkVillageWrite } = require('../config/villageScope');
 
 // @@LEGAL-MAP 选举方式法定联动（认知定稿·法条第六条）
 // 村委会→只能村民直接选举；居委会→三选一
@@ -43,6 +44,15 @@ module.exports = {
         if (villageId)    { sql += ' AND e.village_id = ?';       countSql += ' AND e.village_id = ?';       params.push(villageId);   countParams.push(villageId); }
         if (electionType) { sql += ' AND e.election_type = ?';    countSql += ' AND e.election_type = ?';    params.push(electionType);countParams.push(electionType); }
         if (status)       { sql += ' AND e.status = ?';           countSql += ' AND e.status = ?';           params.push(status);      countParams.push(status); }
+
+        // @@村级隔离：非超管自动过滤 village_id
+        const { wherePart: vw, params: vp } = villageWhere(ctx);
+        if (vw && !villageId) {
+          sql += vw.replace('village_id', 'e.village_id');
+          countSql += vw;
+          params.push(...vp);
+          countParams.push(...vp);
+        }
 
         sql += ' ORDER BY e.id DESC LIMIT ? OFFSET ?';
         params.push(limit, offset);
