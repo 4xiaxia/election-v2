@@ -233,41 +233,37 @@ export function exportFullArchives() {
   return http.get('/admin/archives/export/full', { responseType: 'blob' });
 }
 
-// 管理员
-// @@TODO-无后端
-export function getAdmins() {
-  return http.get('/admin/admins');
+// 用户与管理员 user-v2（users表统一入口）
+export function getAdmins(params?: any) {
+  return http.get('/user-v2/list', { params }).then(normalizeResponse);
 }
-// @@TODO-无后端
 export function createAdmin(data: any) {
-  return http.post('/admin/admins', data);
+  return http.post('/user-v2/add', data);
 }
-// @@TODO-无后端
 export function updateAdmin(id: string, data: any) {
-  return http.put(`/admin/admins/${id}`, data);
+  return http.post('/user-v2/update', { id, ...data });
 }
-// @@TODO-无后端
 export function deleteAdmin(id: string) {
-  return http.delete(`/admin/admins/${id}`);
+  return http.post('/user-v2/disable', { id });
 }
 
-// 角色
-// @@TODO-无后端
+// 用户列表（含村民，供选民登记/权限检查用）
+export function getUsers(params?: any) {
+  return http.get('/user-v2/all', { params }).then(normalizeResponse);
+}
+
+// 角色枚举（本地常量，无需请求接口——roles表不存在，role是users字段枚举）
 export function getRoles() {
-  return http.get('/admin/roles');
+  return Promise.resolve({ data: [
+    { name: '超级管理', description: '系统最高权限，可管理所有模块', count: 0 },
+    { name: '经办',   description: '负责日常选举事务操作',         count: 0 },
+    { name: '审核',   description: '负责材料审核和候选人审批',      count: 0 },
+    { name: '运营',   description: '负责公告发布和数据查看',        count: 0 },
+  ]});
 }
-// @@TODO-无后端
-export function createRole(data: any) {
-  return http.post('/admin/roles', data);
-}
-// @@TODO-无后端
-export function updateRole(id: string, data: any) {
-  return http.put(`/admin/roles/${id}`, data);
-}
-// @@TODO-无后端
-export function deleteRole(id: string) {
-  return http.delete(`/admin/roles/${id}`);
-}
+export function createRole(_data: any) { return Promise.reject(new Error('角色由系统固定，不支持自定义')); }
+export function updateRole(_id: string, _data: any) { return Promise.reject(new Error('角色由系统固定，不支持修改')); }
+export function deleteRole(_id: string) { return Promise.reject(new Error('角色由系统固定，不支持删除')); }
 
 // 登录（新门 auth-v2·三身份：手机号+密码+身份）
 export function login(phone: string, password: string, role: string, villageId?: string) {
