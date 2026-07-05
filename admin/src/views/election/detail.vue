@@ -56,6 +56,62 @@
 
     <p class="page-hint">下方是本次选举的全部关联数据，按顺序查看与操作。</p>
 
+    <!-- ===== 阶段总览面板（母表 11 阶段 → 公告 + 归档材料）===== -->
+    <section class="block" v-if="timeline.length">
+      <div class="block-head">
+        <h2 class="block-title"><span class="dot"></span>阶段总览 <em>({{ timeline.length }} 阶段)</em></h2>
+      </div>
+      <el-collapse v-model="activeStages">
+        <el-collapse-item v-for="stage in timeline" :key="stage.stageKey" :name="stage.stageKey">
+          <template #title>
+            <div class="stage-header">
+              <el-tag :type="stageStatusType(stage.stageStatus)" size="small" effect="plain">{{ stage.stageStatus || '未开始' }}</el-tag>
+              <span class="stage-key">{{ stage.stageKey }}</span>
+              <span class="stage-name">{{ stage.stageName }}</span>
+              <span class="stage-date" v-if="stage.dateRange">{{ stage.dateRange }}</span>
+              <span class="stage-counts">
+                <span v-if="stageNotices(stage).length" class="sc-item">📢 {{ stageNotices(stage).length }}公告</span>
+                <span v-if="stageMaterials(stage).length" class="sc-item">📎 {{ stageMaterials(stage).length }}材料</span>
+              </span>
+            </div>
+          </template>
+          <div class="stage-body">
+            <p class="stage-work" v-if="stage.work">{{ stage.work }}</p>
+            <!-- 本阶段公告 -->
+            <div v-if="stageNotices(stage).length" class="stage-section">
+              <h4>📢 公告（{{ stageNotices(stage).length }}）</h4>
+              <el-table :data="stageNotices(stage)" size="small">
+                <el-table-column prop="notice_no" label="编号" width="70" />
+                <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
+                <el-table-column prop="status" label="状态" width="90">
+                  <template #default="{ row }"><el-tag :type="row.status==='已发布'?'success':'info'" size="small" effect="plain">{{ row.status }}</el-tag></template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <!-- 本阶段归档材料 -->
+            <div v-if="stageMaterials(stage).length" class="stage-section">
+              <h4>📎 归档材料（{{ stageMaterials(stage).length }}）</h4>
+              <el-table :data="stageMaterials(stage)" size="small">
+                <el-table-column prop="material_no" label="编号" width="80" />
+                <el-table-column prop="applicant_name" label="上报人" width="100" />
+                <el-table-column prop="file_url" label="文件" min-width="160">
+                  <template #default="{ row }">
+                    <a v-if="row.file_url" :href="row.file_url" target="_blank" class="el-link el-link--primary">查看</a>
+                    <span v-else class="dim">未上传</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="status" label="状态" width="90">
+                  <template #default="{ row }"><el-tag :type="row.status==='通过'?'success':row.status==='驳回'?'danger':'warning'" size="small" effect="plain">{{ row.status }}</el-tag></template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <!-- 空态 -->
+            <div v-if="!stageNotices(stage).length && !stageMaterials(stage).length" class="empty">本阶段暂无公告和归档材料</div>
+          </div>
+        </el-collapse-item>
+      </el-collapse>
+    </section>
+
     <!-- ===== 职位 ===== -->
     <section class="block">
       <div class="block-head">
@@ -403,6 +459,24 @@ const positionDetail = ref<any>(null);
 const posSubmissions = ref<Record<string, number>>({});
 const posCandidates = ref<Record<string, number>>({});
 
+// 阶段总览
+const timeline = ref<any[]>([]);
+const activeStages = ref<string[]>([]);
+const archiveMaterials = ref<any[]>([]);
+
+function stageStatusType(status: string) {
+  if (status === '已完成') return 'success';
+  if (status === '进行中') return 'warning';
+  return 'info';
+}
+function stageNotices(stage: any) {
+  if (!stage.noticeNos?.length) return [];
+  return notices.value.filter((n: any) => stage.noticeNos.includes(n.notice_no) || n.stage_key === stage.stageKey);
+}
+function stageMaterials(stage: any) {
+  return archiveMaterials.value.filter((m: any) => m.stage_key === stage.stageKey);
+}
+
 const statusMap: Record<string, any> = {
   'draft':          { type: 'info',    label: '草稿' },
   'pending_review': { type: 'warning', label: '待审批' },
@@ -457,6 +531,12 @@ async function loadAll() {
   try {
     const el = await getElections({ id: electionId.value });
     election.value = (el.data?.list || []).find((e: any) => e.id === electionId.value) || el.data?.list?.[0];
+    // 解析 timeline（母表 11 阶段）
+    try {
+      const content = election.value?.content;
+      const parsed = typeof content === 'string' ? JSON.parse(content) : content;
+      timeline.value = parsed?.timeline || [];
+    } catch { timeline.value = []; }
     const [p, c, n, m, nt] = await Promise.all([
       getPositions({ electionId: electionId.value }),
       getCandidates({ electionId: electionId.value }),
@@ -469,6 +549,8 @@ async function loadAll() {
     notices.value = n.data?.list || [];
     materials.value = m.data?.list || [];
     notifications.value = nt.data?.list || [];
+    // 归档材料单独过滤（scope=archive）
+    archiveMaterials.value = materials.value.filter((x: any) => x.scope === 'archive');
     // 统计每个职位的提交数/通过候选人数（用 positionId 做 key）
     posSubmissions.value = {};
     posCandidates.value = {};
