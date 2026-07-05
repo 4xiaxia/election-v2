@@ -18,15 +18,15 @@ onMounted(async () => {
 const c = {
   title: '管理员', desc: '管理系统管理员账号（四档角色：超级管理/经办/审核/运营）',
   columns: [
-    { prop: 'name', label: '姓名', minWidth: '120' },
-    { prop: 'role', label: '角色', width: '120', tagMap: {
+    { prop: 'name', label: '姓名', minWidth: '120', fieldHint: 'users.name' },
+    { prop: 'role', label: '角色', width: '120', fieldHint: 'users.role', tagMap: {
       '超级管理': { type: 'danger', text: '超级管理' },
       '经办': { type: 'warning', text: '经办' },
       '审核': { type: 'success', text: '审核' },
       '运营': { type: 'info', text: '运营' },
     } },
-    { prop: 'phone', label: '手机号', width: '140' },
-    { prop: 'lastLoginAt', label: '最近登录', width: '160' },
+    { prop: 'phone', label: '手机号', width: '140', fieldHint: 'users.phone' },
+    { prop: 'lastLoginAt', label: '最近登录', width: '160', fieldHint: 'users.last_login_at' },
   ],
   formFields: [
     { field: 'name', label: '姓名', required: true, placeholder: '输入姓名' },

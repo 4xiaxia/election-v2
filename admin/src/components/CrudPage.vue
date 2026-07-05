@@ -24,6 +24,10 @@
       <el-table-column v-if="config.selectable" type="selection" width="44" />
       <el-table-column v-if="config.showIndex" type="index" label="#" width="56" align="center" />
       <el-table-column v-for="col in config.columns" :key="col.prop" :prop="col.prop" :label="col.label" :width="col.width" :min-width="col.minWidth" :align="col.align||'left'" :show-overflow-tooltip="col.tooltip">
+        <template #header>
+          <span>{{ col.label }}</span>
+          <span v-if="col.fieldHint" class="field-hint">{{ col.fieldHint }}</span>
+        </template>
         <template #default="{ row }" v-if="col.render || col.tagMap || col.formatter">
           <span v-if="col.render">{{ col.render(row) }}</span>
           <span v-else-if="col.formatter">{{ col.formatter(row) }}</span>
@@ -218,6 +222,18 @@ defineExpose({ refresh: fetchData, selected, tableData, form });
   border-radius: 0 2px 2px 0;
 }
 .page-desc { font-size: 13px; color: var(--ink-light); margin: 0; }
+
+/* 字段标注小字（表名.字段名，辅助甲方定位） */
+.field-hint {
+  display: block;
+  font-size: 10px;
+  color: #bbb;
+  font-weight: 400;
+  font-family: Consolas, monospace;
+  line-height: 1.2;
+  margin-top: 2px;
+  letter-spacing: 0;
+}
 
 .toolbar {
   display: flex;

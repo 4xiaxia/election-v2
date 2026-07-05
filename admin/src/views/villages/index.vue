@@ -10,8 +10,9 @@ const c = {
   title: '村居管理',
   desc: '管理城厢区下辖的村（社区）',
   columns: [
-    { prop: 'name', label: '名称', minWidth: '160' },
-    { prop: 'type', label: '类型', width: '100', tagMap: { '村委会': { type: 'warning', text: '村委会' }, '居委会': { type: 'success', text: '居委会' } } },
+    { prop: 'name', label: '名称', minWidth: '160', fieldHint: 'villages.name' },
+    { prop: 'type', label: '类型', width: '100', fieldHint: 'villages.type',
+      tagMap: { '村委会': { type: 'warning', text: '村委会' }, '居委会': { type: 'success', text: '居委会' } } },
   ],
   api: { list: getVillages, create: createVillage, update: updateVillage, delete: deleteVillage },
   searchFields: [
