@@ -32,20 +32,87 @@ Then inspect only the files needed for the current task.
 
 ## Context Compression Rules
 
-When context is automatically compressed, protect these permanent items:
+三层压缩体系：机械删重 → 智能修剪 → 缓存增量。
 
-**永久上下文（永不丢弃）：**
-- Root: 项目目标、核心问题、关键术语（村/社区换届、主任/副主任/委员、材料审核血缘翻转）
-- Trunk: 架构主线（village → election → positions → candidates → materials）、数据库表结构、后端路由映射
-- Lifeline: 依赖链（materials审核 → 生成candidates）、调用链、决策链（一人一场一岗位铁律）、当前推理进度
-- Constraints: 确认事实（phase-1边界、已废弃路由）、已拒绝选项、开放问题、硬边界规则
+### 第一层：永久保留（绝对不可压缩）
 
-**可裁剪：**
-- 重复代码块、重复日志输出、重复 diff 内容
-- 已完成任务的中间过程细节
-- 不影响主线的局部实现细节
+```
+【根层】- 项目基础
+  ├─ 项目目标与核心问题域：村/社区换届选举、血缘翻转材料审核
+  ├─ 关键概念与定义：主任/副主任/委员、一人一场一岗位铁律
+  └─ 术语表：材料(materials) → 候选人(candidates)、scope=candidate|archive
 
-压缩时保留：当前接力锚点、数据库字段真相、phase-1 硬边界、血缘翻转核心逻辑。
+【主干层】- 工程骨架
+  ├─ 架构分层：村居 → 选举 → 岗位 → 材料 → 候选人
+  ├─ 模块依赖：village → election → positions → materials → candidates
+  ├─ 主流程：报名 → 审核 → 公示 → 结果回填
+  └─ 数据流：前端表单 → material-v2/submit → 审核 → candidate-v2/create
+
+【命脉层】- 关键通路
+  ├─ 依赖链：candidates.material_id → materials.id
+  ├─ 调用链：审核通过 → materials.candidate_id 回填
+  ├─ 数据流：18公告 × 11阶段 timeline → notice_no/stage_key
+  ├─ 决策链：为什么禁止 ctx（曾经压坏接力图）、为什么走 material-v2
+  └─ 推理逻辑：当前接力锚点、下一刀目标
+
+【约束层】- 边界条件
+  ├─ 已确认事实：phase-1 只做主任/副主任/委员、村监会不在范围
+  ├─ 约束条件：不能删 import/review/notification 已有功能
+  ├─ 已排除方案：废弃 /admin/election-methods、不用多商户
+  └─ 开放问题：选民登记表(election_voters)无菜单、操作日志路由缺失
+```
+
+### 第二层：时间衰减 + 树形修剪
+
+```
+最新层（当前轮）
+  ├─ 保留：高保真原始细节
+  ├─ 包含：当前文件、当前报错、当前 diff、当前推理
+  └─ 压缩强度：最轻（只删重复代码块/日志/diff）
+
+中间层（较早但相关）
+  ├─ 保留：结构化摘要
+  ├─ 包含：模块关系、已确认发现、已尝试方法、未解决问题
+  └─ 压缩强度：中等（删重复 + 折叠细节）
+
+最旧层（历史上下文）
+  ├─ 保留：关键记录
+  ├─ 包含：重要结论、关键约束、明确排除项
+  └─ 压缩强度：最强（只保关键点）
+
+核心层（所有时间）
+  ├─ 保留：永不删减（根/主干/命脉/约束）
+  ├─ 包含：上方第一层所有内容
+  └─ 压缩强度：0（只能提炼重写，不能删）
+```
+
+### 第三层：缓存与增量更新
+
+SessionStart 读取梳理好的摘要，不从原文大段里捞：
+
+```
+缓存键：
+  ├─ project:state (24h) → 当前接力图 + 进度
+  ├─ project:decisions (24h) → 已确认决策
+  ├─ project:architecture (24h) → 模块关系图
+  └─ project:issues (24h) → 未解决问题
+
+工作中：
+  ├─ 查询 → 先查缓存 → 命中 → 0 token
+  ├─ 未命中 → 读文件 → 更新缓存
+  └─ 增量更新（不全文重读）
+
+Stop：
+  ├─ 文档更新 → 清相关缓存
+  ├─ 下次 SessionStart → 重新预热
+  └─ 24h 内缓存仍然有效
+```
+
+**可删减的东西（只修剪这些）：**
+- 重复代码片段、重复目录树、重复日志输出
+- 重复 diff 展示、重复背景描述
+- 旧轮次的佐证细节（原文当证据用，不占工作记忆）
+- 局部实现细节（不影响主干理解）
 
 ## Memory Skills
 
@@ -87,16 +154,8 @@ No record means not done. No verification means not usable.
 
 ## Permanent Context
 
-Never drop these during compression:
-
-```text
-Root: project goal, core problem, key terms
-Trunk: architecture, modules, main flow, data flow
-Lifeline: dependency chain, call chain, decision chain, current reasoning
-Constraints: confirmed facts, rejected options, open questions
-```
-
-Only trim repeated code, repeated logs, repeated diffs, old evidence details, and local implementation details that do not affect the mainline.
+→ See **Context Compression Rules** above for the full three-layer system.
+永久保留层 / 时间衰减修剪 / 缓存增量更新 均在那里定义，不重复。
 
 ## Engineering Rules
 
