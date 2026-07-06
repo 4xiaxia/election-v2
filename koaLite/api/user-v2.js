@@ -17,15 +17,17 @@ module.exports = {
     async list(ctx) {
       try {
         const { role, keyword, villageId } = ctx.query;
-        let sql = `SELECT id, phone, name, role, village_id, status,
-                          DATE_FORMAT(last_login_at, '%Y-%m-%d %H:%i') as last_login_at,
-                          DATE_FORMAT(created_at, '%Y-%m-%d %H:%i') as created_at
-                   FROM users WHERE role IN (${ADMIN_ROLES.map(() => '?').join(',')})`;
+        let sql = `SELECT u.id, u.phone, u.name, u.role, u.village_id, u.status,
+                          v.name as villageName,
+                          DATE_FORMAT(u.last_login_at, '%Y-%m-%d %H:%i') as lastLoginAt,
+                          DATE_FORMAT(u.created_at, '%Y-%m-%d %H:%i') as createdAt
+                   FROM users u LEFT JOIN villages v ON u.village_id = v.id
+                   WHERE u.role IN (${ADMIN_ROLES.map(() => '?').join(',')})`;
         const params = [...ADMIN_ROLES];
-        if (role) { sql += ' AND role=?'; params.push(role); }
-        if (villageId) { sql += ' AND village_id=?'; params.push(villageId); }
-        if (keyword) { sql += ' AND (name LIKE ? OR phone LIKE ?)'; params.push(`%${keyword}%`, `%${keyword}%`); }
-        sql += ' ORDER BY created_at DESC';
+        if (role) { sql += ' AND u.role=?'; params.push(role); }
+        if (villageId) { sql += ' AND u.village_id=?'; params.push(villageId); }
+        if (keyword) { sql += ' AND (u.name LIKE ? OR u.phone LIKE ?)'; params.push(`%${keyword}%`, `%${keyword}%`); }
+        sql += ' ORDER BY u.created_at DESC';
         const [rows] = await pool.query(sql, params);
         response.pageSuccess(ctx, rows, rows.length);
       } catch (e) { console.error(e); response.serverError(ctx, '查询管理员失败'); }
