@@ -16,17 +16,25 @@
       <div class="toolbar">
         <el-button type="primary" @click="handleAdd">＋ 新增选举</el-button>
         <el-input v-model="keyword" placeholder="搜索选举名称或村居..." clearable style="width:240px" />
+        <span class="filter-hint">筛选锚点：elections.name / villages.name(关联)</span>
       </div>
       <el-table :data="filteredElections" highlight-current-row @row-click="handleSelect" row-class-name="clickable-row" v-loading="loading">
-        <el-table-column prop="name" label="选举名称" min-width="220" show-overflow-tooltip />
-        <el-table-column prop="village" label="村（社区）" width="120" />
+        <el-table-column prop="name" label="选举名称" min-width="220" show-overflow-tooltip>
+          <template #header>选举名称<span class="field-hint">elections.name</span></template>
+        </el-table-column>
+        <el-table-column prop="village" label="村（社区）" width="120">
+          <template #header>村（社区）<span class="field-hint">villages.name(关联)</span></template>
+        </el-table-column>
         <el-table-column label="选举方式" width="120">
+          <template #header>选举方式<span class="field-hint">elections.election_method</span></template>
           <template #default="{ row }"><el-tag effect="plain" type="warning">{{ row.electionMethod || row.election_method || '-' }}</el-tag></template>
         </el-table-column>
         <el-table-column prop="date" label="选举日期" width="120">
+          <template #header>选举日期<span class="field-hint">elections.election_end_date</span></template>
           <template #default="{ row }"><span class="num num-blue">{{ row.date }}</span></template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="110">
+          <template #header>状态<span class="field-hint">elections.status</span></template>
           <template #default="{ row }"><el-tag effect="plain" :type="statusMap[row.status]?.type || 'info'">{{ statusMap[row.status]?.label || row.status }}</el-tag></template>
         </el-table-column>
         <el-table-column label="操作" width="200" align="center">
@@ -460,6 +468,8 @@ async function handleDelete(row: any) {
 
 .list-panel { width: 100%; }
 .toolbar { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; gap: 8px; }
+.filter-hint { font-size: 11px; color: #a8a29e; font-family: Consolas, monospace; }
+.field-hint { display:block; font-size:10px; color:#bbb; font-weight:400; font-family:Consolas,monospace; line-height:1.2; margin-top:2px; }
 
 .dialog-form { max-height: 70vh; overflow-y: auto; padding-right: 8px; }
 .dialog-footer { display: flex; justify-content: flex-end; gap: 10px; }

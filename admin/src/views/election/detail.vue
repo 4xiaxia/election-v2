@@ -11,11 +11,11 @@
           </el-tag>
         </div>
         <div class="header-meta">
-          <span><i>编号</i>{{ election.id }}</span>
-          <span><i>选举日</i>{{ election.electionEndDate || '未设' }}</span>
-          <span><i>村居</i>{{ election.village }}</span>
-          <span><i>类型</i>{{ election.electionType }}</span>
-          <span><i>方式</i>{{ election.electionMethod }}</span>
+          <span><i>编号</i><b class="field-mini">elections.id</b>{{ election.id }}</span>
+          <span><i>选举日</i><b class="field-mini">elections.election_end_date</b>{{ election.electionEndDate || '未设' }}</span>
+          <span><i>村居</i><b class="field-mini">villages.name(关联)</b>{{ election.village }}</span>
+          <span><i>类型</i><b class="field-mini">elections.election_type</b>{{ election.electionType }}</span>
+          <span><i>方式</i><b class="field-mini">elections.election_method</b>{{ election.electionMethod }}</span>
         </div>
         <!-- 完整时间链（选举程序法定节点） -->
         <div class="header-timeline" v-if="election.enrollStartAt || election.enrollEndAt || election.publicityStartAt || election.publicityEndAt || election.scheduledPublishAt || election.reviewEndAt">
@@ -81,9 +81,14 @@
             <div v-if="stageNotices(stage).length" class="stage-section">
               <h4>📢 公告（{{ stageNotices(stage).length }}）</h4>
               <el-table :data="stageNotices(stage)" size="small">
-                <el-table-column prop="notice_no" label="编号" width="70" />
-                <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
+                <el-table-column prop="notice_no" label="编号" width="70">
+                  <template #header>编号<span class="field-hint">notices.notice_no</span></template>
+                </el-table-column>
+                <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip>
+                  <template #header>标题<span class="field-hint">notices.title</span></template>
+                </el-table-column>
                 <el-table-column prop="status" label="状态" width="90">
+                  <template #header>状态<span class="field-hint">notices.status</span></template>
                   <template #default="{ row }"><el-tag :type="row.status==='已发布'?'success':'info'" size="small" effect="plain">{{ row.status }}</el-tag></template>
                 </el-table-column>
               </el-table>
@@ -92,15 +97,21 @@
             <div v-if="stageMaterials(stage).length" class="stage-section">
               <h4>📎 归档材料（{{ stageMaterials(stage).length }}）</h4>
               <el-table :data="stageMaterials(stage)" size="small">
-                <el-table-column prop="material_no" label="编号" width="80" />
-                <el-table-column prop="applicant_name" label="上报人" width="100" />
+                <el-table-column prop="material_no" label="编号" width="80">
+                  <template #header>编号<span class="field-hint">materials.material_no</span></template>
+                </el-table-column>
+                <el-table-column prop="applicant_name" label="上报人" width="100">
+                  <template #header>上报人<span class="field-hint">materials.applicant_name</span></template>
+                </el-table-column>
                 <el-table-column prop="file_url" label="文件" min-width="160">
+                  <template #header>文件<span class="field-hint">materials.file_url</span></template>
                   <template #default="{ row }">
                     <a v-if="row.file_url" :href="row.file_url" target="_blank" class="el-link el-link--primary">查看</a>
                     <span v-else class="dim">未上传</span>
                   </template>
                 </el-table-column>
                 <el-table-column prop="status" label="状态" width="90">
+                  <template #header>状态<span class="field-hint">materials.status</span></template>
                   <template #default="{ row }"><el-tag :type="row.status==='通过'?'success':row.status==='驳回'?'danger':'warning'" size="small" effect="plain">{{ row.status }}</el-tag></template>
                 </el-table-column>
               </el-table>
@@ -133,12 +144,18 @@
         <el-button type="primary" @click="addPosition">新增职位</el-button>
       </div>
       <el-table :data="positions" row-class-name="clickable-row">
-        <el-table-column prop="name" label="职位名称" width="140" />
-        <el-table-column prop="quota" label="应选名额" width="100" align="center" />
+        <el-table-column prop="name" label="职位名称" width="140">
+          <template #header>职位名称<span class="field-hint">positions.name</span></template>
+        </el-table-column>
+        <el-table-column prop="quota" label="应选名额" width="100" align="center">
+          <template #header>应选名额<span class="field-hint">positions.quota</span></template>
+        </el-table-column>
         <el-table-column label="已收材料" width="110" align="center">
+          <template #header>已收材料<span class="field-hint">materials.election_id/position_id</span></template>
           <template #default="{ row }"><span class="num num-blue">{{ posSubmissions[row.id]||0 }}</span><span class="unit"> 份</span></template>
         </el-table-column>
         <el-table-column label="已通过候选人" width="130" align="center">
+          <template #header>已通过候选人<span class="field-hint">candidates.position_id/status</span></template>
           <template #default="{ row }"><span class="num num-red">{{ posCandidates[row.id]||0 }}</span><span class="unit"> 人</span></template>
         </el-table-column>
         <el-table-column label="操作" width="220">
@@ -159,10 +176,17 @@
         <el-button type="primary" @click="addCandidate">新增候选人</el-button>
       </div>
       <el-table :data="candidates" :row-class-name="candidateRowClass" @row-click="onCandidateClick" highlight-current-row>
-        <el-table-column prop="name" label="姓名" width="100" />
-        <el-table-column prop="position" label="竞选职位" width="140" />
-        <el-table-column prop="village" label="所属村居" width="110" />
+        <el-table-column prop="name" label="姓名" width="100">
+          <template #header>姓名<span class="field-hint">candidates.name</span></template>
+        </el-table-column>
+        <el-table-column prop="position" label="竞选职位" width="140">
+          <template #header>竞选职位<span class="field-hint">positions.name(关联)</span></template>
+        </el-table-column>
+        <el-table-column prop="village" label="所属村居" width="110">
+          <template #header>所属村居<span class="field-hint">villages.name(关联)</span></template>
+        </el-table-column>
         <el-table-column prop="status" label="审核状态" width="100">
+          <template #header>审核状态<span class="field-hint">candidates.status</span></template>
           <template #default="{ row }">
             <el-tag :type="row.status==='已通过'?'success':row.status==='待审核'?'warning':'info'" effect="plain">{{ row.status }}</el-tag>
           </template>
@@ -184,11 +208,20 @@
         <el-button type="primary" @click="addNotice">发布新公告</el-button>
       </div>
       <el-table :data="notices" row-class-name="clickable-row">
-        <el-table-column prop="title" label="公告标题" min-width="220" show-overflow-tooltip />
-        <el-table-column prop="type" label="类型" width="90" />
-        <el-table-column prop="startTime" label="开始" width="110" />
-        <el-table-column prop="endTime" label="截止" width="110" />
+        <el-table-column prop="title" label="公告标题" min-width="220" show-overflow-tooltip>
+          <template #header>公告标题<span class="field-hint">notices.title</span></template>
+        </el-table-column>
+        <el-table-column prop="type" label="类型" width="90">
+          <template #header>类型<span class="field-hint">notices.type</span></template>
+        </el-table-column>
+        <el-table-column prop="startTime" label="开始" width="110">
+          <template #header>开始<span class="field-hint">notices.start_time</span></template>
+        </el-table-column>
+        <el-table-column prop="endTime" label="截止" width="110">
+          <template #header>截止<span class="field-hint">notices.end_time</span></template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
+          <template #header>状态<span class="field-hint">notices.status</span></template>
           <template #default="{ row }"><el-tag :type="row.status==='已发布'?'success':'info'" effect="plain">{{ row.status }}</el-tag></template>
         </el-table-column>
         <el-table-column label="操作" width="150">
@@ -1127,4 +1160,6 @@ onMounted(loadAll);
 .tmpl-dl:hover { text-decoration:underline; }
 .tmpl-tip { color:#aaa; font-size:11px; white-space:nowrap; }
 .req-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.field-hint { display:block; font-size:10px; color:#bbb; font-weight:400; font-family:Consolas,monospace; line-height:1.2; margin-top:2px; }
+.field-mini { display:block; font-size:10px; color:#b7b7b7; font-weight:400; font-family:Consolas,monospace; line-height:1.1; margin:1px 0 2px; }
 </style>
