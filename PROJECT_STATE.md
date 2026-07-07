@@ -1,5 +1,9 @@
 # PROJECT_STATE
 
+- 2026-07-07 UI 原型入口纠偏：`C:\Users\admin\Downloads\换届选举系统-UI优化.html` 已把“登录后选择归属地”改为“登录页绑定角色与归属地”；非超级管理必须选择行政村/社区后进入本村视角，超级管理进入全区汇总视角。主页面原 1-5 步骤条已改为“本村日历”看板：日期由下方母活动/子节点边走边填，日历只做引用与跳转。只改外部原型文件，未改项目源码；已跑 HTML 内脚本语法解析检查通过。
+
+- 2026-07-06 Vite 与路由守卫修复：`admin/package.json` 已设 `type=module`，`admin/vite.config.ts` 改为 `import.meta.url` 解析目录，消除 Vite CJS Node API 弃用链路；`admin/src/router/index.ts` 已修正未授权回退策略，改为按角色跳首个可访问路由，避免 `/`→`/dashboard` 无限重定向。
+
 - 2026-07-06 开发环境降噪：全局 `C:\Users\admin\.codex\config.toml` 中失效的 `[mcp_servers.node_repl]` 已删除，停止会话启动时报 `MCP client for node_repl failed to start`；已自动备份为 `config.toml.bak-node-repl-20260706-034901`。本轮不改项目代码，只清理工具噪音。
 - 2026-07-05 基础权限补齐：超级管理/经办/运营/审核四角色已做最小对齐；经办补 `election-methods/archives/logs` 菜单，运营补 `archives` 菜单，审核移除公告菜单；后端 `position/material/notice/notification` 写操作已补基础 RBAC；候选人页对审核员隐藏新增工具栏。未完成断点：归档/日志/选举提案/管理员/角色/设置仍有无后端接口，审批页未接 `election-v2/approve`。
 - 2026-07-05 超级管理侧栏补齐：`admin/src/layouts/Sidebar.vue` 已把超级管理可访问路由补进侧栏菜单，覆盖 `election-methods/archives/admins/roles/settings/logs` 等 key，并把文案贴近当前业务稿；本轮只做静态覆盖检查，未跑 build。

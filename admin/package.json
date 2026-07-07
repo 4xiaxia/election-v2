@@ -1,6 +1,7 @@
 {
   "name": "election-admin",
   "version": "1.0.0",
+  "type": "module",
   "description": "城厢区村居换届选举管理系统 - PC管理后台",
   "scripts": {
     "dev": "vite",

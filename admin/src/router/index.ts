@@ -50,6 +50,19 @@ const router = createRouter({
   routes,
 });
 
+function resolveFallbackPathByRole(role?: string): string {
+  const main = routes.find((r: any) => r.path === '/');
+  const children = (main as any)?.children || [];
+  if (!role) return '/login';
+
+  const allowed = children.find((item: any) => {
+    const routeRoles = item?.meta?.roles as string[] | undefined;
+    return Array.isArray(routeRoles) && routeRoles.includes(role);
+  });
+
+  return allowed ? `/${allowed.path}` : '/login';
+}
+
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('token');
   // 移动端 H5 无需登录
@@ -63,7 +76,12 @@ router.beforeEach((to, _from, next) => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
       if (user?.role && !(to.meta.roles as string[]).includes(user.role)) {
-        next('/dashboard');
+        const fallbackPath = resolveFallbackPathByRole(user.role);
+        if (to.path === fallbackPath) {
+          next('/login');
+          return;
+        }
+        next(fallbackPath);
         return;
       }
     } catch {}
