@@ -1423,3 +1423,38 @@
 ### 接力棒
 
 - 下一位打开 HTML，先看 `systemBlueprint` 区，再看日历/岗位/母版详情，不要从碎页面猜业务结构。
+
+## 2026-07-08 母版详情页时间轴表口径纠偏
+
+### 输入
+
+- 用户指出：参考 `E:\w\0\election-v2\选举系统_填空模板 (1).html` 时，不看弹层和上面的非主体部分，只看主体表；不同类型选举的步骤会有一些不一样。
+
+### 发现
+
+- 主体表表头固定：`#/阶段名称/开始日期/结束日期/天数/核心工作/关联材料/上传文件/公告编辑`。
+- 参考稿内有 4 种模板：
+  - `TEMPLATE_VILLAGE`：村民委员会 · 全民直选。
+  - `TEMPLATE_COMMUNITY_DIRECT`：居民委员会 · 全民直选。
+  - `TEMPLATE_COMMUNITY_HOUSEHOLD`：居民委员会 · 户代表选举。
+  - `TEMPLATE_COMMUNITY_REPRESENTATIVE`：居民委员会 · 代表选举。
+- 阶段行来自当前模板 `stages[]`，不同类型行数、阶段名、offset、材料文件可能不同，不能所有类型硬套 11 阶段。
+
+### 动作
+
+- 修正 `换届选举系统-UI优化.html` 中三个锚点：
+  - `dashboard-calendar-stage-link-001`
+  - `election-mother-detail-unit-001`
+  - `election-community-mother-detail-unit-001`
+- 新口径：`elections.content.timeline` 保存当前母活动实际采用的 `templateKey + stages[]`；日历、公告阶段、归档材料都跟这份 stages 对齐。
+- 更新 `DECISIONS.md` 和 `PROJECT_STATE.md`。
+
+### 验证
+
+- `Select-String` 已确认三个锚点存在：`dashboard-calendar-stage-link-001`、`election-mother-detail-unit-001`、`election-community-mother-detail-unit-001`。
+- `node -e` 已解析 HTML 内 `<script>`，结果：`script syntax ok 1`。
+- `git diff --check` 对本轮相关文件无空白错误；仅有 Windows LF/CRLF 提示，不影响提交。
+
+### 接力棒
+
+- 下一步做母版详情页时，先落“模板选择/继承”再落阶段表；不能从旧 11 阶段 seed 直接推所有类型。

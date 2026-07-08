@@ -975,10 +975,11 @@ body{
           下方一行三个业务板块约占首屏高度 <code>1/4</code>；页面字号用全局 <code>rem</code> 比例变量控制。弹窗内容不受此比例限制，但必须 UI 友好。
         </div>
         <div class="anchor-note">
-          📌 母版步骤关联规则 · ID: <code>dashboard-calendar-stage-link-001</code><br>
-          事项名称必须等于母版步骤名：前期准备/选民登记/名单公布/调整解释/代表&小组长/提名/竞选预选/资格审查/选举准备/选举日/村监会&移交。<br>
-          时间必须来自对应步骤的客户填写时间，字段建议: <code>elections.content.timeline[].stageName/dateRange/startDate/endDate</code>。<br>
-          ⚠️ 客户跳步时，只允许该步骤时间为空或状态跳过，不能把时间挪到别的步骤，避免公告、材料、候选人节点错位。
+          📌 母版模板阶段关联规则 · ID: <code>dashboard-calendar-stage-link-001</code><br>
+          事项名称必须等于当前母版模板的 <code>stages[].name</code>，不是所有选举类型硬套同一套阶段名。<br>
+          村委会默认村民直接选举模板；社区按选举方式走居民直接选举 / 户代表选举 / 居民代表选举三类模板，阶段行可不同。<br>
+          时间必须来自对应阶段的客户填写时间，字段建议: <code>elections.content.timeline[].templateKey/stageKey/stageName/startDate/endDate/days</code>。<br>
+          ⚠️ 客户跳步时，只允许该阶段时间为空或状态跳过，不能把时间挪到别的阶段，避免公告、材料、候选人节点错位。
         </div>
         <div class="anchor-note">
           📌 日历真相边界 · ID: <code>dashboard-calendar-truth-001</code><br>
@@ -1055,8 +1056,8 @@ body{
           </div>
           <div class="anchor-note">
             📌 母版详情最小单元 · ID: <code>election-mother-detail-unit-001</code><br>
-            进入 <code>/election/:id</code> 后展示一张可编辑时间轴表：<code>阶段名称/开始日期/结束日期/天数/核心工作/关联材料/上传文件/公告编辑</code>。<br>
-            真相源: <code>elections.content.timeline</code>；阶段名称必须对齐母版 11 阶段，日期和天数由客户填写；跳步时该阶段留空或标跳过，不能把日期挪到别的阶段。<br>
+            进入 <code>/election/:id</code> 后展示一张可编辑时间轴表：<code>#/阶段名称/开始日期/结束日期/天数/核心工作/关联材料/上传文件/公告编辑</code>。<br>
+            真相源: <code>elections.content.timeline</code>；村委会默认使用“村民委员会 · 全民直选”模板，阶段行来自该模板 <code>stages[]</code>，日期和天数由客户填写。<br>
             关联: 上传文件走 <code>materials.scope=archive</code>；公告编辑走 <code>notice-v2</code>；候选报名材料另走 <code>materials.scope=candidate</code>。
           </div>
           <div class="activity-list">
@@ -1203,8 +1204,8 @@ body{
           </div>
           <div class="anchor-note">
             📌 母版详情最小单元 · ID: <code>election-community-mother-detail-unit-001</code><br>
-            进入 <code>/election/:id</code> 后展示一张可编辑时间轴表：<code>阶段名称/开始日期/结束日期/天数/核心工作/关联材料/上传文件/公告编辑</code>。<br>
-            真相源: <code>elections.content.timeline</code>；社区可因选举方式不同调整阶段展示，但同一母活动内阶段名、日程标题、公告阶段必须一一对应。<br>
+            进入 <code>/election/:id</code> 后展示一张可编辑时间轴表：<code>#/阶段名称/开始日期/结束日期/天数/核心工作/关联材料/上传文件/公告编辑</code>。<br>
+            真相源: <code>elections.content.timeline</code>；社区按 <code>elections.election_method</code> 选择模板：居民直接选举、户代表选举、居民代表选举。不同模板阶段行可以不同，但同一母活动内阶段名、日程标题、公告阶段必须一一对应。<br>
             关联: 上传文件走 <code>materials.scope=archive</code>；公告编辑走 <code>notice-v2</code>；候选报名材料另走 <code>materials.scope=candidate</code>。
           </div>
           <div class="activity-list">
