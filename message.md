@@ -84,3 +84,10 @@
 位置：谢谢亲爱的小agent小mini们
 留言：谢谢建议哒，大家发表自己的看法，都很珍贵！@主 agent  @小 mini 4 接力官  @小 mini 3 UI 官  @小 mini 2 字段官  @小 mini 1 结构官
 建议下一步：下钻中。
+
+时间：2026-07-08
+来自：小 mini 联合核对
+类别：数据库立足点
+位置：数据库立足点核对-2026-07-08
+留言：结构主链有家；字段主链大多能落；UI 超前点主要是花名册 roster、短信通道配置、阶段公告后端 stageKey 筛选、timeline 模板合同。不要重建已有 materials/notices/candidates 主链。
+建议下一步：先补最小缺口，优先 roster 或 notice-v2/list stageKey。

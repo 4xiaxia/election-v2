@@ -1538,3 +1538,42 @@ flowchart LR
 - `node --check` 已解析 HTML 内 1 个 `<script>`，结果：`script syntax ok 1`。
 - `Select-String` 已确认 `election-stage-notice-list-001`、`阶段子公告集合`、`多条子公告`、`查看列表` 等锚点/文字已落到 HTML 与接力记录。
 - `git diff --check` 对本轮相关文件无空白错误；仅有 Windows LF/CRLF 提示。
+
+## 2026-07-08 数据库立足点核对
+
+### 输入
+
+- 用户要求：从数据库出发，观察并对比当前设计的功能是否都能在数据库里找到立足之本；哪些已经对应，哪些还没找到家。
+
+### 动作
+
+- 使用 `xiaxia-anchor-marking` 的真相边界规则：不凭空编字段，缺失就标 TODO/缺口。
+- `koaLite` 当前缺 `node_modules`，先执行 `npm ci --omit=dev --ignore-scripts` 恢复只读核对所需依赖；未启动服务，未写数据库。
+- 跑 live schema 只读脚本：`SHOW TABLES`、`SHOW COLUMNS`、关键表 `COUNT(*)`、抽样解析 `elections.content`。
+- 新增 `副船长的航海接力日志/数据库立足点核对-2026-07-08.md`，按“已对上/半对上/未找到家”收口。
+- 更新 `PROJECT_STATE.md` 和 `副船长的航海接力日志/文件索引.md`。
+
+### live schema 结论
+
+- 已有主链表：`users/villages/elections/positions/materials/candidates/notices/notifications/message_reads/election_voters/logs`。
+- 缺表：`roster`。
+- live sample：`elections.content` 当前形状为 `selectionDay/totalDays/timeline/timelineVersion`，没有 `templateKey`，阶段数组叫 `timeline[]`。
+- live `notices` 已支持阶段多公告数据：例如 `S1=3` 条、`S9=6` 条；另有 2 条 `stage_key=''`。
+- live `villages=124`，与甲方 122 名单存在数量差，需另核名单源。
+
+### 主要缺口
+
+1. `roster` 花名册表还没有。
+2. `notice-v2/list` 缺 `stageKey` 后端筛选。
+3. `elections.content` 需要统一 JSON 合同：兼容旧 `timeline[]`，补 `templateKey` 或 `timelineTemplateKey`。
+4. 短信通道配置 UI 有，DB 无配置表；不能宣称短信通道已落库。
+5. 提案审批当前借 `materials.scope=proposal`，口径不够干净，需决定是否一期保留。
+
+### 验证
+
+- live DB 只读查询成功。
+- 未跑完整 build；本轮是数据结构核对，不改业务代码。
+
+### 接力棒
+
+- 下一刀建议按缺口优先级走：先 `roster` 最小表/API，或先补 `notice-v2/list stageKey` 这种小而稳的接口承接。不要重建已有 `materials/notices/candidates` 主链。
