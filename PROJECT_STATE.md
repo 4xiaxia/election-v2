@@ -1,5 +1,7 @@
 # PROJECT_STATE
 
+- 2026-07-08 阶段性离线主文档完成：新增根目录 `阶段性进度与全局认知说明-2026-07-08.md`。定位为无上下文可读的阶段报告和全局认知底图，上半部分可摘给甲方看当前进度、边界、未完成项和下一阶段安排；下半部分给产品/UI/前端/后端/数据库接手，细化到角色视角、页面单元、侧边栏目录、数据库表、缺口、风险、验收和下一步实施顺序。本轮不改业务代码，不跑完整 build。
+
 - 2026-07-08 角色视角数据库盘点完成：新增 `副船长的航海接力日志/数据库角色视角盘点-2026-07-08.md`，按结构官/字段官/UI 官/接力官四个视角，把子管理、超管、运营、审核、普通用户的动作链路走了一遍。结论：旧主表继续保留并补强；优先微调 `elections.content` 合同、`notice-v2/list stageKey`、`position-v2` 输出字段；新增最小 `roster` 表承接花名册；短信通道配置先定 `system_configs` 或 `sms_channels` 边界，不把短信能力过度承诺为已落库。本轮只做文档盘点和计划，未改业务代码。
 
 - 2026-07-08 数据库立足点核对完成：已恢复 `koaLite` 运行依赖并跑 live schema 只读核对，新增 `副船长的航海接力日志/数据库立足点核对-2026-07-08.md`。结论：主链 `villages -> elections -> timeline/positions -> notices/materials/candidates/notifications/election_voters` 都有数据库根；当前没找到家的主要是 `roster` 花名册表、短信通道配置表、定时通知执行器、母版模板库表。半对上的主要是 `elections.content` 当前为 `timeline[]` 且缺 `templateKey`、`notice-v2/list` 暂无 `stageKey` 后端筛选、提案审批借用 `materials.scope=proposal` 口径不够干净。live DB 当前 `villages=124`，仍需另核甲方 122 名单。
