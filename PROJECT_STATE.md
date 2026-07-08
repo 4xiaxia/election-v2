@@ -1,5 +1,7 @@
 # PROJECT_STATE
 
+- 2026-07-08 子管理新建选举现场修复：夏夏用子管理账号在选举管理中新建保存失败，根因是旧字段链断开：新建时未默认带当前子管理 `villageId`，村居下拉只取分页前 10 条导致涧口 `id=28` 不在选项里，保存校验看 `village` 文本而不是 `villageId`，且隐藏的 `electionType` 默认“村委会选举”会让社区“居民代表选举”被后端法定校验拒绝。已修 `admin/src/views/election/index.vue`：子管理锁定当前归属地，村居下拉改用 `village-v2/all`，选举类型按村居类型自动联动，选举方式只显示合法项，保存以 `villageId` 为准。验证：Vite 编译选举页 200；子管理 `15000000000 / 123456 / 经办` 调 `election-v2/add` 创建涧口居委会选举成功，并用超管清理测试记录。
+
 - 2026-07-08 子管理岗位页 roster 小闭环已跑通：新增 `koaLite/scripts/seed-subadmin-roster-demo.js`，幂等填充 `15000000000 / 123456 / 经办` 子管理账号并绑定涧口 `village_id=28`，同时给涧口第十五届 `主任/副主任/委员` 填 3 条 active 在岗花名册样例，并同步 `positions.incumbent*` 摘要字段。已用该子管理账号验证：登录成功、`election-v2/list` 只返回涧口活动、`position-v2/list` 可见一期 3 岗、`roster-v2/list` 可读主任在岗、`roster-v2/add/delete` 可新增后停用，停用后 active 列表消失。Vite 3000 可编译 `positions/index.vue`；为消除既有扫描断点，`admin/src/api/api.ts` 补 `submitMaterial` 兼容导出到 `createMaterial`。
 
 - 2026-07-08 Pearl mini 接力保护：当前不能丢的两层成果已落记录。历史层：timeline、18 公告、仪表盘、archive、母公告、UI 锚点、live DB 盘点、`roster` 后端、`stageKey`、`templateKey`、`position` 扩展字段都已压实，不能重做或覆盖。当前层：`admin/src/views/positions/index.vue` 的岗位页“在岗花名册”弹窗改动已被记录保护；页面 runtime 验证结果见上条子管理小闭环记录。

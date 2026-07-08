@@ -55,7 +55,7 @@
         </el-form-item>
         <div class="form-row">
           <el-form-item label="所属村(社区)" required>
-            <el-select v-model="editForm.villageId" filterable @change="onVillageChange" style="width:100%">
+            <el-select v-model="editForm.villageId" filterable :disabled="isVillageLocked" @change="onVillageChange" style="width:100%">
               <el-option v-for="v in villages" :key="v.id" :label="v.name" :value="v.id" />
             </el-select>
           </el-form-item>
@@ -63,7 +63,7 @@
         <div class="form-row">
           <el-form-item label="选举方式" required>
             <el-select v-model="editForm.electionMethod" placeholder="请选择选举方式" style="width:100%">
-              <el-option v-for="m in electionMethods" :key="m.id" :label="m.name" :value="m.name" />
+              <el-option v-for="m in availableElectionMethods" :key="m.id" :label="m.name" :value="m.name" />
             </el-select>
           </el-form-item>
           <el-form-item label="时间段">
@@ -189,7 +189,7 @@
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { getElections, createElection, updateElection, updateElectionStatus, deleteElection, getVillages, getElectionMethodMap, getPositions, getCandidates, getNotices, getMaterials } from '@/api/api';
+import { getElections, createElection, updateElection, updateElectionStatus, deleteElection, getVillagesAll, getElectionMethodMap, getPositions, getCandidates, getNotices, getMaterials } from '@/api/api';
 import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -206,6 +206,12 @@ const loading = ref(false);
 const elections = ref<any[]>([]);
 const villages = ref<any[]>([]);
 const electionMethods = ref<any[]>([]);
+const currentUser = (() => {
+  try { return JSON.parse(localStorage.getItem('user') || 'null') || {}; } catch { return {}; }
+})();
+const isSuperAdmin = computed(() => currentUser.role === '超级管理');
+const isVillageLocked = computed(() => !isSuperAdmin.value);
+const lockedVillageId = computed(() => String(currentUser.villageId ?? currentUser.village_id ?? ''));
 
 const stats = ref([
   { label: '选举活动', value: '0' }, { label: '进行中', value: '0' },
@@ -224,6 +230,7 @@ const editForm = reactive({
   deadlineAt: '', reviewStartAt: '', reviewEndAt: '', electionEndDate: '',
   smsPhones: '', smsTemplate: '',
 });
+const availableElectionMethods = computed(() => electionMethods.value.filter((m: any) => m.type === editForm.electionType));
 
 // Tiptap 富文本编辑器
 const editor = useEditor({
@@ -311,22 +318,44 @@ const filteredElections = computed(() => {
   return elections.value.filter((e: any) => (e.name||'').toLowerCase().includes(kw) || (e.village||'').toLowerCase().includes(kw));
 });
 
-function onVillageChange(villageId: string) {
-  const v = villages.value.find((v: any) => v.id === villageId);
-  if (v) editForm.village = v.name;
+function inferElectionType(village: any) {
+  const typeText = String(village?.type || village?.name || '');
+  return typeText.includes('居委') || typeText.includes('社区') ? '居委会选举' : '村委会选举';
+}
+
+function syncElectionMethod() {
+  const allowed = electionMethods.value.filter((m: any) => m.type === editForm.electionType);
+  if (!allowed.some((m: any) => m.name === editForm.electionMethod)) {
+    editForm.electionMethod = allowed[0]?.name || '';
+  }
+}
+
+function onVillageChange(villageId: string | number) {
+  const v = villages.value.find((item: any) => String(item.id) === String(villageId));
+  if (!v) return;
+  editForm.villageId = v.id;
+  editForm.village = v.name;
+  editForm.electionType = inferElectionType(v);
+  syncElectionMethod();
+}
+
+function applyLockedVillage() {
+  if (isSuperAdmin.value || !lockedVillageId.value) return;
+  onVillageChange(lockedVillageId.value);
 }
 
 async function fetchData() {
   loading.value = true;
   try {
     const [eleRes, vilRes, emRes] = await Promise.all([
-      getElections(), getVillages(), getElectionMethodMap(),
+      getElections(), getVillagesAll(), getElectionMethodMap(),
     ]);
     elections.value = (eleRes.data?.list || []).map(normalizeElection);
-    villages.value = vilRes.data?.list || [];
+    villages.value = Array.isArray(vilRes.data) ? vilRes.data : (vilRes.data?.list || []);
     electionMethods.value = Object.entries(emRes.data || {}).flatMap(([type, methods]: any) =>
       (methods || []).map((method: string) => ({ id: `${type}:${method}`, type, name: method }))
     );
+    applyLockedVillage();
     stats.value = [
       { label: '选举活动', value: String(elections.value.length) },
       { label: '进行中', value: String(elections.value.filter((e:any) => e.status === 'in_progress').length) },
@@ -384,6 +413,7 @@ function handleAdd() {
     deadlineAt: '', reviewStartAt: '', reviewEndAt: '', electionEndDate: '',
     smsPhones: '', smsTemplate: '',
   });
+  applyLockedVillage();
   dialogVisible.value = true;
 }
 
@@ -391,10 +421,13 @@ async function handleSaveDraft() { await save('pending', '草稿已保存'); }
 async function handlePublish() { await save('in_progress', '已发布'); }
 
 async function save(targetStatus: string, msg: string) {
-  if (!editForm.name || !editForm.village) { ElMessage.warning('请填写选举名称和所属村居'); return; }
+  if (!editForm.name || !editForm.villageId) { ElMessage.warning('请填写选举名称和所属村居'); return; }
+  if (!editForm.village) onVillageChange(editForm.villageId);
+  syncElectionMethod();
   const method = electionMethods.value.find((m: any) => m.name === editForm.electionMethod);
   const data: any = {
     ...editForm,
+    villageId: editForm.villageId,
     electionType: method?.type || editForm.electionType,
     electionMethod: method?.name || editForm.electionMethod,
   };
