@@ -50,6 +50,7 @@ koaLite/start.log
 .claude/
 .codex/
 .codesight/
+.aionrs/
 .reasonix/
 .ctx/cache/
 .vscode/

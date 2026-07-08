@@ -1680,3 +1680,23 @@ flowchart LR
 ### 接力棒
 
 - 下一刀按顺序补 `notice-v2/list stageKey` 查询；然后再做 `elections.content templateKey` 兼容合同和 `position-v2` 输出字段补齐。
+
+## 2026-07-08 Git 扫描目录屏蔽
+
+### 输入
+
+- 用户要求：目录做屏蔽，这些本机工具目录不要让 Git 扫入。
+
+### 发现
+
+- `.aionrs/skills/cron`、`.aionrs/skills/officecli`、`.aionrs/skills/skill-creator` 是 junction，指向 `C:\Users\admin\AppData\Roaming\AionUi\aionui\builtin-skills\auto-inject\...`。
+- 这些目标目录不存在时，`git status` 会反复打印 `could not open directory` warning。
+- `.gitignore` 当前是白名单模式，`!*/` 会让 Git 遍历目录，所以需要显式屏蔽 `.aionrs/`。
+
+### 动作
+
+- 更新 `.gitignore`：在工具缓存目录段新增 `.aionrs/`。
+
+### 验证
+
+- `git status --short` 不再打印 `.aionrs/skills/...` warning，只显示本轮 `.gitignore` 与记录文件改动。

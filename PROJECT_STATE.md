@@ -1,5 +1,7 @@
 # PROJECT_STATE
 
+- 2026-07-08 Git 扫描噪音处理：`.aionrs/skills/cron`、`officecli`、`skill-creator` 是本机 AionUi junction，目标目录不存在时 `git status` 会反复报 `could not open directory`。已在 `.gitignore` 屏蔽 `.aionrs/`，验证 `git status --short` 不再打印这三个目录 warning。
+
 - 2026-07-08 `roster` 花名册最小闭环第一刀完成：新增 `koaLite/db/init_v2.sql` 中 `roster` 最小表，字段为 `id/village_id/session_no/year_start/year_end/post/name/phone/intro/status/created_by/created_at/updated_at`；新增 `koaLite/api/roster-v2.js`，提供 `list/detail/add/update/delete`，其中 `delete` 只将 `status` 置为 `inactive`，不硬删历史在任名录；新增 `admin/src/api/api.ts` 的 `getRosters/getRoster/createRoster/updateRoster/deleteRoster` 包装；新增 `koaLite/scripts/check-roster-v2.js` 最小自检。验证：`node --check koaLite/api/roster-v2.js`、`node --check koaLite/db/db.js`、`node koaLite/scripts/check-roster-v2.js`、live schema `SHOW COLUMNS FROM roster`、`node koaLite/scripts/check-router-api-prefix.js`、roster 路由路径断言均通过。本轮未跑完整 build。
 
 - 2026-07-08 阶段性离线主文档完成：新增根目录 `阶段性进度与全局认知说明-2026-07-08.md`。定位为无上下文可读的阶段报告和全局认知底图，上半部分可摘给甲方看当前进度、边界、未完成项和下一阶段安排；下半部分给产品/UI/前端/后端/数据库接手，细化到角色视角、页面单元、侧边栏目录、数据库表、缺口、风险、验收和下一步实施顺序。本轮不改业务代码，不跑完整 build。
