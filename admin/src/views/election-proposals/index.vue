@@ -53,7 +53,27 @@
 
     <!-- 新建/查看详情弹窗 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="800px" destroy-on-close>
-      <el-form :model="form" label-width="100px" :disabled="dialogMode === 'view'">
+      <div v-if="dialogMode === 'view'" class="proposal-detail">
+        <h3>{{ form.title || '（无标题）' }}</h3>
+        <div class="detail-meta">
+          <el-tag :type="getStatusType(form.status)">{{ form.status }}</el-tag>
+          <span v-if="form.rejectReason" class="reject-inline">驳回理由：{{ form.rejectReason }}</span>
+        </div>
+        <section>
+          <h4>文本报告</h4>
+          <p class="report-content">{{ form.reportContent || '（无内容）' }}</p>
+        </section>
+        <section>
+          <h4>附件材料</h4>
+          <div v-if="form.attachments.length" class="detail-attachments">
+            <a v-for="(att, idx) in form.attachments" :key="idx" :href="att.url" target="_blank" class="attachment-link">
+              {{ att.category }}：{{ att.name || '查看文件' }}
+            </a>
+          </div>
+          <div v-else class="archive-hint">暂无附件</div>
+        </section>
+      </div>
+      <el-form v-else :model="form" label-width="100px">
         <el-form-item label="提案标题">
           <el-input v-model="form.title" placeholder="如：XX村2024年村委会换届选举申请" />
         </el-form-item>
@@ -86,12 +106,6 @@
             </div>
             <el-button type="primary" plain size="small" @click="addAttachment" v-if="dialogMode !== 'view'">+ 添加附件</el-button>
           </div>
-        </el-form-item>
-        <el-form-item label="状态" v-if="dialogMode === 'view'">
-          <el-tag :type="getStatusType(form.status)">{{ form.status }}</el-tag>
-        </el-form-item>
-        <el-form-item label="驳回理由" v-if="dialogMode === 'view' && form.rejectReason">
-          <div class="reject-reason">{{ form.rejectReason }}</div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -289,6 +303,13 @@ async function confirmReject() {
 .attachment-item { display: flex; gap: 8px; align-items: center; }
 .attachment-link { color: #2563eb; font-size: 13px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .archive-hint { color: #a8a29e; font-size: 12px; }
+.proposal-detail { display: flex; flex-direction: column; gap: 16px; }
+.proposal-detail h3 { margin: 0; font-size: 18px; color: #1f2937; }
+.proposal-detail h4 { margin: 0 0 8px; font-size: 14px; color: #374151; }
+.detail-meta { display: flex; align-items: center; gap: 12px; }
+.report-content { margin: 0; white-space: pre-wrap; line-height: 1.7; color: #374151; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; }
+.detail-attachments { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.reject-inline { color: #b91c1c; font-size: 13px; }
 .reject-reason { padding: 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 4px; color: #b91c1c; }
 .field-hint { display:block; font-size:10px; color:#bbb; font-weight:400; font-family:Consolas,monospace; line-height:1.2; margin-top:2px; }
 </style>
