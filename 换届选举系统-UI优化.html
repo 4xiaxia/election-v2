@@ -1,0 +1,2498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>城厢区换届选举系统 · 甲方规则 → 系统落地</title>
+<style>
+:root{
+  /* 主色：沉稳政务绿 */
+  --green:#2f8f5b;
+  --green-d:#1f6e44;
+  --green-l:#e9f6ef;
+  --green-ll:#f4fbf7;
+  /* 权威金 + 深咖 */
+  --gold:#d4af37;
+  --brown-1:#43342a;
+  --brown-2:#2a1c14;
+  --brown-3:#160d07;
+  /* 中性 */
+  --ink:#16202e;
+  --ink-2:#3a4658;
+  --muted:#7a8699;
+  --line:#e7ebf0;
+  --bg:#f3f5f8;
+  --card:#ffffff;
+  --shadow-sm:0 1px 3px rgba(22,32,46,.06),0 1px 2px rgba(22,32,46,.04);
+  --shadow-md:0 6px 20px rgba(22,32,46,.08);
+  --shadow-lg:0 18px 50px rgba(22,32,46,.18);
+  --radius:16px;
+  --radius-sm:11px;
+  --ui-font-base:1rem;
+  --first-screen-row-h:25vh;
+  --first-screen-calendar-w:50%;
+  --first-screen-side-w:50%;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:16px;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:var(--ui-font-base);
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ============ 顶部权威区 ============ */
+.authority-bar{
+  background:radial-gradient(120% 140% at 50% 0%,var(--brown-1) 0%,var(--brown-2) 55%,var(--brown-3) 100%);
+  padding:52px 20px 46px;
+  text-align:center;color:#fff;position:relative;overflow:hidden;
+}
+.authority-bar::before{
+  content:"";position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.035'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+  opacity:.6;
+}
+.authority-bar::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:4px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+.authority-badge{
+  position:relative;display:inline-block;
+  background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.45);
+  color:var(--gold);padding:6px 22px;border-radius:30px;
+  font-size:.8em;letter-spacing:5px;margin-bottom:18px;
+  box-shadow:0 0 22px rgba(212,175,55,.12) inset;
+}
+.authority-bar h1{
+  position:relative;font-size:2.1em;letter-spacing:3px;margin-bottom:8px;
+  font-weight:800;text-shadow:0 2px 16px rgba(0,0,0,.35);
+}
+.authority-bar .sub{position:relative;color:#cbb89c;font-size:.96em;letter-spacing:1px;}
+.authority-rule{
+  position:relative;margin-top:24px;display:inline-flex;gap:14px;flex-wrap:wrap;justify-content:center;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  padding:14px 26px;border-radius:14px;font-size:.86em;backdrop-filter:blur(4px);
+  box-shadow:0 8px 30px rgba(0,0,0,.25);
+}
+.authority-rule .rule-item{display:flex;align-items:center;gap:7px;color:#ece3d4;}
+.authority-rule .rule-icon{color:var(--gold);font-size:1.05em;}
+
+/* 下降箭头 */
+.arrow-down{
+  text-align:center;padding:14px 0 4px;color:#b9a079;font-size:1.4em;letter-spacing:6px;
+  background:linear-gradient(180deg,var(--brown-3),var(--bg));
+}
+.system-area{
+  background:var(--bg);border-bottom:1px solid var(--line);
+  padding:12px 20px;text-align:center;font-size:.8em;color:var(--muted);
+  letter-spacing:3px;font-weight:600;
+}
+
+.container{max-width:1320px;margin:0 auto;padding:18px 20px 0;}
+
+/* ============ 顶部步骤条 ============ */
+.steps{display:flex;justify-content:center;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;}
+.step-col{display:flex;flex-direction:column;align-items:center;}
+.step-node{
+  width:46px;height:46px;border-radius:50%;background:#fff;color:#b6bfca;
+  border:2px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:.92em;transition:all .35s cubic-bezier(.4,0,.2,1);
+  box-shadow:var(--shadow-sm);
+}
+.step-node.done{background:var(--green);color:#fff;border-color:var(--green);}
+.step-node.current{
+  background:#fff;color:var(--green);border-color:var(--green);
+  box-shadow:0 0 0 5px var(--green-l),0 4px 14px rgba(47,143,91,.28);
+  transform:translateY(-2px);
+}
+.step-label{font-size:.76em;color:var(--muted);margin-top:8px;text-align:center;white-space:nowrap;transition:color .3s;}
+.step-label.done{color:var(--green-d);font-weight:600;}
+.step-line{width:42px;height:3px;background:var(--line);margin:21px 2px 0;border-radius:3px;transition:background .35s;}
+.step-line.done{background:linear-gradient(90deg,var(--green),var(--green-d));}
+
+/* ============ 本村日历：引用下方母活动/子节点 ============ */
+.village-calendar{
+  background:#fff;border:1px solid var(--line);border-radius:18px;
+  box-shadow:var(--shadow-md);margin-bottom:24px;overflow:hidden;
+  display:grid;grid-template-columns:minmax(0,var(--first-screen-calendar-w)) minmax(0,var(--first-screen-side-w));
+  max-height:var(--first-screen-row-h);
+}
+.calendar-head{
+  order:2;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;
+  padding:18px 20px;background:linear-gradient(135deg,#f8fbf7,#eef8f2);
+  border-left:1px solid var(--line);overflow:auto;
+}
+.calendar-kicker{font-size:.72em;color:var(--green-d);font-weight:800;letter-spacing:3px;margin-bottom:4px;}
+.calendar-head h3{font-size:1.12em;color:var(--ink);margin:0 0 5px;font-weight:900;}
+.calendar-sub{font-size:.82em;color:var(--muted);line-height:1.5;}
+.calendar-scope{
+  min-width:260px;padding:11px 13px;border-radius:13px;background:#fff;
+  border:1px solid #dce9e1;color:var(--ink-2);font-size:.8em;line-height:1.55;
+}
+.calendar-scope strong{color:var(--green-d);}
+.calendar-grid{
+  order:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px;overflow:auto;
+  max-height:var(--first-screen-row-h);
+}
+.calendar-item{
+  border:1px solid #e5eee8;border-top:4px solid var(--green);
+  border-radius:12px;background:#fff;padding:9px;min-height:108px;
+  display:flex;flex-direction:column;gap:6px;transition:transform .18s,box-shadow .18s;cursor:pointer;
+}
+.calendar-item:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.calendar-date{display:flex;align-items:center;gap:8px;}
+.calendar-date input{
+  width:100%;padding:7px 8px;border:1.5px solid #dfe8e2;border-radius:9px;
+  font-family:inherit;font-size:.82em;color:var(--ink);background:#fbfdfc;
+}
+.calendar-empty-date{
+  font-size:.78em;color:#b26b21;background:#fff8e8;border:1px dashed #e2b971;
+  border-radius:9px;padding:7px 8px;
+}
+.calendar-title{font-size:.82em;font-weight:800;color:var(--ink);line-height:1.3;}
+.calendar-note{font-size:.7em;color:var(--muted);line-height:1.35;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.calendar-node{
+  display:inline-flex;align-items:center;justify-content:center;
+  border:none;border-radius:9px;background:var(--green-ll);color:var(--green-d);
+  font-size:.76em;font-weight:800;padding:7px 9px;cursor:pointer;font-family:inherit;
+}
+.calendar-node:hover{background:var(--green-l);}
+.schedule-modal-overlay{position:fixed;inset:0;background:rgba(20,30,40,.45);display:none;align-items:center;justify-content:center;z-index:118;}
+.schedule-modal-overlay.show{display:flex;}
+.schedule-modal{width:520px;max-width:92vw;background:#fff;border-radius:16px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.28);}
+.schedule-modal h3{margin:0 0 8px;color:var(--ink);font-size:1.05em;}
+.schedule-modal p{margin:8px 0;color:var(--ink-2);font-size:.86em;line-height:1.65;}
+.schedule-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap;}
+@media(max-width:980px){.village-calendar{display:block;max-height:none;}.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;}.calendar-head{flex-direction:column;}.calendar-scope{min-width:0;width:100%;}}
+@media(max-width:560px){.calendar-grid{grid-template-columns:1fr;}}
+
+/* ============ 双栏卡片 ============ */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+@media(max-width:760px){.two-col{grid-template-columns:1fr;}}
+
+.demo-section{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px;box-shadow:var(--shadow-md);margin-bottom:20px;
+  transition:box-shadow .3s,transform .3s;
+}
+.demo-section:hover{box-shadow:var(--shadow-lg);}
+.demo-section h3{
+  font-size:1.06em;font-weight:800;margin-bottom:16px;
+  display:flex;align-items:center;gap:9px;color:var(--ink);
+}
+.demo-section h3 .badge{
+  font-size:.7em;padding:3px 11px;border-radius:20px;
+  background:var(--green-l);color:var(--green-d);font-weight:600;letter-spacing:.5px;
+}
+
+/* ============ 下拉框 ============ */
+.select-box{
+  background:var(--green-ll);border:2px solid var(--line);border-radius:var(--radius-sm);
+  overflow:hidden;transition:border-color .2s,box-shadow .2s;margin-bottom:12px;
+}
+.select-box.open{border-color:var(--green);box-shadow:0 0 0 4px var(--green-l);}
+.select-box.done{border-color:#bfe3cd;background:var(--green-ll);}
+.select-header{
+  padding:13px 16px;display:flex;justify-content:space-between;align-items:center;
+  cursor:pointer;background:#fbfdfc;font-weight:700;font-size:.88em;user-select:none;
+  transition:background .15s;
+}
+.select-header:hover{background:#f2faf6;}
+.select-header .arrow{color:#aab3bf;font-size:.7em;transition:transform .25s;}
+.select-box.open .select-header .arrow{transform:rotate(180deg);color:var(--green);}
+.select-options{display:none;background:#fff;}
+.select-box.open .select-options{display:block;animation:slideDown .22s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.select-option{
+  padding:11px 16px 11px 34px;border-top:1px solid #f1f4f6;font-size:.85em;
+  cursor:pointer;transition:background .15s,color .15s;position:relative;
+}
+.select-option:hover{background:var(--green-ll);color:var(--green-d);}
+.select-option.selected{background:var(--green-l);font-weight:700;color:var(--green-d);}
+.select-option.selected::after{content:" ✓";color:var(--green);font-weight:800;position:absolute;left:14px;}
+.select-option.locked{color:var(--green-d);background:var(--green-ll);cursor:not-allowed;font-weight:600;}
+.select-option.locked::after{content:" 🔒";}
+
+/* ============ 岗位清单 ============ */
+.job-list{
+  display:inline-block;
+  vertical-align:top;
+  width:calc((100% - 24px)/3);
+  min-width:260px;
+  background:var(--green-ll);
+  border-radius:var(--radius-sm);
+  padding:16px;
+  margin-top:12px;
+  border:1px solid #eaf4ee;
+}
+.job-list h4{font-size:.82em;margin-bottom:9px;color:var(--ink-2);font-weight:700;letter-spacing:.5px;}
+.linked-election-select{
+  margin:0 0 10px;
+  padding:10px;
+  border:1px solid #dcefe2;
+  border-radius:10px;
+  background:#fff;
+}
+.linked-election-select label{display:block;color:var(--ink-2);font-size:12px;font-weight:800;margin-bottom:6px;}
+.linked-election-select select{width:100%;border:1.5px solid #dfe6ee;border-radius:8px;padding:8px 9px;font-family:inherit;color:var(--ink);}
+.job-tags{display:flex;flex-wrap:wrap;gap:7px;}
+.job-tag{
+  padding:5px 13px;border-radius:15px;font-size:.77em;
+  background:#fff;border:1px solid #dcefe2;color:var(--green-d);transition:transform .15s;
+}
+.job-tag:hover{transform:translateY(-1px);}
+.job-tag.election{border-color:var(--green);background:var(--green-l);font-weight:600;}
+.job-tag.hired{border-color:#ecd9bf;background:#fdf8f1;color:#9a6b1e;}
+
+/* ============ 参选形式 ============ */
+.form-section{margin-top:16px;}
+.form-section .form-label{font-size:.85em;color:var(--ink-2);font-weight:700;margin-bottom:9px;}
+.form-options{display:flex;flex-wrap:wrap;gap:9px;}
+.form-opt{
+  flex:1;min-width:110px;padding:13px 10px;
+  background:#fff;border:2px solid var(--line);border-radius:var(--radius-sm);
+  text-align:center;font-size:.82em;cursor:pointer;transition:all .2s;font-weight:600;color:var(--muted);
+}
+.form-opt:hover{border-color:var(--green);color:var(--green-d);background:var(--green-ll);}
+.form-opt.active{border-color:var(--green);background:var(--green-l);color:var(--green-d);font-weight:700;box-shadow:0 4px 12px rgba(47,143,91,.15);}
+.form-opt .form-icon{font-size:1.35em;display:block;margin-bottom:3px;}
+
+/* ============ 模板表 ============ */
+.table-section{margin-top:16px;}
+.table-section .table-label{font-size:.85em;color:var(--ink-2);font-weight:700;margin-bottom:9px;}
+.job-table{
+  width:100%;border-collapse:separate;border-spacing:0;font-size:.82em;
+  background:#fff;border-radius:var(--radius-sm);overflow:hidden;
+  box-shadow:var(--shadow-sm);border:1px solid var(--line);
+}
+.job-table th{
+  background:linear-gradient(180deg,var(--ink),#1f2c3e);color:#fff;
+  padding:11px 12px;text-align:left;font-weight:600;font-size:.76em;letter-spacing:.6px;
+}
+.job-table td{padding:10px 12px;border-bottom:1px solid #f1f4f6;background:#fff;transition:background .12s;}
+.job-table tbody tr:last-child td{border-bottom:none;}
+.job-table tbody tr:hover td{background:var(--green-ll);}
+.tag{display:inline-block;padding:2px 9px;border-radius:8px;font-size:.74em;font-weight:700;}
+.tag.election{background:#d8f3dc;color:#1f6e44;}
+.tag.hired{background:#fdf1df;color:#9a6b1e;}
+.tag.self{background:#e8f0fe;color:#1a56db;}
+.tag.group{background:#f3e8ff;color:#6b21a8;}
+
+/* 提示 */
+.lock-hint{
+  margin-top:8px;padding:9px 14px;background:var(--green-l);border-radius:8px;
+  font-size:.76em;color:var(--green-d);border:1px dashed var(--green);
+  animation:fadeIn .4s ease;font-weight:600;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+.rumble{animation:rumble .4s ease;}
+@keyframes rumble{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+
+/* ============ 底部规则 ============ */
+.rules-footer{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 22px;box-shadow:var(--shadow-md);margin-top:20px;margin-bottom:16px;
+}
+.rules-footer h3{font-size:.95em;margin-bottom:12px;font-weight:800;display:flex;align-items:center;gap:8px;}
+.rule-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:11px;}
+.rule-item{
+  padding:11px 15px;background:var(--green-ll);border:1px solid #eaf4ee;border-radius:10px;
+  font-size:.82em;display:flex;align-items:flex-start;gap:8px;color:var(--ink-2);
+}
+.rule-item .rule-icon{font-size:1em;flex-shrink:0;color:var(--green);}
+.footer{text-align:center;color:#aeb6c0;font-size:.74em;padding:20px;letter-spacing:1px;}
+
+/* ============ 表格内控件 ============ */
+.job-link{
+  color:var(--green-d);font-weight:700;cursor:pointer;text-decoration:none;
+  border-bottom:1px dashed var(--green);transition:all .15s;
+}
+.job-link:hover{color:var(--green);border-bottom-style:solid;}
+.job-link::after{content:" →";font-size:.75em;opacity:.5;}
+
+.status-select{
+  padding:4px 8px;border:1.5px solid #d8d8d8;border-radius:7px;
+  font-size:.78em;font-family:inherit;background:#fff;color:#333;cursor:pointer;min-width:82px;
+}
+.status-select:focus{outline:none;border-color:var(--green);}
+.status-select.在岗{color:#1f6e44;border-color:#bfe3cd;background:var(--green-ll);}
+.status-select.竞选{color:#d97706;border-color:#ffe0b2;background:#fffaf3;}
+.status-select.待换{color:#c0392b;border-color:#ffc9cc;background:#fffafa;}
+
+.incumbent-input{
+  width:100%;padding:5px 9px;border:1.5px solid #e4e8ee;border-radius:7px;
+  font-size:.78em;font-family:inherit;background:#fafbfc;color:#333;min-width:74px;transition:border-color .15s,background .15s;
+}
+.incumbent-input:focus{outline:none;border-color:var(--green);background:#fff;}
+.incumbent-input::placeholder{color:#c2c9d2;font-size:.9em;}
+
+/* ============ 岗位详情弹窗 ============ */
+.job-modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(16,13,9,.55);
+  backdrop-filter:blur(3px);z-index:200;justify-content:center;align-items:center;padding:16px;
+}
+.job-modal-overlay.show{display:flex;animation:overlayIn .2s ease;}
+@keyframes overlayIn{from{opacity:0;}to{opacity:1;}}
+.job-modal{
+  background:#fff;border-radius:20px;max-width:620px;width:100%;
+  max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg);
+  animation:modalIn .28s cubic-bezier(.34,1.3,.64,1);
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(24px) scale(.95);}to{opacity:1;transform:translateY(0) scale(1);}}
+.job-modal-header{
+  background:linear-gradient(135deg,var(--ink),#26384e);color:#fff;
+  padding:22px 26px;border-radius:20px 20px 0 0;position:relative;
+}
+.job-modal-header::after{content:"";position:absolute;left:26px;right:26px;bottom:0;height:3px;background:linear-gradient(90deg,var(--gold),transparent);}
+.job-modal-header h3{font-size:1.12em;margin-bottom:5px;font-weight:800;}
+.job-modal-header .sub{font-size:.78em;opacity:.75;}
+.job-modal-body{padding:24px 26px;}
+.job-modal-body .form-row{display:flex;gap:13px;margin-bottom:16px;align-items:flex-end;flex-wrap:wrap;}
+.job-modal-body .form-row .form-col{flex:1;min-width:140px;}
+.job-modal-body .form-col label{display:block;font-size:.77em;font-weight:700;color:var(--ink-2);margin-bottom:5px;}
+.job-modal-body .form-col input,
+.job-modal-body .form-col select,
+.job-modal-body .form-col textarea{
+  width:100%;padding:11px 13px;border:2px solid #e4e8ee;border-radius:11px;
+  font-size:.85em;font-family:inherit;background:#fafbfc;transition:border-color .15s,background .15s;
+}
+.job-modal-body .form-col input:focus,
+.job-modal-body .form-col select:focus,
+.job-modal-body .form-col textarea:focus{outline:none;border-color:var(--green);background:#fff;}
+.job-modal-body .form-col textarea{resize:vertical;min-height:72px;}
+.job-modal-body .section-title{font-size:.9em;font-weight:800;color:var(--ink);margin:20px 0 11px;padding-left:11px;border-left:3px solid var(--green);}
+.job-modal-footer{padding:16px 26px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;}
+.job-modal-footer .btn{padding:9px 22px;border-radius:11px;font-size:.85em;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .15s;}
+.job-modal-footer .btn-cancel{background:#eef1f4;color:#5b6472;}
+.job-modal-footer .btn-cancel:hover{background:#e2e6ec;}
+.job-modal-footer .btn-save{background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;}
+.job-modal-footer .btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(47,143,91,.3);}
+
+.tpl-badge{display:inline-block;padding:3px 11px;border-radius:10px;font-size:.72em;font-weight:700;margin-left:6px;}
+.tpl-badge.village{background:#d8f3dc;color:#1f6e44;}
+.tpl-badge.community{background:#e3f2fd;color:#1565c0;}
+
+.status-tag{display:inline-block;padding:2px 9px;border-radius:8px;font-size:.74em;font-weight:700;}
+.status-tag.in-office{background:#d8f3dc;color:#1f6e44;}
+.status-tag.campaigning{background:#fff3e0;color:#d97706;}
+.status-tag.changing{background:#ffebee;color:#c0392b;}
+
+/* 保存提示 toast */
+.toast{
+  position:fixed;top:22px;left:50%;transform:translateX(-50%);
+  background:rgba(22,32,46,.94);color:#fff;padding:11px 26px;border-radius:12px;
+  font-size:.85em;font-weight:600;z-index:999;box-shadow:var(--shadow-lg);
+  animation:toastIn .3s ease;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+
+/* ========== 步骤3 岗位操作区 ========== */
+.pos-actions{display:flex;flex-direction:column;gap:9px;margin-top:4px;}
+.pos-row{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  background:#fff;border:1px solid var(--line,#e3e8ee);border-radius:11px;padding:9px 12px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.pos-row:hover{border-color:var(--green);box-shadow:0 2px 10px rgba(47,143,91,.08);}
+.pos-btn{
+  flex:1;min-width:120px;text-align:left;cursor:pointer;
+  border:none;background:linear-gradient(135deg,var(--green-l),var(--green-ll));
+  color:var(--green-d);font-weight:700;font-size:.86em;font-family:inherit;
+  padding:9px 14px;border-radius:9px;transition:all .15s;
+}
+.pos-btn:hover{background:linear-gradient(135deg,var(--green-ll),#dff3e8);transform:translateY(-1px);}
+.pos-mini{
+  cursor:pointer;border:1.5px solid #d8e3df;background:#f7faf9;color:#3a6b52;
+  font-size:.78em;font-weight:600;font-family:inherit;padding:7px 12px;border-radius:9px;
+  transition:all .15s;white-space:nowrap;
+}
+.pos-mini:hover{border-color:var(--green);background:var(--green-l);color:var(--green-d);}
+.pos-mini.dl{color:#1a56db;border-color:#cdddfb;background:#f3f7ff;}
+.pos-mini.dl:hover{background:#e3edff;color:#1546b0;}
+
+/* ========== 全屏弹层（岗位说明 / 表格下载） ========== */
+.full-overlay{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(15,23,35,.55);backdrop-filter:blur(4px);
+  justify-content:center;align-items:center;padding:24px;
+}
+.full-overlay.show{display:flex;animation:fadeIn .2s ease;}
+.full-modal{
+  background:#fff;width:min(960px,100%);max-height:92vh;display:flex;flex-direction:column;
+  border-radius:18px;overflow:hidden;box-shadow:var(--shadow-lg);
+  animation:modalIn .25s ease;
+}
+.full-header{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:18px 24px;background:linear-gradient(135deg,#1a1a2e,#2d3a4a);color:#fff;
+}
+.full-header h3{font-size:1.08em;margin:0;}
+.full-header .full-tools{display:flex;gap:8px;}
+.full-header .full-tools button{
+  cursor:pointer;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);
+  color:#fff;font-size:.8em;font-family:inherit;padding:6px 12px;border-radius:9px;transition:all .15s;
+}
+.full-header .full-tools button:hover{background:rgba(255,255,255,.22);}
+.full-body{padding:20px 24px;overflow:auto;flex:1;}
+.full-footer{
+  display:flex;align-items:center;gap:10px;justify-content:flex-end;
+  padding:14px 24px;border-top:1px solid #eee;background:#fafbfc;
+}
+.full-footer .btn-cancel,.full-footer .btn-save{
+  padding:9px 20px;border-radius:10px;font-size:.85em;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .15s;
+}
+.full-footer .btn-cancel{background:#f0f0f0;color:#666;}
+.full-footer .btn-cancel:hover{background:#e4e4e4;}
+.full-footer .btn-save{background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;}
+.full-footer .btn-save:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(47,143,91,.25);}
+.full-footer .btn-jump{
+  margin-right:auto;text-decoration:none;
+  background:linear-gradient(135deg,#1a56db,#1546b0);color:#fff;font-weight:700;
+  font-size:.85em;padding:9px 18px;border-radius:10px;transition:all .15s;
+}
+.full-footer .btn-jump:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(26,86,219,.3);}
+.full-footer .btn-jump.disabled{background:#c4c9d4;pointer-events:none;}
+
+/* 富文本编辑器 */
+.rt-toolbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.rt-toolbar button{
+  cursor:pointer;border:1.5px solid #e0e3e8;background:#fff;color:#444;
+  font-size:.8em;font-family:inherit;padding:7px 11px;border-radius:8px;transition:all .15s;
+}
+.rt-toolbar button:hover{border-color:var(--green);background:var(--green-l);color:var(--green-d);}
+.rt-editor{
+  min-height:300px;border:2px solid #e3e8ee;border-radius:12px;padding:16px 18px;
+  font-size:.9em;line-height:1.7;outline:none;background:#fff;overflow:auto;
+}
+.rt-editor:focus{border-color:var(--green);}
+.rt-editor:empty:before{content:attr(data-ph);color:#b8bdc7;}
+.rt-preview{
+  min-height:300px;border:2px dashed #d8e3df;border-radius:12px;padding:16px 18px;
+  font-size:.9em;line-height:1.7;background:#fcfdfe;overflow:auto;
+}
+.rt-preview h3{margin:.4em 0;color:#1a1a2e;}
+.rt-preview ul,.rt-preview ol{margin:.4em 0 .4em 1.4em;}
+
+/* 表格下载编辑 */
+.dl-label{display:block;font-size:.82em;font-weight:700;color:#555;margin-bottom:6px;}
+.dl-input{
+  width:100%;padding:11px 14px;border:2px solid #e3e8ee;border-radius:11px;
+  font-size:.88em;font-family:inherit;background:#fafbfc;
+}
+.dl-input:focus{outline:none;border-color:var(--green);background:#fff;}
+.dl-preview{
+  margin-top:16px;padding:14px 16px;background:#f7faf9;border:1px dashed #cdddfb;border-radius:11px;font-size:.85em;
+}
+.dl-preview a{color:#1a56db;font-weight:600;word-break:break-all;}
+.dl-empty{color:#9aa0ab;font-style:italic;}
+/* 干部花名册 */
+.roster-section { margin-top:18px; }
+.roster-section .roster-label {
+  font-size:0.9em; font-weight:700; margin-bottom:10px;
+  padding-left:12px; border-left:3px solid var(--green);
+  display:flex; align-items:center; gap:8px; color:#1a1a2e;
+}
+.roster-table {
+  width:100%; border-collapse:collapse; font-size:0.8em;
+  background:#fff; border-radius:10px; overflow:hidden;
+  box-shadow:0 1px 8px rgba(0,0,0,0.04);
+}
+.roster-table th {
+  background:#1a1a2e; color:#fff; padding:9px 10px; text-align:left;
+  font-weight:600; font-size:0.92em; letter-spacing:0.5px;
+}
+.roster-table td { padding:6px 8px; border-bottom:1px solid #f0f0f0; vertical-align:middle; }
+.roster-table tr:last-child td { border-bottom:none; }
+.roster-table tbody tr:hover td { background:#f8faf9; }
+.roster-input {
+  width:100%; padding:5px 8px; border:1.5px solid #e0e0e0; border-radius:6px;
+  font-size:0.95em; font-family:inherit; background:#fafbfc; color:#333;
+}
+.roster-input:focus { outline:none; border-color:var(--green); background:#fff; }
+.roster-select {
+  padding:5px 8px; border:1.5px solid #e0e0e0; border-radius:6px;
+  font-size:0.95em; font-family:inherit; background:#fff; color:#333; min-width:108px;
+}
+.roster-select:focus { outline:none; border-color:var(--green); }
+.roster-actions { display:flex; gap:4px; }
+.roster-btn {
+  width:28px; height:28px; border-radius:7px; border:none; cursor:pointer;
+  font-size:1em; font-weight:700; font-family:inherit;
+  display:inline-flex; align-items:center; justify-content:center; transition:all .15s;
+}
+.roster-btn.add { background:#edf7f0; color:var(--green); }
+.roster-btn.add:hover { background:var(--green); color:#fff; }
+.roster-btn.del { background:#ffebee; color:#c62828; }
+.roster-btn.del:hover { background:#c62828; color:#fff; }
+.roster-foot { margin-top:8px; display:flex; gap:8px; align-items:center; }
+.roster-add-row {
+  padding:7px 14px; border-radius:9px; border:1.5px dashed var(--green);
+  background:#f4fbf7; color:var(--green); font-size:0.82em; font-weight:600;
+  cursor:pointer; font-family:inherit; transition:all .15s;
+}
+.roster-add-row:hover { background:var(--green); color:#fff; }
+.roster-save {
+  padding:7px 18px; border-radius:9px; border:none;
+  background:linear-gradient(135deg,var(--green),#2d6a4f); color:#fff;
+  font-size:0.82em; font-weight:700; cursor:pointer; font-family:inherit;
+  transition:all .15s;
+}
+.roster-save:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(64,145,108,0.25); }
+.roster-empty { text-align:center; color:#aaa; font-size:0.95em; padding:16px 0; }
+/* 换届选举表：状态色 + 详情按钮 + 阶段区块 */
+.status-select.st-incumbent{color:#2d6a4f;border-color:#c8e6c9;background:#fafff9;}
+.status-select.st-signup{color:#1565c0;border-color:#bbdefb;background:#f5faff;}
+.status-select.st-nominate{color:#00838f;border-color:#b2ebf2;background:#f3fbfc;}
+.status-select.st-formal{color:#6a1b9a;border-color:#e1bee7;background:#faf5fc;}
+.status-select.st-campaign{color:#e67e22;border-color:#ffe0b2;background:#fffaf5;}
+.status-select.st-vote{color:#bf5e00;border-color:#ffccbc;background:#fff7f3;}
+.status-select.st-review{color:#b58700;border-color:#fff2c2;background:#fffdf5;}
+.status-select.st-result{color:#c62828;border-color:#ffcdd2;background:#fffafa;}
+.detail-btn{padding:5px 13px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--green),#2d6a4f);color:#fff;font-size:.8em;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s;}
+.detail-btn:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(64,145,108,.25);}
+.stage-block{display:none;margin-top:6px;}
+.incumbent-mode .hide-on-incumbent{display:none !important;}
+.hide-always{display:none !important;}
+/* ===== 竞选报名：两栏布局 ===== */
+.campaign-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:768px){.campaign-grid{grid-template-columns:1fr;}}
+.campaign-col{display:flex;flex-direction:column;}
+.campaign-subtitle{font-size:.88em;font-weight:700;color:var(--ink);margin-bottom:8px;padding-left:10px;border-left:3px solid var(--green);}
+.rte-toolbar{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;}
+.rte-btn{min-width:32px;height:30px;padding:0 8px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:.82em;transition:all .15s;font-family:inherit;}
+.rte-btn:hover{background:var(--green-ll);border-color:var(--green);}
+.rte-editor{min-height:170px;max-height:320px;overflow-y:auto;border:2px solid #e0e3e8;border-radius:10px;padding:12px;font-size:.85em;line-height:1.6;background:#fafbfc;color:var(--ink);}
+.rte-editor:focus{outline:none;border-color:var(--green);background:#fff;}
+.rte-editor:empty:before{content:attr(data-placeholder);color:#bbb;pointer-events:none;}
+.campaign-save-btn{margin-top:8px;padding:8px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--green),#2d6a4f);color:#fff;font-size:.83em;font-weight:600;cursor:pointer;align-self:flex-start;transition:all .15s;}
+.campaign-save-btn:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(64,145,108,.25);}
+.dl-template-row{display:flex;gap:8px;}
+.dl-url-input{flex:1;padding:9px 12px;border:2px solid #e0e3e8;border-radius:10px;font-size:.83em;font-family:inherit;background:#fafbfc;color:var(--ink);}
+.dl-url-input:focus{outline:none;border-color:var(--green);background:#fff;}
+.dl-save-btn{padding:9px 18px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:.83em;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.dl-save-btn:hover{background:#2d6a4f;}
+.dl-link{display:block;margin-top:8px;padding:9px 14px;background:var(--green-ll);border:1px dashed var(--green);border-radius:8px;color:var(--green);font-size:.82em;font-weight:600;text-decoration:none;transition:all .15s;}
+.dl-link:hover{background:#e0f3e8;}
+.upload-main-btn{padding:14px 24px;border-radius:12px;border:2px dashed var(--green);background:var(--green-ll);color:var(--green);font-size:.9em;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;}
+.upload-main-btn:hover{background:#e0f3e8;transform:translateY(-1px);}
+.upload-config-trigger{margin-top:10px;font-size:.78em;color:var(--ink-2);cursor:pointer;text-decoration:underline;text-align:center;}
+.upload-config-trigger:hover{color:var(--green);}
+.upload-config-box{margin-top:8px;padding:14px;background:#f8faf9;border:1px solid #e0e3e8;border-radius:10px;}
+.config-label{display:block;font-size:.78em;font-weight:700;color:var(--ink-2);margin-bottom:6px;}
+.config-textarea{width:100%;min-height:130px;padding:10px 12px;border:2px solid #e0e3e8;border-radius:8px;font-size:.78em;font-family:'Consolas','Monaco',monospace;background:#fff;color:var(--ink);resize:vertical;}
+.config-textarea:focus{outline:none;border-color:var(--green);}
+.config-save-btn{margin-top:8px;padding:7px 16px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:.8em;font-weight:600;cursor:pointer;transition:all .15s;}
+.config-save-btn:hover{background:#2d6a4f;}
+.upload-status{margin-top:8px;font-size:.78em;color:var(--ink-2);}
+/* ===== 日期范围 ===== */
+.date-range-row{display:flex;align-items:center;gap:10px;}
+.date-input{flex:1;padding:9px 12px;border:2px solid #e0e3e8;border-radius:10px;font-size:.83em;font-family:inherit;background:#fafbfc;color:var(--ink);}
+.date-input:focus{outline:none;border-color:var(--green);background:#fff;}
+.date-sep{font-size:.95em;color:var(--ink-2);font-weight:700;}
+/* ===== 在岗位位人员 → 花名册卡片 ===== */
+#jmRosterCards{margin-top:2px;}
+.rc-empty{padding:18px;text-align:center;color:var(--ink-2);background:var(--green-ll);border-radius:10px;font-size:.85em;}
+.rc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.rc-count{font-size:.82em;font-weight:700;color:var(--ink-2);}
+.rc-nav{display:flex;gap:6px;}
+.rc-arrow{width:30px;height:30px;border:none;border-radius:8px;background:var(--green);color:#fff;font-size:1.1em;cursor:pointer;transition:all .15s;}
+.rc-arrow:hover:not([disabled]){transform:translateY(-1px);box-shadow:0 3px 10px rgba(47,143,91,.3);}
+.rc-arrow[disabled]{background:#cfd8d2;cursor:not-allowed;}
+.rc-card{background:#fff;border:1px solid #e6efe9;border-left:4px solid var(--green);border-radius:12px;padding:16px 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.rc-card .rc-row{display:flex;gap:12px;padding:7px 0;border-bottom:1px dashed #eef3f0;font-size:.85em;}
+.rc-card .rc-row:last-child{border-bottom:none;}
+.rc-card .rc-k{flex:0 0 92px;color:var(--ink-2);font-weight:600;}
+.rc-card .rc-v{flex:1;color:var(--ink);}
+.rc-card .rc-name{font-weight:700;color:var(--green);font-size:1.02em;}
+.rc-card .rc-intro .rc-v{line-height:1.5;}
+
+/* ============ 视图页 ============ */
+.view-page{min-height:100vh;}
+
+/* 登录页 */
+.login-page{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a1a2e 0%,#2d3a4a 50%,#1b3a2d 100%);}
+.login-card{background:#fff;border-radius:20px;padding:40px 36px;width:460px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;}
+.login-logo{font-size:2.8em;margin-bottom:8px;}
+.login-card h2{font-size:1.15em;color:var(--ink);margin-bottom:6px;font-weight:800;}
+.login-hint{font-size:.82em;color:var(--muted);margin-bottom:22px;}
+.login-form{display:flex;flex-direction:column;gap:12px;}
+.login-input{padding:13px 16px;border:2px solid #e0e3e8;border-radius:12px;font-size:.9em;font-family:inherit;background:#fafbfc;color:var(--ink);transition:all .2s;}
+.login-input:focus{outline:none;border-color:var(--green);background:#fff;box-shadow:0 0 0 4px var(--green-l);}
+.login-location-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.login-scope-hint{padding:10px 12px;border-radius:12px;background:var(--green-ll);color:var(--green-d);font-size:.78em;font-weight:700;text-align:left;line-height:1.45;}
+.login-btn{margin-top:6px;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;font-size:.92em;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(47,143,91,.35);}
+.login-default{margin-top:16px;font-size:.76em;color:var(--muted);}
+.login-error{margin-top:8px;font-size:.8em;color:#c62828;min-height:1.2em;}
+
+/* 选择页 */
+.select-page{display:flex;align-items:flex-start;justify-content:center;padding:48px 20px;background:linear-gradient(180deg,#f0f4f1 0%,#fff 100%);}
+.select-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:36px;width:560px;max-width:92vw;box-shadow:var(--shadow-lg);}
+.select-card h2{font-size:1.1em;color:var(--ink);margin-bottom:24px;text-align:center;font-weight:800;}
+.type-choice{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.type-card{border:2px solid var(--line);border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .25s;background:#fafbfc;}
+.type-card:hover{border-color:var(--green);background:var(--green-ll);transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.type-card.active{border-color:var(--green);background:var(--green-ll);box-shadow:0 0 0 4px var(--green-l);}
+.type-icon{font-size:2.4em;margin-bottom:8px;}
+.type-name{font-size:1.02em;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.type-count{font-size:.78em;color:var(--muted);}
+.location-area{padding-top:8px;border-top:1px solid var(--line);}
+.location-label{display:block;font-size:.85em;font-weight:700;color:var(--ink-2);margin-bottom:10px;}
+.location-row{display:flex;gap:10px;}
+.location-select{flex:1;padding:12px 14px;border:2px solid #e0e3e8;border-radius:12px;font-size:.88em;font-family:inherit;background:#fafbfc;color:var(--ink);cursor:pointer;}
+.location-select:focus{outline:none;border-color:var(--green);background:#fff;}
+.enter-btn{padding:12px 28px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;font-size:.88em;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;font-family:inherit;}
+.enter-btn:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(47,143,91,.3);}
+
+/* 主页面顶部栏 */
+.main-topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;background:linear-gradient(135deg,var(--green-d),var(--green));padding:12px 24px;box-shadow:var(--shadow-md);position:sticky;top:0;z-index:50;}
+.topbar-loc{color:#fff;font-size:.92em;font-weight:700;}
+.topbar-actions{display:flex;align-items:center;gap:10px;}
+.topbar-back{padding:6px 16px;border:1.5px solid rgba(255,255,255,.4);border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-size:.8em;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;}
+.topbar-back:hover{background:rgba(255,255,255,.25);}
+.topbar-bell{width:34px;height:34px;border:1.5px solid rgba(255,255,255,.45);border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer;position:relative;}
+.topbar-bell:after{content:"";position:absolute;right:7px;top:7px;width:7px;height:7px;border-radius:50%;background:#ffdf6b;}
+.notify-modal-overlay{position:fixed;inset:0;background:rgba(20,30,40,.45);display:none;align-items:center;justify-content:center;z-index:120;}
+.notify-modal-overlay.show{display:flex;}
+.notify-modal{width:420px;max-width:92vw;background:#fff;border-radius:16px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.28);}
+.notify-modal h3{margin:0 0 10px;color:var(--ink);font-size:1.05em;}
+.notify-modal p{margin:8px 0;color:var(--ink-2);font-size:.84em;line-height:1.6;}
+.notify-form{display:grid;gap:10px;margin-top:12px;}
+.notify-form label{display:grid;gap:5px;color:var(--ink-2);font-size:12px;font-weight:700;}
+.notify-form input,.notify-form select,.notify-form textarea{width:100%;box-sizing:border-box;border:1.5px solid #dde3ea;border-radius:9px;padding:9px 10px;font-family:inherit;font-size:13px;color:var(--ink);background:#fff;}
+.notify-form textarea{min-height:76px;resize:vertical;}
+.notify-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+.calendar-bell{margin-top:8px;border:1px solid #d7eadf;border-radius:999px;background:#f7fffa;color:#1f7a4d;font-size:12px;font-weight:700;padding:6px 10px;cursor:pointer;font-family:inherit;}
+
+/* 单列模式 */
+.two-col.single-mode{grid-template-columns:1fr;}
+.locked-scope-note{
+  margin-bottom:12px;padding:10px 12px;border-radius:11px;
+  background:#f6fbf8;border:1px solid #dcece3;color:var(--green-d);
+  font-size:.8em;font-weight:700;
+}
+.scope-select-hidden{display:none !important;}
+.method-card{
+  display:inline-block;
+  vertical-align:top;
+  width:calc((100% - 24px)/3);
+  min-width:260px;
+  max-width:none;
+  margin-top:10px;
+  border-radius:12px;
+}
+.method-card .select-header{
+  min-height:42px;
+}
+.method-card .field-map{
+  margin:6px 10px 10px;
+}
+.method-form-card{
+  display:inline-block;
+  vertical-align:top;
+  width:calc((100% - 24px)/3);
+  min-width:260px;
+  max-width:none;
+  margin:10px 0 0 12px;
+  padding:12px;
+  border:1px solid #e1e8ef;
+  border-radius:12px;
+  background:#fff;
+}
+.method-form-card .form-label{margin-bottom:8px;}
+.method-form-card .form-options{gap:8px;flex-wrap:wrap;}
+.method-form-card .anchor-note{margin-top:10px;}
+.activity-panel{
+  display:inline-block;
+  vertical-align:top;
+  width:calc((100% - 24px)/3);
+  min-width:260px;
+  margin:10px 0 0 12px;
+  padding:14px;
+  border:1px solid #dfe8ee;
+  border-radius:14px;
+  background:#fff;
+}
+.activity-panel h4{margin:0 0 10px;color:var(--ink);font-size:.96em;}
+.activity-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.activity-panel-head h4{margin:0;}
+.activity-more{border:0;background:transparent;color:var(--green-d);font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;}
+.activity-list{display:grid;gap:8px;}
+.activity-card{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:6px;
+  align-items:center;
+  padding:10px 12px;
+  border:1px solid #edf1f4;
+  border-radius:10px;
+  background:#fbfcfd;
+  font-size:12px;
+}
+.activity-card strong{color:var(--ink);}
+.activity-card span{color:var(--muted);}
+.activity-card button{border:1px solid #cfe4d8;border-radius:8px;background:#f7fffa;color:var(--green-d);font-weight:800;cursor:pointer;padding:6px 8px;font-family:inherit;}
+@media(max-width:760px){
+  .method-card,.method-form-card,.activity-panel{width:100%;max-width:none;margin-left:0;}
+  .job-list{width:100%;max-width:none;}
+  .activity-card{grid-template-columns:1fr;}
+}
+.anchor-note{
+  margin:8px 0 0;
+  padding:7px 9px;
+  border:1px dashed #b8d8c6;
+  border-radius:8px;
+  background:#fbfffc;
+  color:#456052;
+  font-size:11px;
+  line-height:1.55;
+  text-align:left;
+}
+.anchor-note code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:10px;
+  color:#205b3b;
+}
+.anchor-stack{display:grid;gap:6px;margin-top:8px;}
+.anchor-mini{font-size:10px;color:#6b7d72;}
+.field-map{
+  margin:-6px 0 2px;
+  color:#7a8798;
+  font-size:10px;
+  line-height:1.35;
+  text-align:left;
+}
+.field-map code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color:#2b6c49;
+}
+.system-blueprint{
+  margin:14px 0 18px;
+  border:1px solid #dfe8e3;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:var(--shadow-sm);
+  overflow:hidden;
+}
+.blueprint-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  padding:14px 16px;
+  background:linear-gradient(135deg,#f7fbf8,#eef7f2);
+  border-bottom:1px solid #e4ede8;
+}
+.blueprint-head h3{margin:0;color:var(--ink);font-size:1rem;font-weight:900;}
+.blueprint-head p{margin:3px 0 0;color:var(--ink-2);font-size:.78rem;line-height:1.5;}
+.blueprint-badge{flex:0 0 auto;border:1px solid #cfe4d8;border-radius:8px;padding:6px 9px;background:#fff;color:var(--green-d);font-size:.72rem;font-weight:800;}
+.blueprint-grid{display:grid;grid-template-columns:1.1fr 1fr 1.2fr;gap:12px;padding:14px 16px;}
+.blueprint-card{border:1px solid #edf1f4;border-radius:10px;background:#fbfcfd;padding:12px;min-width:0;}
+.blueprint-card h4{margin:0 0 8px;color:var(--ink);font-size:.86rem;font-weight:900;}
+.funnel-list,.sidebar-map,.field-chain{display:grid;gap:7px;}
+.funnel-step,.side-row,.field-row{display:grid;gap:3px;border-left:3px solid var(--green);padding:7px 8px;background:#fff;border-radius:8px;font-size:.73rem;line-height:1.45;}
+.funnel-step strong,.side-row strong,.field-row strong{color:var(--ink);font-weight:900;}
+.funnel-step span,.side-row span,.field-row span{color:var(--ink-2);}
+.side-row{border-left-color:#d4af37;}
+.field-row{border-left-color:#8b6fc7;}
+.blueprint-rule{margin-top:10px;padding:8px 9px;border-radius:8px;background:#f7fffa;color:#365845;font-size:.72rem;line-height:1.5;border:1px dashed #b8d8c6;}
+@media(max-width:980px){.blueprint-grid{grid-template-columns:1fr;}.blueprint-head{flex-direction:column;}}
+.login-location-grid > div{min-width:0;}
+.login-location-grid .login-input{width:100%;}
+</style>
+</head>
+<body>
+
+<!-- ============ 登录页 ============ -->
+<div id="view-login" class="view-page login-page">
+  <div class="login-card">
+    <div class="login-logo">🏛️</div>
+    <h2>城厢区换届选举系统</h2>
+    <p class="login-hint">登录时绑定角色和归属地，子管理直接进入本村/社区</p>
+    <div class="login-form">
+      <select id="loginRole" class="login-input" onchange="onLoginRoleChange()">
+        <option value="超级管理">超级管理（全区汇总视角）</option>
+        <option value="村/社区管理员">村/社区管理员</option>
+        <option value="经办/书记">经办/书记</option>
+        <option value="运营/小编">运营/小编</option>
+        <option value="审核">审核</option>
+      </select>
+      <div class="field-map">字段：<code>users.role</code>；登录参数：<code>role</code></div>
+      <input type="text" id="loginUser" class="login-input" placeholder="账号" value="123456">
+      <div class="field-map">字段：<code>users.phone</code>；登录参数：<code>phone</code>；当前 demo 用账号占位</div>
+      <input type="password" id="loginPass" class="login-input" placeholder="密码" value="123456">
+      <div class="field-map">字段：<code>users.password</code>；登录参数：<code>password</code>；页面不显示真实密文</div>
+      <div id="loginLocationBlock" style="display:none;">
+        <div class="login-location-grid">
+          <div>
+            <select id="loginType" class="login-input" onchange="onLoginTypeChange()">
+              <option value="">选择归属类型</option>
+              <option value="village">行政村</option>
+              <option value="community">社区</option>
+            </select>
+            <div class="field-map">字段：<code>villages.type</code></div>
+          </div>
+          <div>
+            <select id="loginLocation" class="login-input">
+              <option value="">先选择归属类型</option>
+            </select>
+            <div class="field-map">字段：<code>users.village_id</code> → <code>villages.id/name</code></div>
+          </div>
+        </div>
+      </div>
+      <div id="loginScopeHint" class="login-scope-hint">超级管理不绑定单个村/社区，登录后先看全区汇总列表。</div>
+      <div class="anchor-note">
+        🔐 登录/归属锚点 · ID: <code>login-scope-auth-001</code><br>
+        API: <code>POST /auth-v2/login</code>；参数: <code>phone,password,role,villageId</code><br>
+        表: <code>users.role/users.village_id</code> + <code>villages.id/name/type</code>；子管理锁定归属，超管只加外围列表。
+      </div>
+      <button class="login-btn" onclick="doLogin()">进 入 系 统 →</button>
+    </div>
+    <p class="login-default">默认账号密码均为 123456</p>
+    <p id="loginError" class="login-error"></p>
+  </div>
+</div>
+
+<!-- ============ 归属地选择页 ============ -->
+<div id="view-select" class="view-page select-page" style="display:none;">
+  <div class="select-card">
+    <h2>选择归属地</h2>
+    <div class="type-choice">
+      <div class="type-card" id="typeVillage" onclick="selectType('village')">
+        <div class="type-icon">🏡</div>
+        <div class="type-name">行政村</div>
+        <div class="type-count">93 个</div>
+      </div>
+      <div class="type-card" id="typeCommunity" onclick="selectType('community')">
+        <div class="type-icon">🏙️</div>
+        <div class="type-name">社区</div>
+        <div class="type-count">29 个</div>
+      </div>
+    </div>
+    <div id="locationSelectArea" class="location-area" style="display:none;">
+      <label class="location-label">选择具体归属地</label>
+      <div class="location-row">
+        <select id="locationSelect" class="location-select"></select>
+        <button class="enter-btn" onclick="enterMain()">进 入 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 主页面 ============ -->
+<div id="view-main" class="view-page" style="display:none;">
+  <div class="main-topbar">
+    <span class="topbar-loc" id="currentLocationDisplay">—</span>
+    <span class="anchor-mini">💾 ID: shell-scope-display-001 · user.role + user.village_id · 子管理内容源，上级视角只做外围列表下钻</span>
+    <div class="topbar-actions">
+      <button class="topbar-bell" title="通知设置" onclick="openNotifySettings()">🔔</button>
+      <button class="topbar-back" onclick="goBack()">← 返回登录</button>
+    </div>
+  </div>
+
+<div class="container">
+
+  <section class="system-blueprint" id="systemBlueprint">
+    <div class="blueprint-head">
+      <div>
+        <h3>系统施工导览：业务漏斗 × 侧边栏目录 × 数据库字段</h3>
+        <p>给第一次接手的人看的总入口：先看谁决定谁，再看页面怎么跳，最后看字段挂哪里。所有页面都从同一条母活动链路往下走。</p>
+      </div>
+      <div class="blueprint-badge">ID: system-global-funnel-001</div>
+    </div>
+    <div class="blueprint-grid">
+      <div class="blueprint-card">
+        <h4>1. 业务漏斗：谁在谁前面</h4>
+        <div class="funnel-list">
+          <div class="funnel-step"><strong>归属地</strong><span><code>villages.id/type/name</code> 决定这是村还是社区；子管理登录后锁定一个归属地。</span></div>
+          <div class="funnel-step"><strong>母活动</strong><span><code>elections.id/village_id/session_no</code> 决定一届换届；所有岗位、材料、公告、候选人都挂它。</span></div>
+          <div class="funnel-step"><strong>时间轴</strong><span><code>elections.content.timeline</code> 决定 11 个阶段；日历、公告阶段、归档材料都读它。</span></div>
+          <div class="funnel-step"><strong>岗位</strong><span><code>positions.election_id/name/quota</code> 决定主任/副主任/委员；同岗位不同届次不能混。</span></div>
+          <div class="funnel-step"><strong>材料与候选人</strong><span><code>materials.scope=candidate</code> 审核通过后生成/关联 <code>candidates</code>；<code>scope=archive</code> 只归档。</span></div>
+        </div>
+        <div class="blueprint-rule">📌 真相边界 · ID: <code>system-truth-order-001</code>：页面只能投影这条链，不能把日期、岗位、材料、候选人做成各自一套真相。</div>
+      </div>
+
+      <div class="blueprint-card">
+        <h4>2. 侧边栏目录：每个菜单吃哪层</h4>
+        <div class="sidebar-map">
+          <div class="side-row"><strong>村居管理</strong><span>维护 <code>villages</code>；它在最前面，决定后面列表默认范围。</span></div>
+          <div class="side-row"><strong>选举活动管理</strong><span>维护 <code>elections</code> 和母版详情 <code>/election/:id</code>；阶段表、公告编辑、归档入口都从这里进。</span></div>
+          <div class="side-row"><strong>岗位管理</strong><span>维护 <code>positions</code>；必须先选母活动，再看岗位需求、在岗干部、岗位状态。</span></div>
+          <div class="side-row"><strong>材料提交管理</strong><span>吃 <code>materials.scope=candidate</code>；筛选顺序是归属地 → 母活动 → 岗位 → 参选形式。</span></div>
+          <div class="side-row"><strong>候选人管理</strong><span>吃 <code>candidates</code>；来源是材料审核通过 + 后台导入，按同一岗位下钻。</span></div>
+          <div class="side-row"><strong>审核/通知/归档</strong><span>审核改 <code>materials/candidates.status</code>；通知写 <code>notifications</code>；归档只看 <code>materials.scope=archive</code>。</span></div>
+        </div>
+        <div class="blueprint-rule">🔌 侧边栏锚点 · ID: <code>system-sidebar-route-map-001</code>：菜单不是平铺功能，都是同一漏斗不同层的入口。</div>
+      </div>
+
+      <div class="blueprint-card">
+        <h4>3. 字段决定链：谁决定谁</h4>
+        <div class="field-chain">
+          <div class="field-row"><strong><code>users.village_id</code></strong><span>决定子管理默认归属地；超级管理不绑定，先看外层列表再下钻。</span></div>
+          <div class="field-row"><strong><code>villages.type</code></strong><span>决定选举方式集合：村委会固定村民直接选举；社区可直选/户代表/居民代表。</span></div>
+          <div class="field-row"><strong><code>elections.id</code></strong><span>决定所有业务归属，是岗位、材料、候选人、公告、选民登记的主锚。</span></div>
+          <div class="field-row"><strong><code>timeline[].stageKey</code></strong><span>决定日程、子公告、阶段归档材料的位置；跳步只能空着或标跳过。</span></div>
+          <div class="field-row"><strong><code>positions.id</code></strong><span>决定报名材料和候选人属于哪个岗位；岗位说明/下载资源也必须带它。</span></div>
+          <div class="field-row"><strong><code>roster.post</code></strong><span>决定岗位详情“在岗”卡片展示谁；匹配 <code>post=positions.name</code>，只做最小花名册。</span></div>
+          <div class="field-row"><strong><code>materials.candidate_id</code></strong><span>决定报名材料与候选人的血缘；只有审核通过才回填，归档材料永不生成候选人。</span></div>
+        </div>
+        <div class="blueprint-rule">💾 字段漏斗锚点 · ID: <code>system-field-decision-chain-001</code>：先有范围，再有母活动，再有阶段/岗位，最后才有材料、候选人、通知和归档。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="village-calendar" id="villageCalendar">
+    <div class="calendar-head">
+      <div>
+        <div class="calendar-kicker">本村日历 · 引用母活动节点</div>
+        <h3 id="dashboardContextTitle">当前归属地：—</h3>
+        <div class="calendar-sub" id="dashboardContextMeta">
+          今天日期：<strong id="todayDisplay">—</strong>　
+          当前角色：<strong id="roleDisplay">—</strong>　
+          登录手机号：<strong id="phoneDisplay">—</strong>
+        </div>
+        <div class="anchor-note">
+          💾 登录上下文字段 · ID: <code>dashboard-login-context-001</code><br>
+          字段: <code>villages.name/type</code> + <code>users.role</code> + <code>users.phone</code>。<br>
+          规则: 后台管理员账号只认手机号；已在登录选择归属地后，子管理页面不再重复出现无意义的村/社区大标题。
+        </div>
+        <div class="anchor-note">
+          ⚠️ 子管理视角修正 · ID: <code>dashboard-sub-scope-warning-001</code><br>
+          子管理进入后禁止出现“总管理/全区管理/超级管理”口径；只显示当前锁定的 <code>villages.name/type</code> 与本村/社区日程。
+        </div>
+        <div class="anchor-note">
+          🧩 日历组件施工禁令 · ID: <code>dashboard-calendar-component-001</code><br>
+          当前 <code>calendar-grid</code> 是 demo 问题稿；正式 Vue 页面必须用框架日历组件，不手搓日历。谁手搓谁王八蛋0。<br>
+          候选: <code>@fullcalendar/vue3</code> 或现有框架 <code>Element Plus Calendar</code>；数据源仍是 <code>elections.content.timeline</code>。
+        </div>
+        <div class="anchor-note">
+          🎨 首屏比例规则 · ID: <code>dashboard-first-screen-ratio-001</code><br>
+          日历日程区域不得超过首屏高度 <code>1/4</code>、宽度 <code>1/2</code>；右侧 <code>1/2</code> 放归属地名称、今天日期、当前角色、用户手机号。<br>
+          下方一行三个业务板块约占首屏高度 <code>1/4</code>；页面字号用全局 <code>rem</code> 比例变量控制。弹窗内容不受此比例限制，但必须 UI 友好。
+        </div>
+        <div class="anchor-note">
+          📌 母版步骤关联规则 · ID: <code>dashboard-calendar-stage-link-001</code><br>
+          事项名称必须等于母版步骤名：前期准备/选民登记/名单公布/调整解释/代表&小组长/提名/竞选预选/资格审查/选举准备/选举日/村监会&移交。<br>
+          时间必须来自对应步骤的客户填写时间，字段建议: <code>elections.content.timeline[].stageName/dateRange/startDate/endDate</code>。<br>
+          ⚠️ 客户跳步时，只允许该步骤时间为空或状态跳过，不能把时间挪到别的步骤，避免公告、材料、候选人节点错位。
+        </div>
+        <div class="anchor-note">
+          📌 日历真相边界 · ID: <code>dashboard-calendar-truth-001</code><br>
+          表: <code>elections.content.timeline</code>；接口: <code>GET /election-v2/detail?id</code><br>
+          禁止: 日历只是投影和跳转，不单独造日期真相。
+        </div>
+      </div>
+      <div class="calendar-scope" id="calendarScope">当前范围加载中...</div>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+  </section>
+
+  <div class="two-col">
+
+    <!-- 左：村 -->
+    <div>
+      <div class="demo-section" id="villagePanel">
+        <h3>🏡 行政村<span class="badge">93 个</span></h3>
+        <div class="anchor-note">
+          💾 行政村范围锚点 · ID: <code>unit-village-scope-001</code><br>
+          表: <code>villages.id/name/type/status</code>；接口: <code>GET /village-v2/list</code> / <code>GET /village-v2/all</code><br>
+          设计: 子管理直接锁定一个村；超管先看全区村列表，再下钻复用本块。
+        </div>
+        <div class="locked-scope-note" id="vScopeNote" style="display:none;"></div>
+
+        <div class="select-box" id="vStep1">
+          <div class="select-header" onclick="toggleSelect('vStep1')">📍 归属地 <span class="sel-val">点击选择 →</span><span class="arrow">▾</span></div>
+          <div class="select-options">
+            <div class="select-option" onclick="pickVillage('龙桥街道 · 泗华村')">龙桥街道 · 泗华村</div>
+            <div class="select-option" onclick="pickVillage('华亭镇 · 东太村')">华亭镇 · 东太村</div>
+            <div class="select-option" onclick="pickVillage('常太镇 · 常太村')">常太镇 · 常太村</div>
+            <div class="select-option" onclick="pickVillage('灵川镇 · 径里村')">灵川镇 · 径里村</div>
+          </div>
+        </div>
+
+        <div class="select-box method-card" id="vStep2">
+          <div class="select-header" onclick="toggleSelect('vStep2')">🗳️ 选举方式 <span class="sel-val">—</span><span class="arrow">▾</span></div>
+          <div class="select-options">
+            <div class="select-option locked selected">村民直接选举（全民直选）</div>
+          </div>
+          <div class="field-map">字段：<code>elections.election_method</code>；关联：<code>villages.type=村委会</code> 时固定为村民直接选举</div>
+        </div>
+        <div class="form-section method-form-card" id="vStep4">
+          <div class="form-label">✋ 参选人支持形式（可多选）</div>
+          <div class="form-options">
+            <div class="form-opt active" onclick="toggleForm(this)"><span class="form-icon">🙋</span>个人自荐</div>
+            <div class="form-opt active" onclick="toggleForm(this)"><span class="form-icon">👥</span>村民联名推荐</div>
+          </div>
+          <div class="anchor-note">
+            📌 筛选伏笔 · ID: <code>material-candidate-form-filter-001</code><br>
+            关联侧边栏：<code>材料提交管理</code> + <code>候选人管理</code>；字段: <code>candidates.recommend_type</code>，材料侧字段 TODO 待确认。<br>
+            规则: 选举方式右侧渐进显示参选形式，后续列表按此筛选材料和候选人。
+          </div>
+        </div>
+        <div class="activity-panel" id="vActivityList">
+          <div class="activity-panel-head">
+            <h4>🗂️ 本村历史选举活动列表（最近5场）</h4>
+            <button class="activity-more" onclick="showToast('跳转：侧边栏 / 选举活动管理 / 全部活动')">查看更多 →</button>
+          </div>
+          <div class="anchor-note">
+            🔌 侧边栏跳转锚点 · ID: <code>election-activity-sidebar-route-001</code><br>
+            侧边栏位置: <code>选举活动管理 / 全部活动</code>；前端路由: <code>/election</code>；详情路由: <code>/election/:id</code>。<br>
+            规则: 子管理点“查看更多”进入本村活动列表；列表点某场进入该选举活动母版内容（时间轴、材料、公告编辑）。
+          </div>
+          <div class="anchor-note">
+            📌 大母版归档单位 · ID: <code>election-mother-archive-unit-001</code><br>
+            接口: <code>GET /election-v2/list?villageId&pageSize=5</code>；表: <code>elections.id/village_id/name/session_no/election_type/election_method/status/election_end_date/content.timeline</code>。<br>
+            规则: 每一场选举活动就是一个大母版，也是一个存档单位；文件名建议 <code>活动名称 | 时间</code>。
+          </div>
+          <div class="anchor-note">
+            📦 母版归档结构伏笔 · ID: <code>archive-mother-folder-001</code><br>
+            <code>活动名称|时间/阶段子文件夹/存档材料</code>：管理后台上传，走 <code>materials.scope=archive/stage_key/material_no/file_url</code>。<br>
+            <code>下载资源</code>：前端给人下载的模板/资源；<code>其他</code>：暂时不知道怎么定义的文件，先收纳不丢。
+          </div>
+          <div class="anchor-note">
+            📌 母版详情最小单元 · ID: <code>election-mother-detail-unit-001</code><br>
+            进入 <code>/election/:id</code> 后展示一张可编辑时间轴表：<code>阶段名称/开始日期/结束日期/天数/核心工作/关联材料/上传文件/公告编辑</code>。<br>
+            真相源: <code>elections.content.timeline</code>；阶段名称必须对齐母版 11 阶段，日期和天数由客户填写；跳步时该阶段留空或标跳过，不能把日期挪到别的阶段。<br>
+            关联: 上传文件走 <code>materials.scope=archive</code>；公告编辑走 <code>notice-v2</code>；候选报名材料另走 <code>materials.scope=candidate</code>。
+          </div>
+          <div class="activity-list">
+            <div class="activity-card"><strong>第十五届村委会换届选举</strong><span>2026</span><button onclick="showToast('进入母版详情：第十五届村委会换届选举 / 时间轴材料公告')">进入母版</button></div>
+            <div class="activity-card"><strong>第十四届村委会换届选举</strong><span>2021</span><button onclick="showToast('进入母版详情：第十四届村委会换届选举')">进入母版</button></div>
+            <div class="activity-card"><strong>第十三届村委会换届选举</strong><span>2018</span><button onclick="showToast('进入母版详情：第十三届村委会换届选举')">进入母版</button></div>
+            <div class="activity-card"><strong>第十二届村委会换届选举</strong><span>2015</span><button onclick="showToast('进入母版详情：第十二届村委会换届选举')">进入母版</button></div>
+            <div class="activity-card"><strong>第十一届村委会换届选举</strong><span>2012</span><button onclick="showToast('进入母版详情：第十一届村委会换届选举')">进入母版</button></div>
+          </div>
+        </div>
+        <div class="lock-hint" id="vLockHint" style="display:none;">🔒 农村锁死全民直选，系统自动匹配，无需手动选择</div>
+
+        <div class="job-list" id="vStep3" style="margin-top:8px;">
+          <h4>📋 选举类岗位</h4>
+          <div class="linked-election-select">
+            <label>关联选举活动</label>
+            <select>
+              <option>第十五届村委会换届选举</option>
+              <option>第十四届村委会换届选举</option>
+              <option>第十三届村委会换届选举</option>
+            </select>
+            <div class="field-map">字段：<code>positions.election_id</code> → <code>elections.id/name/session_no</code>；列表来自 <code>GET /election-v2/list?villageId</code></div>
+          </div>
+          <div class="anchor-note">
+            💾 岗位锚点 · ID: <code>position-village-list-001</code><br>
+            侧边栏位置: <code>岗位管理</code>；必须先关联当前选举活动 <code>elections.id</code>，每一届岗位需求可能不同。<br>
+            表: <code>positions.id/election_id/name/quota/duty/material_requirements/sort_weight/enabled/elected_candidates/enroll_start_at/enroll_end_at</code><br>
+            接口: <code>GET /position-v2/list?electionId</code>；编辑: <code>POST /position-v2/update</code>；岗位文件下载优先匹配 <code>positions.material_requirements</code>。
+          </div>
+          <div class="pos-actions">
+            <div class="pos-row">
+              <button class="pos-btn" onclick="openJobDetail('v_dir','village')">村委会主任</button>
+              <button class="pos-mini" onclick="openDesc('v_dir')">📝 岗位说明</button>
+              <button class="pos-mini dl" onclick="openDownload('v_dir')">⬇️ 表格下载</button>
+            </div>
+            <div class="pos-row">
+              <button class="pos-btn" onclick="openJobDetail('v_dep','village')">村委会副主任</button>
+              <button class="pos-mini" onclick="openDesc('v_dep')">📝 岗位说明</button>
+              <button class="pos-mini dl" onclick="openDownload('v_dep')">⬇️ 表格下载</button>
+            </div>
+            <div class="pos-row">
+              <button class="pos-btn" onclick="openJobDetail('v_mem','village')">村委委员</button>
+              <button class="pos-mini" onclick="openDesc('v_mem')">📝 岗位说明</button>
+              <button class="pos-mini dl" onclick="openDownload('v_mem')">⬇️ 表格下载</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="roster-section" id="vRosterSection">
+          <div class="roster-label"><span>📒 当前村委干部花名册</span></div>
+          <div class="anchor-note">
+            ⚠️ 花名册锚点 · ID: <code>roster-village-current-001</code><br>
+            定义: 本村在职干部花名册，由子管理录入；必须有 <code>届数</code>，因为任期可能 5 年。<br>
+            字段建议: <code>village_id/session_no/year_start/post/name/phone/intro</code>；当前 schema 暂无独立花名册表，TODO: 确认新增最小 roster 表。<br>
+            联动: 本期岗位状态为 <code>在岗</code> 时，点击岗位详情弹窗，按 <code>post=positions.name</code> 显示花名册中该职位的在任干部。
+          </div>
+          <table class="roster-table" id="vRosterTable">
+            <thead><tr><th>第几届</th><th>年份起始</th><th>岗位</th><th>在任干部姓名</th><th>联系方式</th><th>干部简介</th><th style="width:66px;">操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="roster-foot">
+            <button class="roster-add-row" onclick="addRosterRow('village')">＋ 添加一行</button>
+            <button class="roster-save" onclick="saveRoster('village')">💾 保存花名册</button>
+          </div>
+        </div>
+
+        <div class="table-section" id="vStep5">
+          <div class="table-label">📊 换届选举表</div>
+          <div class="anchor-note">
+            📦 活动-岗位组合锚点 · ID: <code>election-position-table-001</code><br>
+            表: <code>elections.id/village_id/name/session_no/election_type/election_method/status</code> + <code>positions.election_id</code><br>
+            接口: <code>GET /election-v2/list?villageId</code> + <code>GET /position-v2/list?electionId</code>。
+          </div>
+          <div class="lock-hint" id="vHint">👆 请先选择归属地，后续步骤将自动解锁</div>
+          <table class="job-table" id="vTable" style="display:none;">
+            <thead><tr><th>xx届</th><th>岗位</th><th>参选形式</th><th>需求人数</th><th>岗位状态</th><th>点击进入详情</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右：社区 -->
+    <div>
+      <div class="demo-section" id="communityPanel">
+        <h3>🏙️ 社区<span class="badge">29 个</span></h3>
+        <div class="anchor-note">
+          💾 社区范围锚点 · ID: <code>unit-community-scope-001</code><br>
+          表: <code>villages.id/name/type/status</code>；接口: <code>GET /village-v2/list?type=居委会</code><br>
+          设计: 社区与行政村共用同一套后端和页面，只由 <code>villages.type</code> 与选举方式区分。
+        </div>
+        <div class="locked-scope-note" id="cScopeNote" style="display:none;"></div>
+
+        <div class="select-box" id="cStep1">
+          <div class="select-header" onclick="toggleSelect('cStep1')">📍 归属地 <span class="sel-val">点击选择 →</span><span class="arrow">▾</span></div>
+          <div class="select-options">
+            <div class="select-option" onclick="pickCommunity('龙桥街道 · 兴安社区')">龙桥街道 · 兴安社区</div>
+            <div class="select-option" onclick="pickCommunity('凤凰山街道 · 南门社区')">凤凰山街道 · 南门社区</div>
+            <div class="select-option" onclick="pickCommunity('霞林街道 · 沟头社区')">霞林街道 · 沟头社区</div>
+            <div class="select-option" onclick="pickCommunity('华亭镇 · 华亭社区')">华亭镇 · 华亭社区</div>
+          </div>
+        </div>
+
+        <div class="select-box method-card" id="cStep2">
+          <div class="select-header" onclick="toggleSelect('cStep2')">🗳️ 选举方式 <span class="sel-val">—</span><span class="arrow">▾</span></div>
+          <div class="select-options">
+            <div class="select-option" onclick="pickCMode(this,'居民直接选举（全民直选）')">居民直接选举（全民直选）</div>
+            <div class="select-option" onclick="pickCMode(this,'户的代表选举（户代表选举）')">户的代表选举（户代表选举）⭐ 最常用</div>
+            <div class="select-option" onclick="pickCMode(this,'居民代表选举（代表选举）')">居民代表选举（代表选举）</div>
+          </div>
+          <div class="field-map">字段：<code>elections.election_method</code>；关联：<code>villages.type=居委会</code> 时三选一</div>
+        </div>
+        <div class="form-section method-form-card" id="cStep4">
+          <div class="form-label">✋ 参选人支持形式（可多选）</div>
+          <div class="form-options">
+            <div class="form-opt active" onclick="toggleForm(this)"><span class="form-icon">🙋</span>个人自荐</div>
+            <div class="form-opt active" onclick="toggleForm(this)"><span class="form-icon">👥</span>群众联名推荐</div>
+          </div>
+          <div class="anchor-note">
+            📌 筛选伏笔 · ID: <code>material-candidate-community-form-filter-001</code><br>
+            关联侧边栏：<code>材料提交管理</code> + <code>候选人管理</code>；字段: <code>candidates.recommend_type</code>，材料侧字段 TODO 待确认。<br>
+            规则: 社区选举方式确定后，右侧参选形式作为材料/候选人列表筛选条件。
+          </div>
+        </div>
+        <div class="activity-panel" id="cActivityList">
+          <div class="activity-panel-head">
+            <h4>🗂️ 本社区历史选举活动列表（最近5场）</h4>
+            <button class="activity-more" onclick="showToast('跳转：侧边栏 / 选举活动管理 / 全部活动')">查看更多 →</button>
+          </div>
+          <div class="anchor-note">
+            🔌 侧边栏跳转锚点 · ID: <code>election-community-activity-sidebar-route-001</code><br>
+            侧边栏位置: <code>选举活动管理 / 全部活动</code>；前端路由: <code>/election</code>；详情路由: <code>/election/:id</code>。<br>
+            规则: 子管理点“查看更多”进入本社区活动列表；列表点某场进入该选举活动母版内容（时间轴、材料、公告编辑）。
+          </div>
+          <div class="anchor-note">
+            📌 大母版归档单位 · ID: <code>election-community-mother-archive-unit-001</code><br>
+            接口: <code>GET /election-v2/list?villageId&pageSize=5</code>；表: <code>elections.id/village_id/name/session_no/election_type/election_method/status/election_end_date/content.timeline</code>。<br>
+            规则: 每一场社区选举活动也是一个大母版和存档单位；文件名建议 <code>活动名称 | 时间</code>。
+          </div>
+          <div class="anchor-note">
+            📦 母版归档结构伏笔 · ID: <code>archive-community-mother-folder-001</code><br>
+            <code>活动名称|时间/阶段子文件夹/存档材料</code>：管理后台上传，走 <code>materials.scope=archive/stage_key/material_no/file_url</code>。<br>
+            <code>下载资源</code>：前端给人下载的模板/资源；<code>其他</code>：暂时不知道怎么定义的文件，先收纳不丢。
+          </div>
+          <div class="anchor-note">
+            📌 母版详情最小单元 · ID: <code>election-community-mother-detail-unit-001</code><br>
+            进入 <code>/election/:id</code> 后展示一张可编辑时间轴表：<code>阶段名称/开始日期/结束日期/天数/核心工作/关联材料/上传文件/公告编辑</code>。<br>
+            真相源: <code>elections.content.timeline</code>；社区可因选举方式不同调整阶段展示，但同一母活动内阶段名、日程标题、公告阶段必须一一对应。<br>
+            关联: 上传文件走 <code>materials.scope=archive</code>；公告编辑走 <code>notice-v2</code>；候选报名材料另走 <code>materials.scope=candidate</code>。
+          </div>
+          <div class="activity-list">
+            <div class="activity-card"><strong>第十五届居委会换届选举</strong><span>2026</span><button onclick="showToast('进入母版详情：第十五届居委会换届选举 / 时间轴材料公告')">进入母版</button></div>
+            <div class="activity-card"><strong>第十四届居委会换届选举</strong><span>2021</span><button onclick="showToast('进入母版详情：第十四届居委会换届选举')">进入母版</button></div>
+            <div class="activity-card"><strong>第十三届居委会换届选举</strong><span>2018</span><button onclick="showToast('进入母版详情：第十三届居委会换届选举')">进入母版</button></div>
+            <div class="activity-card"><strong>第十二届居委会换届选举</strong><span>2015</span><button onclick="showToast('进入母版详情：第十二届居委会换届选举')">进入母版</button></div>
+            <div class="activity-card"><strong>第十一届居委会换届选举</strong><span>2012</span><button onclick="showToast('进入母版详情：第十一届居委会换届选举')">进入母版</button></div>
+          </div>
+        </div>
+        <div class="lock-hint" id="cModeHint" style="display:none;"></div>
+
+        <div class="job-list" id="cStep3" style="margin-top:8px;">
+          <h4>📋 选举类岗位</h4>
+          <div class="linked-election-select">
+            <label>关联选举活动</label>
+            <select>
+              <option>第十五届居委会换届选举</option>
+              <option>第十四届居委会换届选举</option>
+              <option>第十三届居委会换届选举</option>
+            </select>
+            <div class="field-map">字段：<code>positions.election_id</code> → <code>elections.id/name/session_no</code>；列表来自 <code>GET /election-v2/list?villageId</code></div>
+          </div>
+          <div class="anchor-note">
+            💾 岗位锚点 · ID: <code>position-community-list-001</code><br>
+            侧边栏位置: <code>岗位管理</code>；必须先关联当前选举活动 <code>elections.id</code>，每一届岗位需求可能不同。<br>
+            表: <code>positions.id/election_id/name/quota/duty/material_requirements/sort_weight/enabled/elected_candidates/enroll_start_at/enroll_end_at</code><br>
+            接口: <code>GET /position-v2/list?electionId</code>；编辑: <code>POST /position-v2/update</code>；岗位文件下载优先匹配 <code>positions.material_requirements</code>。
+          </div>
+          <div class="pos-actions">
+            <div class="pos-row">
+              <button class="pos-btn" onclick="openJobDetail('c_dir','community')">居委会主任</button>
+              <button class="pos-mini" onclick="openDesc('c_dir')">📝 岗位说明</button>
+              <button class="pos-mini dl" onclick="openDownload('c_dir')">⬇️ 表格下载</button>
+            </div>
+            <div class="pos-row">
+              <button class="pos-btn" onclick="openJobDetail('c_dep','community')">居委会副主任</button>
+              <button class="pos-mini" onclick="openDesc('c_dep')">📝 岗位说明</button>
+              <button class="pos-mini dl" onclick="openDownload('c_dep')">⬇️ 表格下载</button>
+            </div>
+            <div class="pos-row">
+              <button class="pos-btn" onclick="openJobDetail('c_mem','community')">居委会委员</button>
+              <button class="pos-mini" onclick="openDesc('c_mem')">📝 岗位说明</button>
+              <button class="pos-mini dl" onclick="openDownload('c_mem')">⬇️ 表格下载</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="roster-section" id="cRosterSection">
+          <div class="roster-label"><span>📒 当前社区居委干部花名册</span></div>
+          <div class="anchor-note">
+            ⚠️ 花名册锚点 · ID: <code>roster-community-current-001</code><br>
+            定义: 本社区在职干部花名册，由子管理录入；必须有 <code>届数</code>，因为任期可能 5 年。<br>
+            字段建议: <code>village_id/session_no/year_start/post/name/phone/intro</code>；当前 schema 暂无独立花名册表，TODO: 与行政村共用一个最小 roster 表。<br>
+            联动: 本期岗位状态为 <code>在岗</code> 时，点击岗位详情弹窗，按 <code>post=positions.name</code> 显示花名册中该职位的在任干部。
+          </div>
+          <table class="roster-table" id="cRosterTable">
+            <thead><tr><th>第几届</th><th>年份起始</th><th>岗位</th><th>在任干部姓名</th><th>联系方式</th><th>干部简介</th><th style="width:66px;">操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="roster-foot">
+            <button class="roster-add-row" onclick="addRosterRow('community')">＋ 添加一行</button>
+            <button class="roster-save" onclick="saveRoster('community')">💾 保存花名册</button>
+          </div>
+        </div>
+
+        <div class="table-section" id="cStep5">
+          <div class="table-label">📊 换届选举表</div>
+          <div class="anchor-note">
+            📦 活动-岗位组合锚点 · ID: <code>election-community-position-table-001</code><br>
+            表: <code>elections.election_type/election_method/session_no/committee_size/deputy_count</code> + <code>positions</code><br>
+            接口: <code>GET /election-v2/list?villageId</code>；社区选举方式来自 <code>GET /election-v2/methods</code>。
+          </div>
+          <div class="lock-hint" id="cHint">👆 请先选择归属地，后续步骤将自动解锁</div>
+          <table class="job-table" id="cTable" style="display:none;">
+            <thead><tr><th>xx届</th><th>岗位</th><th>参选形式</th><th>需求人数</th><th>岗位状态</th><th>点击进入详情</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="rules-footer">
+    <h3>📋 系统内置硬规则（不可逾越）</h3>
+    <div class="rule-grid">
+      <div class="rule-item"><span class="rule-icon">🔒</span>农村锁死全民直选，不设其他选举方式</div>
+      <div class="rule-item"><span class="rule-icon">🔀</span>社区三选一：直选 / 户代表 / 代表选举</div>
+      <div class="rule-item"><span class="rule-icon">🚫</span>村社岗位完全分离，不可跨着任职</div>
+      <div class="rule-item"><span class="rule-icon">👥</span>居民选举 vs 村民选举，两套选民不可互通</div>
+      <div class="rule-item"><span class="rule-icon">🛡️</span>村委（主任、副主任、委员）亲属回避</div>
+      <div class="rule-item"><span class="rule-icon">📋</span>仅村委/居委主任、副主任、委员可自荐</div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+</div><!-- /view-main -->
+
+<!-- ============ 日程详情弹窗 ============ -->
+<div class="schedule-modal-overlay" id="scheduleModalOverlay" onclick="if(event.target===this)closeScheduleDetail()">
+  <div class="schedule-modal">
+    <h3 id="scheduleModalTitle">日程详情</h3>
+    <p><strong>日程日期：</strong><span id="scheduleModalDate">—</span></p>
+    <p id="scheduleModalNote">—</p>
+    <div class="anchor-note">
+      🧩 日程弹窗锚点 · ID: <code>dashboard-schedule-modal-001</code><br>
+      格子只展示摘要；详情、通知设置、跳转节点放进弹窗。数据源仍是 <code>elections.content.timeline[].stageName/dateRange/startDate/endDate</code>。
+    </div>
+    <div class="schedule-modal-actions">
+      <button class="btn btn-cancel" onclick="closeScheduleDetail()">关闭</button>
+      <button class="btn btn-save" onclick="notifyFromSchedule()">🔔 设置通知</button>
+      <button class="btn btn-save" onclick="jumpFromSchedule()">跳到子节点</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 通知设置弹窗 ============ -->
+<div class="notify-modal-overlay" id="notifyModalOverlay" onclick="if(event.target===this)closeNotifySettings()">
+  <div class="notify-modal">
+    <h3>🔔 通知设置</h3>
+    <p>这里是仪表盘快捷通知设置入口：可快速设置当前村/社区、当前选举活动、当前步骤的提醒。</p>
+    <div class="notify-form">
+      <label>通知标题
+        <input id="notifyTitle" type="text" readonly placeholder="自动继承当前日程步骤标题">
+      </label>
+      <label>继承日程日期
+        <input id="notifyScheduleDate" type="date" readonly>
+      </label>
+      <label>通知类型
+        <select id="notifyType">
+          <option value="系统消息">系统消息（用户侧站内信/个人消息小红点）</option>
+          <option value="短信">短信（走系统设置里的短信通道配置）</option>
+        </select>
+      </label>
+      <div class="anchor-note">
+        ⚡ 短信通道锚点 · ID: <code>dashboard-notify-sms-channel-001</code><br>
+        选择短信时，不在这里手搓通道配置；关联侧边栏 <code>系统设置</code> 的短信通道配置模块，抄模块复用。<br>
+        弹窗内容仍然相同：标题继承日程标题 + 文本内容 + 发送时间 + 属性 + 手机号。
+      </div>
+      <label>文本内容
+        <textarea id="notifyContent" placeholder="输入要发送给用户的通知内容"></textarea>
+      </label>
+      <label>发送时间
+        <input id="notifySendAt" type="datetime-local">
+      </label>
+      <label>属性
+        <select id="notifyAttr">
+          <option value="预告通知">预告通知</option>
+          <option value="消息通知">消息通知</option>
+          <option value="逾期提示">逾期提示</option>
+        </select>
+      </label>
+      <label>通知手机号
+        <textarea id="notifyPhones" placeholder="输入绑定手机号；多个手机号用逗号或换行分隔"></textarea>
+      </label>
+      <div class="anchor-note">
+        🔐 用户归属提醒 · ID: <code>dashboard-notify-user-scope-001</code><br>
+        系统只把绑定手机号的人认作用户：<code>users.phone</code> + <code>users.is_phone_bound=1</code>。<br>
+        发送前必须注意 <code>users.village_id</code> / 当前锁定归属地，避免跨村/社区误发；未绑定手机号的前端访问者按游客处理。
+      </div>
+    </div>
+    <div class="anchor-note">
+      🔔 通知设置锚点 · ID: <code>dashboard-notify-settings-001</code><br>
+      后续侧边栏对应：<code>通知管理</code>；接口: <code>POST /notification-v2/send</code> / <code>GET /notification-v2/list</code><br>
+      表: <code>notifications.title/content/type/target_phones/target_village/send_mode/scheduled_at/status</code>；已读: <code>message_reads</code>。
+    </div>
+    <div class="notify-modal-actions">
+      <button class="btn btn-cancel" onclick="closeNotifySettings()">关闭</button>
+      <button class="btn btn-save" onclick="closeNotifySettings()">保存通知</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 岗位详情弹窗 ============ -->
+<div class="job-modal-overlay" id="jobModalOverlay">
+  <div class="job-modal">
+    <div class="job-modal-header">
+      <h3 id="jobModalTitle">📋 岗位详情</h3>
+      <div class="sub" id="jobModalSub"></div>
+      <div class="anchor-note">
+        📌 岗位详情真相边界 · ID: <code>position-detail-truth-001</code><br>
+        表: <code>positions.id/election_id/name/quota/duty/material_requirements/elected_candidates</code>；接口: <code>GET /position-v2/detail?id</code><br>
+        禁止: 弹窗不要成为材料/候选人/公告的第二真相，只做跳转与状态投影。
+      </div>
+      <div class="anchor-note">
+        📌 当前母活动上下文 · ID: <code>position-detail-election-context-001</code><br>
+        每次打开岗位详情必须带当前 <code>elections.id</code>，来源为上方“关联选举活动”下拉；展示文案要带 <code>elections.name/session_no</code>，避免用户误以为岗位是全局写死。<br>
+        影响: 岗位说明、表格下载、材料提交、候选人筛选、结果回填全部使用同一个 <code>positions.election_id</code>。
+      </div>
+    </div>
+    <div class="job-modal-body">
+      <div class="form-row hide-always">
+        <div class="form-col">
+          <label>📌 岗位名称</label>
+          <input type="text" id="jmJobName" readonly style="font-weight:700;color:var(--ink);background:#f3f0f8;">
+        </div>
+        <div class="form-col">
+          <label>✋ 参选形式</label>
+          <select id="jmForm"><option value="自荐">🙋 个人自荐</option><option value="联名">👥 联名推荐</option><option value="自荐+联名">🙋+👥 自荐+联名</option></select>
+        </div>
+      </div>
+      <div class="form-row hide-always">
+        <div class="form-col">
+          <label>📊 需求人数</label>
+          <input type="text" id="jmQuota" placeholder="如：1 / 1-2 / 3-5">
+        </div>
+        <div class="form-col">
+          <label>🔴 岗位状态</label>
+          <select id="jmStatus" onchange="refreshStageBlocks()">
+            <option value="在岗">🟢 在岗</option>
+            <option value="竞选报名">🔵 竞选报名</option>
+            <option value="提名公示">🩵 提名公示</option>
+            <option value="正式候选人公示">🟣 正式候选人公示</option>
+            <option value="竞选中">🟠 竞选中</option>
+            <option value="投票中">🟤 投票中</option>
+            <option value="审核中">🟡 审核中</option>
+            <option value="结果公示">🔴 结果公示</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-title hide-always">📑 阶段信息（随岗位状态联动）</div>
+      <div class="anchor-note">
+        🔀 岗位状态弹层路由 · ID: <code>position-status-modal-route-001</code><br>
+        岗位状态不是纯 UI 样式；不同状态点击进入详情，弹层内容不同，后续关联模块也不同。<br>
+        <code>在岗</code> → 花名册在任干部；<code>竞选报名</code> → 公告+材料提交管理；<code>提名公示</code> → 子公告+入围候选人；<code>正式候选人公示</code> → 候选人管理；<code>竞选中/投票中</code> → 线下进度投影；<code>审核中</code> → 材料/候选人审核；<code>结果公示</code> → 候选人结果回填。<br>
+        侧边栏回路: <code>岗位管理</code>、<code>材料提交管理</code>、<code>候选人管理</code>、<code>选举活动管理/公告</code> 都按同一个 <code>electionId + positionId</code> 过滤。
+      </div>
+
+      <div class="stage-block" data-show="在岗">
+        <div class="anchor-note">
+          💾 在岗详情联动 · ID: <code>position-incumbent-roster-link-001</code><br>
+          触发: 岗位状态选择 <code>在岗</code> + 点击进入详情。<br>
+          数据: 从当前村/社区花名册按 <code>post=positions.name</code> 匹配在任干部，展示 <code>session_no/year_start/name/phone/intro</code>。
+        </div>
+        <div id="jmRosterCards"></div>
+      </div>
+
+      <div class="stage-block" data-show="竞选报名">
+        <div class="campaign-grid">
+          <div class="campaign-col">
+            <div class="campaign-subtitle">📢 编辑公告</div>
+            <div class="anchor-note">
+              ⚡ 报名公告锚点 · ID: <code>notice-signup-edit-001</code><br>
+              表: <code>notices.election_id/title/content/status/notice_no/stage_key/template_key</code><br>
+              接口: <code>POST /notice-v2/generate</code> 或 <code>POST /notice-v2/add</code>；阶段建议: <code>stage_key=S6</code>。
+              备注: 通知/公告标题要继承母活动阶段名称，不能让用户手工写成另一个流程名。
+            </div>
+            <div class="rte-toolbar">
+              <button type="button" class="rte-btn" onclick="rteCmd('signupEditor','bold')" title="加粗"><b>B</b></button>
+              <button type="button" class="rte-btn" onclick="rteCmd('signupEditor','italic')" title="斜体"><i>I</i></button>
+              <button type="button" class="rte-btn" onclick="rteCmd('signupEditor','underline')" title="下划线"><u>U</u></button>
+              <button type="button" class="rte-btn" onclick="rteCmd('signupEditor','insertUnorderedList')" title="项目符号">• 列表</button>
+              <button type="button" class="rte-btn" onclick="rteCmd('signupEditor','insertOrderedList')" title="编号列表">1. 列表</button>
+              <button type="button" class="rte-btn" onclick="rteCmd('signupEditor','formatBlock','<h4>')" title="标题">标题</button>
+              <button type="button" class="rte-btn" onclick="rteCmd('signupEditor','formatBlock','<p>')" title="正文">正文</button>
+              <button type="button" class="rte-btn" onclick="rteCmd('signupEditor','removeFormat')" title="清除格式">✕</button>
+            </div>
+            <div class="rte-editor" id="signupEditor" contenteditable="true" data-placeholder="在此编辑竞选报名公告..."></div>
+            <button type="button" class="campaign-save-btn" onclick="saveSignupNotice()">💾 保存公告</button>
+
+            <div class="campaign-subtitle" style="margin-top:16px;">📥 下载报名模板</div>
+            <div class="anchor-note">
+              📥 报名模板下载 · ID: <code>position-signup-template-download-001</code><br>
+              来源: <code>positions.material_requirements[]</code> 中与报名阶段相关的模板资源；必须带 <code>position_id/election_id/stage_key</code>。<br>
+              边界: 这是给前端下载的模板资源，不是后台上传归档材料；后台上传仍走 <code>materials.scope=archive</code> 或候选人材料 <code>materials.scope=candidate</code>。
+            </div>
+            <div class="dl-template-row">
+              <input type="text" class="dl-url-input" id="signupTemplateUrl" placeholder="输入模板下载地址">
+              <button type="button" class="dl-save-btn" onclick="saveSignupTemplateUrl()">保存</button>
+            </div>
+            <a class="dl-link" id="signupTemplateLink" href="#" target="_blank" style="display:none;">⬇️ 点击下载报名模板</a>
+          </div>
+
+          <div class="campaign-col">
+            <div class="campaign-subtitle">📤 竞选材料上传</div>
+            <div class="anchor-note">
+              ⚡ 自荐材料锚点 · ID: <code>material-candidate-submit-001</code><br>
+              表: <code>materials.election_id/position_id/applicant_phone/applicant_name/items/status/candidate_id</code><br>
+              接口: <code>POST /material-v2/submit</code>；通过审核后回填 <code>candidate_id</code> 并生成 <code>candidates</code>。<br>
+              关联侧边栏：<code>材料提交管理</code> → 审核通过 → <code>候选人管理</code>；筛选必须带 <code>election_id + position_id + recommend_type</code>。
+            </div>
+            <button type="button" class="upload-main-btn" onclick="triggerUpload()">📤 上传竞选材料</button>
+            <input type="file" id="signupFileInput" style="display:none;" multiple onchange="handleUploadFiles(this.files)">
+            <div class="upload-config-trigger" onclick="toggleUploadConfig()">⚙️ 配置储存参数</div>
+            <div class="upload-config-box" id="uploadConfigBox" style="display:none;">
+              <label class="config-label">接口代码段（粘贴上传接口配置）</label>
+              <textarea class="config-textarea" id="uploadApiConfig" placeholder='例如:&#10;{&#10;  "url": "https://your-api.com/upload",&#10;  "method": "POST",&#10;  "headers": { "Authorization": "Bearer xxx" },&#10;  "fieldName": "file"&#10;}'></textarea>
+              <button type="button" class="config-save-btn" onclick="saveUploadConfig()">💾 保存配置</button>
+            </div>
+            <div class="upload-status" id="uploadStatus"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-block" data-show="提名公示">
+        <div class="campaign-subtitle">📢 编辑公示公告</div>
+        <div class="anchor-note">
+          ⚡ 提名公示锚点 · ID: <code>notice-nominate-edit-001</code><br>
+          表: <code>notices.election_id/content/start_time/end_time/status/stage_key</code>；接口: <code>POST /notice-v2/add</code> / <code>POST /notice-v2/publish</code><br>
+          关联候选人阶段: <code>candidates.status</code> 从 A 参选人进入 B 入围提名；公示日期来自母活动阶段时间，不得手工移到另一个阶段。
+        </div>
+        <div class="rte-toolbar">
+          <button type="button" class="rte-btn" onclick="rteCmd('nominateEditor','bold')" title="加粗"><b>B</b></button>
+          <button type="button" class="rte-btn" onclick="rteCmd('nominateEditor','italic')" title="斜体"><i>I</i></button>
+          <button type="button" class="rte-btn" onclick="rteCmd('nominateEditor','underline')" title="下划线"><u>U</u></button>
+          <button type="button" class="rte-btn" onclick="rteCmd('nominateEditor','insertUnorderedList')" title="项目符号">• 列表</button>
+          <button type="button" class="rte-btn" onclick="rteCmd('nominateEditor','insertOrderedList')" title="编号列表">1. 列表</button>
+          <button type="button" class="rte-btn" onclick="rteCmd('nominateEditor','formatBlock','<h4>')" title="标题">标题</button>
+          <button type="button" class="rte-btn" onclick="rteCmd('nominateEditor','formatBlock','<p>')" title="正文">正文</button>
+          <button type="button" class="rte-btn" onclick="rteCmd('nominateEditor','removeFormat')" title="清除格式">✕</button>
+        </div>
+        <div class="rte-editor" id="nominateEditor" contenteditable="true" data-placeholder="在此编辑提名公示公告..."></div>
+        <button type="button" class="campaign-save-btn" onclick="saveNominateNotice()">💾 保存公告</button>
+
+        <div class="campaign-subtitle" style="margin-top:16px;">📅 公示时间段</div>
+        <div class="date-range-row">
+          <input type="date" class="date-input" id="nominateDateStart">
+          <span class="date-sep">~</span>
+          <input type="date" class="date-input" id="nominateDateEnd">
+        </div>
+
+        <div class="campaign-subtitle" style="margin-top:16px;">📥 公示模板文件下载</div>
+        <div class="anchor-note">
+          📥 公示模板下载 · ID: <code>position-nominate-template-download-001</code><br>
+          来源: 当前岗位当前母活动的 <code>positions.material_requirements[]</code>；建议记录 <code>name/type/url/required/stage_key</code>。<br>
+          规则: 与报名模板同源，但阶段不同；不能把所有岗位模板做成全局静态链接。
+        </div>
+        <div class="dl-template-row">
+          <input type="text" class="dl-url-input" id="nominateTemplateUrl" placeholder="输入模板下载地址">
+          <button type="button" class="dl-save-btn" onclick="saveNominateTemplateUrl()">保存</button>
+        </div>
+        <a class="dl-link" id="nominateTemplateLink" href="#" target="_blank" style="display:none;">⬇️ 点击下载公示模板</a>
+      </div>
+
+      <div class="stage-block" data-show="正式候选人公示">
+        <div class="anchor-note">
+          💾 候选人漏斗锚点 · ID: <code>candidate-funnel-publicity-001</code><br>
+          表: <code>candidates.election_id/position_id/name/phone/source/recommend_type/status/review_comment</code><br>
+          接口: <code>GET /candidate-v2/list</code> + <code>POST /candidate-v2/review</code>；A/B/C 文案需夏夏确认如何落到 <code>status</code>。
+        </div>
+        <div class="form-row">
+          <div class="form-col"><label>📝 提名方式</label><select id="jmNominateMode"><option value="">—</option><option value="自荐">个人自荐</option><option value="联名">群众联名推荐</option><option value="组织">党组织推荐</option></select></div>
+          <div class="form-col"><label>👥 提名人 / 名单</label><input type="text" id="jmNominator" placeholder="输入提名人员"></div>
+        </div>
+      </div>
+
+      <div class="stage-block" data-show="竞选中,投票中">
+        <div class="anchor-note">
+          💾 竞选/投票进度投影 · ID: <code>candidate-campaign-progress-001</code><br>
+          本期不做线上投票计票；这里只展示线下流程进度和线下结果录入前状态。<br>
+          数据: <code>candidates.election_id/position_id/status/votes</code>；后续结果只由 <code>POST /candidate-v2/result</code> 回填，不能在这里直接替代结果公示。
+        </div>
+        <div class="form-row">
+          <div class="form-col"><label>🗳️ 候选人</label><input type="text" id="jmCandidate" placeholder="输入候选人"></div>
+          <div class="form-col"><label>📈 得票 / 进展</label><input type="text" id="jmVotes" placeholder="得票数或进展"></div>
+        </div>
+      </div>
+
+      <div class="stage-block" data-show="审核中">
+        <div class="anchor-note">
+          🔐 审核锚点 · ID: <code>review-candidate-material-001</code><br>
+          材料审核: <code>POST /material-v2/review</code>，角色: 超级管理/经办/审核；字段: <code>materials.status/reject_reason/reviewer_id/reviewed_at</code><br>
+          候选人审核: <code>POST /candidate-v2/review</code>，字段: <code>candidates.status/review_comment</code>。
+        </div>
+        <div class="form-row">
+          <div class="form-col"><label>✅ 审核意见</label><input type="text" id="jmReview" placeholder="审核结论"></div>
+          <div class="form-col"><label>🧑‍⚖️ 审核人</label><input type="text" id="jmReviewer" placeholder="审核人姓名"></div>
+        </div>
+      </div>
+
+      <div class="stage-block" data-show="结果公示">
+        <div class="anchor-note">
+          ⚡ 结果回填锚点 · ID: <code>candidate-result-fill-001</code><br>
+          表: <code>candidates.elected/votes/status</code> + <code>positions.elected_candidates</code><br>
+          接口: <code>POST /candidate-v2/result</code>；权限: 超级管理/运营；线下结果确认后再回填。
+        </div>
+        <div class="form-row">
+          <div class="form-col"><label>🏆 当选人</label><input type="text" id="jmWinner" placeholder="当选人姓名"></div>
+          <div class="form-col"><label>🔢 得票数</label><input type="text" id="jmVoteCount" placeholder="得票数"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-col" style="flex:2;"><label>📄 结果说明</label><textarea id="jmResultNote" placeholder="结果公示说明..."></textarea></div>
+        </div>
+      </div>
+
+      <div class="form-row hide-always">
+        <div class="form-col" style="flex:2;"><label>📝 备注</label><textarea id="jmRemark" placeholder="补充说明、特殊要求等..."></textarea></div>
+      </div>
+      <div id="jmTemplateInfo" class="hide-always" style="margin-top:12px;padding:11px 15px;background:var(--green-ll);border-radius:9px;font-size:.78em;color:var(--ink-2);"></div>
+    </div>
+    <div class="job-modal-footer">
+      <button class="btn btn-cancel" onclick="closeJobModal()">取消</button>
+      <button class="btn btn-save hide-on-incumbent" onclick="saveJobDetail()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== 页面流程：登录绑定归属地 → 主页面 ==========
+let currentType=null;
+let currentLocation=null;
+let currentRole='超级管理';
+let currentPhone='123456';
+let currentActivityName='第十五届换届选举';
+const VILLAGE_LOCATIONS=['龙桥街道 · 泗华村','华亭镇 · 东太村','常太镇 · 常太村','灵川镇 · 径里村'];
+const COMMUNITY_LOCATIONS=['龙桥街道 · 兴安社区','凤凰山街道 · 南门社区','霞林街道 · 沟头社区','华亭镇 · 华亭社区'];
+const calendarEvents=[
+  {key:'S1',date:'',title:'前期准备',note:'母版步骤：两委联席、代表会议、推选选委会、发1/2/3号公告。时间由客户在母活动填写。',target:'vStep5'},
+  {key:'S2',date:'',title:'选民登记',note:'母版步骤：宣传发动、登记造册。时间由母活动登记阶段自动带入。',target:'vStep4'},
+  {key:'S3',date:'',title:'名单公布',note:'母版步骤：发4号公告、汇总选民名单、委托投票。日历只引用步骤时间。',target:'vStep3'},
+  {key:'S4',date:'',title:'调整解释',note:'母版步骤：处理选民申诉。客户如跳步，保留步骤名与空时间，不改名。',target:'vStep3'},
+  {key:'S5',date:'',title:'代表&小组长',note:'母版步骤：代表和小组长相关材料归档；一期可只做归档入口。',target:'vStep4'},
+  {key:'S6',date:'',title:'提名',note:'母版步骤：初步候选人提名、资格审查、发7/8号公告。',target:'vStep5'},
+  {key:'S7',date:'',title:'竞选预选',note:'母版步骤：预选/竞选，产生正式候选人。',target:'vStep5'},
+  {key:'S8',date:'',title:'资格审查',note:'母版步骤：区级联审、考察、发9号公告。',target:'vStep5'},
+  {key:'S9',date:'',title:'选举准备',note:'母版步骤：发10-15号公告、培训、制票、布场。',target:'vStep3'},
+  {key:'S10',date:'',title:'选举日',note:'母版步骤：线下投票选举、发16号公告、结果回填。',target:'vStep5'},
+  {key:'S11',date:'',title:'村监会&移交',note:'母版步骤：本期只管归档，不管交接；一个母活动下按步骤放材料。',target:'vStep4'}
+];
+
+function onLoginRoleChange(){
+  currentRole=document.getElementById('loginRole').value;
+  const needLocation=currentRole!=='超级管理';
+  document.getElementById('loginLocationBlock').style.display=needLocation?'':'none';
+  document.getElementById('loginScopeHint').textContent=needLocation
+    ? '子管理登录后自动锁定所选村/社区，下面业务页面与超级管理下钻后共用。'
+    : '超级管理不绑定单个村/社区，登录后先看全区汇总列表。';
+}
+function onLoginTypeChange(){
+  const type=document.getElementById('loginType').value;
+  const sel=document.getElementById('loginLocation');
+  sel.innerHTML='<option value="">请选择具体归属地</option>';
+  const locs=type==='village'?VILLAGE_LOCATIONS:type==='community'?COMMUNITY_LOCATIONS:[];
+  locs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;sel.appendChild(o);});
+}
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value.trim();
+  const err=document.getElementById('loginError');
+  if(u==='123456'&&p==='123456'){
+    currentRole=document.getElementById('loginRole').value;
+    currentPhone=u;
+    currentType=document.getElementById('loginType').value || null;
+    currentLocation=document.getElementById('loginLocation').value || null;
+    if(currentRole!=='超级管理'&&(!currentType||!currentLocation)){
+      err.textContent='请选择该账号所属的村/社区';
+      return;
+    }
+    err.textContent='';
+    document.getElementById('view-login').style.display='none';
+    enterMain();
+  }else{
+    err.textContent='❌ 账号或密码错误';
+  }
+}
+function selectType(type){
+  currentType=type;
+  document.getElementById('typeVillage').classList.toggle('active',type==='village');
+  document.getElementById('typeCommunity').classList.toggle('active',type==='community');
+  const sel=document.getElementById('locationSelect');
+  sel.innerHTML='';
+  const locs=type==='village'?VILLAGE_LOCATIONS:COMMUNITY_LOCATIONS;
+  locs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;sel.appendChild(o);});
+  document.getElementById('locationSelectArea').style.display='';
+}
+function enterMain(){
+  if(!currentLocation&&currentRole!=='超级管理'){
+    currentLocation=document.getElementById('locationSelect').value;
+    if(!currentLocation)return;
+  }
+  document.getElementById('view-select').style.display='none';
+  document.getElementById('view-main').style.display='';
+  document.getElementById('currentLocationDisplay').textContent=currentRole==='超级管理'
+    ? '超级管理 · 全区汇总视角'
+    : currentRole+' · '+(currentType==='village'?'🏡 ':'🏙️ ')+currentLocation;
+  const tc=document.querySelector('.two-col');
+  if(tc)tc.classList.toggle('single-mode',currentRole!=='超级管理');
+  document.getElementById('villagePanel').parentElement.style.display=(currentRole==='超级管理'||currentType==='village')?'':'none';
+  document.getElementById('communityPanel').parentElement.style.display=(currentRole==='超级管理'||currentType==='community')?'':'none';
+  applyLockedScope();
+  renderDashboardContext();
+  if(currentType==='village'){
+    pickVillage(currentLocation);
+  }else if(currentType==='community'){
+    pickCommunity(currentLocation);
+  }else{
+    renderVillageCalendar();
+  }
+}
+function goBack(){
+  document.getElementById('view-main').style.display='none';
+  document.getElementById('view-login').style.display='';
+  // 重置选择页状态
+  document.getElementById('typeVillage').classList.remove('active');
+  document.getElementById('typeCommunity').classList.remove('active');
+  document.getElementById('locationSelectArea').style.display='none';
+  currentType=null;
+  currentLocation=null;
+}
+function renderDashboardContext(){
+  const title=document.getElementById('dashboardContextTitle');
+  const today=document.getElementById('todayDisplay');
+  const role=document.getElementById('roleDisplay');
+  const phone=document.getElementById('phoneDisplay');
+  const unit=currentRole==='超级管理'
+    ? '上级管理入口（待分流到村/社区列表）'
+    : (currentLocation||'—');
+  if(title)title.textContent='当前归属地：'+unit;
+  if(today)today.textContent=new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'long'});
+  if(role)role.textContent=currentRole||'—';
+  if(phone)phone.textContent=currentPhone||'—';
+}
+function openNotifySettings(eventKey){
+  const ev=calendarEvents.find(item=>item.key===eventKey);
+  const titleInput=document.getElementById('notifyTitle');
+  const dateInput=document.getElementById('notifyScheduleDate');
+  if(titleInput)titleInput.value=ev?ev.title:'';
+  if(dateInput)dateInput.value=ev&&ev.date?ev.date:'';
+  document.getElementById('notifyModalOverlay').classList.add('show');
+}
+function closeNotifySettings(){
+  document.getElementById('notifyModalOverlay').classList.remove('show');
+}
+let currentScheduleEventKey=null;
+function openScheduleDetail(eventKey){
+  currentScheduleEventKey=eventKey;
+  const ev=calendarEvents.find(item=>item.key===eventKey);
+  if(!ev)return;
+  document.getElementById('scheduleModalTitle').textContent=ev.title;
+  document.getElementById('scheduleModalDate').textContent=ev.date||'时间待客户在母活动中填写';
+  document.getElementById('scheduleModalNote').textContent=ev.note||'';
+  document.getElementById('scheduleModalOverlay').classList.add('show');
+}
+function closeScheduleDetail(){
+  document.getElementById('scheduleModalOverlay').classList.remove('show');
+}
+function notifyFromSchedule(){
+  closeScheduleDetail();
+  openNotifySettings(currentScheduleEventKey);
+}
+function jumpFromSchedule(){
+  const ev=calendarEvents.find(item=>item.key===currentScheduleEventKey);
+  if(!ev)return;
+  closeScheduleDetail();
+  jumpToCalendarNode(calendarTargetId(ev.target));
+}
+
+// ========== 下拉框交互 ==========
+function toggleSelect(id){
+  const box=document.getElementById(id);
+  box.classList.toggle('open');
+  document.querySelectorAll('.select-box.open').forEach(b=>{if(b.id!==id)b.classList.remove('open');});
+}
+
+function applyLockedScope(){
+  const isScoped=currentRole!=='超级管理'&&currentType&&currentLocation;
+  const vStep1=document.getElementById('vStep1');
+  const cStep1=document.getElementById('cStep1');
+  const vNote=document.getElementById('vScopeNote');
+  const cNote=document.getElementById('cScopeNote');
+  vStep1.classList.toggle('scope-select-hidden',isScoped);
+  cStep1.classList.toggle('scope-select-hidden',isScoped);
+  if(vNote){
+    vNote.style.display=isScoped&&currentType==='village'?'':'none';
+    vNote.textContent='已锁定归属地：'+currentLocation+'。子管理不能切换到其他村/社区。';
+  }
+  if(cNote){
+    cNote.style.display=isScoped&&currentType==='community'?'':'none';
+    cNote.textContent='已锁定归属地：'+currentLocation+'。子管理不能切换到其他村/社区。';
+  }
+  const vHint=document.getElementById('vHint');
+  const cHint=document.getElementById('cHint');
+  if(vHint&&isScoped&&currentType==='village')vHint.textContent='当前已锁定 '+currentLocation+'，下方内容只显示本村换届信息。';
+  if(cHint&&isScoped&&currentType==='community')cHint.textContent='当前已锁定 '+currentLocation+'，下方内容只显示本社区换届信息。';
+}
+
+function calendarTargetId(rawTarget){
+  if(currentType==='community'&&rawTarget.startsWith('v'))return rawTarget.replace(/^v/,'c');
+  return rawTarget;
+}
+function renderVillageCalendar(){
+  const scope=document.getElementById('calendarScope');
+  const grid=document.getElementById('calendarGrid');
+  if(!scope||!grid)return;
+  const locationLabel=currentRole==='超级管理'
+    ? '全区汇总视角（点击某村/社区后，下方共用业务层相同）'
+    : (currentLocation||'未选择归属地');
+  scope.innerHTML=`<div><strong>当前角色：</strong>${currentRole}</div><div><strong>当前归属：</strong>${locationLabel}</div><div><strong>当前活动：</strong>${currentActivityName}</div>`;
+  grid.innerHTML=calendarEvents.map(ev=>{
+    const target=calendarTargetId(ev.target);
+    const dateHtml=ev.date
+      ? `<input type="date" value="${ev.date}" onchange="updateCalendarDate('${ev.key}',this.value)">`
+      : `<input type="date" value="" onchange="updateCalendarDate('${ev.key}',this.value)" title="由管理员按实际进度填写">`;
+    return `<article class="calendar-item" onclick="openScheduleDetail('${ev.key}')">
+      <div class="calendar-date">${dateHtml}</div>
+      <div class="calendar-title">${ev.title}</div>
+      <div class="calendar-note">${ev.note}</div>
+      <button class="calendar-bell" onclick="event.stopPropagation();openNotifySettings('${ev.key}')">🔔 设置通知</button>
+      <button class="calendar-node" onclick="event.stopPropagation();jumpToCalendarNode('${target}')">跳到对应子节点</button>
+    </article>`;
+  }).join('');
+}
+function updateCalendarDate(key,value){
+  const item=calendarEvents.find(ev=>ev.key===key);
+  if(item)item.date=value;
+}
+function jumpToCalendarNode(targetId){
+  const el=document.getElementById(targetId);
+  if(!el){showToast('当前视角下还没有这个节点');return;}
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.classList.add('open');
+  el.style.boxShadow='0 0 0 4px rgba(47,143,91,.18)';
+  setTimeout(()=>{el.style.boxShadow='';},1200);
+}
+
+// ========== 村：选归属地 ==========
+function pickVillage(name){
+  const box=document.getElementById('vStep1');
+  box.querySelector('.sel-val').textContent=name;
+  box.querySelectorAll('.select-option').forEach(o=>o.classList.remove('selected'));
+  box.querySelectorAll('.select-option').forEach(o=>{if(o.textContent===name)o.classList.add('selected');});
+  box.classList.add('done');box.classList.remove('open');
+
+  const v2=document.getElementById('vStep2');
+  v2.querySelector('.sel-val').textContent='村民直接选举（全民直选）';
+  v2.classList.add('done');v2.classList.remove('open');
+  v2.querySelector('.select-option').classList.add('selected');
+  document.getElementById('vLockHint').style.display='block';
+  v2.querySelector('.select-header').onclick=function(){
+    v2.classList.add('rumble');
+    setTimeout(()=>v2.classList.remove('rumble'),400);
+  };
+
+  updateSteps('village');
+  renderVillageTable();
+}
+
+// ========== 社区：选归属地 ==========
+function pickCommunity(name){
+  const box=document.getElementById('cStep1');
+  box.querySelector('.sel-val').textContent=name;
+  box.querySelectorAll('.select-option').forEach(o=>o.classList.remove('selected'));
+  box.querySelectorAll('.select-option').forEach(o=>{if(o.textContent===name)o.classList.add('selected');});
+  box.classList.add('done');box.classList.remove('open');
+  document.getElementById('cStep2').classList.add('open');
+  updateSteps('community');
+}
+
+// ========== 社区：选选举方式 ==========
+function pickCMode(el,mode){
+  const box=document.getElementById('cStep2');
+  box.querySelector('.sel-val').textContent=mode;
+  box.querySelectorAll('.select-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  box.classList.add('done');box.classList.remove('open');
+
+  const hint=document.getElementById('cModeHint');
+  hint.textContent='✅ '+mode+' — 已选定，系统自动匹配对应时间轴';
+  hint.style.display='block';
+
+  updateSteps('community');
+  renderCommunityTable(mode);
+}
+
+// ========== 参选形式切换 ==========
+function toggleForm(el){
+  el.classList.toggle('active');
+  const pid=el.closest('.demo-section').id;
+  if(pid==='villagePanel')renderVillageTable();
+  else renderCommunityTable(document.getElementById('cStep2').querySelector('.sel-val').textContent);
+}
+
+// ========== 换届选举表：状态与联动 ==========
+const STATUS_LABEL={
+  '在岗':'🟢 在岗','竞选报名':'🔵 竞选报名','提名公示':'🩵 提名公示',
+  '正式候选人公示':'🟣 正式候选人公示','竞选中':'🟠 竞选中','投票中':'🟤 投票中',
+  '审核中':'🟡 审核中','结果公示':'🔴 结果公示'
+};
+const STATUS_CLASS={
+  '在岗':'st-incumbent','竞选报名':'st-signup','提名公示':'st-nominate',
+  '正式候选人公示':'st-formal','竞选中':'st-campaign','投票中':'st-vote',
+  '审核中':'st-review','结果公示':'st-result'
+};
+function formsToValue(forms){
+  const hasSelf=forms.some(f=>f.includes('自荐'));
+  const hasGroup=forms.some(f=>f.includes('联名'));
+  if(hasSelf&&hasGroup)return '自荐+联名';
+  if(hasSelf)return '自荐';
+  if(hasGroup)return '联名';
+  return '自荐';
+}
+function genStatusSelect(jKey,jd){
+  const list=Object.keys(STATUS_LABEL);
+  const opts=list.map(s=>`<option value="${s}"${jd.status===s?' selected':''}>${STATUS_LABEL[s]}</option>`).join('');
+  return `<select class="status-select ${STATUS_CLASS[jd.status]||''}" onchange="updateJobField('${jKey}','status',this.value);this.className='status-select '+(STATUS_CLASS[this.value]||'');">${opts}</select>`;
+}
+function refreshStageBlocks(){
+  const st=document.getElementById('jmStatus').value;
+  document.body.classList.toggle('incumbent-mode',st==='在岗');
+  document.querySelectorAll('.stage-block').forEach(b=>{
+    const shows=(b.dataset.show||'').split(',');
+    b.style.display=shows.indexOf(st)>=0?'block':'none';
+  });
+  const cancelBtn=document.querySelector('.job-modal-footer .btn-cancel');
+  if(cancelBtn)cancelBtn.textContent=st==='在岗'?'✕ 关闭':'取消';
+  if(st==='在岗')renderRosterCards();
+}
+
+// ========== 在岗位位人员 → 花名册卡片联动 ==========
+let rosterCardIdx=0;
+let currentRosterPanel=null;
+let currentRosterJob=null;
+
+function getRosterMatches(panel,job){
+  return (rosterData[panel]||[]).filter(r=>r.post===job);
+}
+
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function renderRosterCards(){
+  const box=document.getElementById('jmRosterCards');
+  if(!box)return;
+  const matches=getRosterMatches(currentRosterPanel,currentRosterJob);
+  if(!matches.length){
+    box.innerHTML='<div class="rc-empty">📭 花名册暂无「'+currentRosterJob+'」记录，请先在上方「当前村委/社区干部花名册」模块登记</div>';
+    return;
+  }
+  if(rosterCardIdx>=matches.length)rosterCardIdx=0;
+  if(rosterCardIdx<0)rosterCardIdx=0;
+  const m=matches[rosterCardIdx];
+  const total=matches.length;
+  const canPrev=rosterCardIdx>0;
+  const canNext=rosterCardIdx<total-1;
+  const nav=total>1?('<span class="rc-nav"><button class="rc-arrow" '+(canPrev?'':'disabled')+' onclick="rosterCardPrev()">‹</button><button class="rc-arrow" '+(canNext?'':'disabled')+' onclick="rosterCardNext()">›</button></span>'):'';
+  box.innerHTML=
+    '<div class="rc-head"><span class="rc-count">在任干部 '+(rosterCardIdx+1)+' / '+total+'（数据来自花名册）</span>'+nav+'</div>'+
+    '<div class="rc-card">'+
+      '<div class="rc-row"><span class="rc-k">第几届</span><span class="rc-v">'+escapeHtml(m.term||'—')+'</span></div>'+
+      '<div class="rc-row"><span class="rc-k">年份起始</span><span class="rc-v">'+escapeHtml(m.year||'—')+'</span></div>'+
+      '<div class="rc-row"><span class="rc-k">岗位</span><span class="rc-v">'+escapeHtml(m.post||'—')+'</span></div>'+
+      '<div class="rc-row"><span class="rc-k">在任干部姓名</span><span class="rc-v rc-name">'+escapeHtml(m.name||'—')+'</span></div>'+
+      '<div class="rc-row"><span class="rc-k">联系方式</span><span class="rc-v">'+escapeHtml(m.phone||'—')+'</span></div>'+
+      '<div class="rc-row rc-intro"><span class="rc-k">干部简介</span><span class="rc-v">'+escapeHtml(m.intro||'—')+'</span></div>'+
+    '</div>';
+}
+function rosterCardPrev(){ if(rosterCardIdx>0){rosterCardIdx--;renderRosterCards();} }
+function rosterCardNext(){ const n=getRosterMatches(currentRosterPanel,currentRosterJob).length; if(rosterCardIdx<n-1){rosterCardIdx++;renderRosterCards();} }
+
+// ========== 竞选报名：公告编辑 / 模板下载 / 材料上传 ==========
+const signupData={}; // { jobKey: { notice:'', templateUrl:'', uploadConfig:'' } }
+function getSignupData(key){
+  if(!signupData[key])signupData[key]={notice:'',templateUrl:'',uploadConfig:''};
+  return signupData[key];
+}
+function rteCmd(editorId,cmd,val){
+  document.execCommand(cmd,false,val||null);
+  document.getElementById(editorId).focus();
+}
+function loadSignupData(key){
+  const d=getSignupData(key);
+  document.getElementById('signupEditor').innerHTML=d.notice||'';
+  document.getElementById('signupTemplateUrl').value=d.templateUrl||'';
+  const link=document.getElementById('signupTemplateLink');
+  if(d.templateUrl){link.href=d.templateUrl;link.style.display='block';}else{link.style.display='none';}
+  document.getElementById('uploadApiConfig').value=d.uploadConfig||'';
+  document.getElementById('uploadConfigBox').style.display='none';
+  document.getElementById('uploadStatus').textContent='';
+}
+function saveSignupNotice(){
+  if(!currentJobKey)return;
+  getSignupData(currentJobKey).notice=document.getElementById('signupEditor').innerHTML;
+  showToast('✅ 公告已保存');
+}
+function saveSignupTemplateUrl(){
+  if(!currentJobKey)return;
+  const url=document.getElementById('signupTemplateUrl').value.trim();
+  getSignupData(currentJobKey).templateUrl=url;
+  const link=document.getElementById('signupTemplateLink');
+  if(url){link.href=url;link.style.display='block';}else{link.style.display='none';}
+  showToast('✅ 下载地址已保存');
+}
+function toggleUploadConfig(){
+  const box=document.getElementById('uploadConfigBox');
+  box.style.display=box.style.display==='none'?'block':'none';
+}
+function saveUploadConfig(){
+  if(!currentJobKey)return;
+  getSignupData(currentJobKey).uploadConfig=document.getElementById('uploadApiConfig').value;
+  showToast('✅ 储存参数配置已保存');
+}
+function triggerUpload(){
+  const cfg=getSignupData(currentJobKey||'').uploadConfig;
+  const status=document.getElementById('uploadStatus');
+  if(!cfg||!cfg.trim()){
+    status.textContent='⚠️ 请先配置储存参数';
+    status.style.color='#c62828';
+    return;
+  }
+  document.getElementById('signupFileInput').click();
+}
+function handleUploadFiles(files){
+  const status=document.getElementById('uploadStatus');
+  if(!files||!files.length){status.textContent='';return;}
+  status.style.color='var(--ink-2)';
+  status.textContent='📄 已选择 '+files.length+' 个文件：'+Array.from(files).map(f=>f.name).join('、')+'（演示模式：接口配置已保存，实际上传需对接后端）';
+}
+
+// ========== 提名公示：公告编辑 / 时间段 / 模板下载 ==========
+const nominateData={}; // { jobKey: { notice, dateStart, dateEnd, templateUrl } }
+function getNominateData(key){
+  if(!nominateData[key])nominateData[key]={notice:'',dateStart:'',dateEnd:'',templateUrl:''};
+  return nominateData[key];
+}
+function loadNominateData(key){
+  const d=getNominateData(key);
+  document.getElementById('nominateEditor').innerHTML=d.notice||'';
+  document.getElementById('nominateDateStart').value=d.dateStart||'';
+  document.getElementById('nominateDateEnd').value=d.dateEnd||'';
+  document.getElementById('nominateTemplateUrl').value=d.templateUrl||'';
+  const link=document.getElementById('nominateTemplateLink');
+  if(d.templateUrl){link.href=d.templateUrl;link.style.display='block';}else{link.style.display='none';}
+}
+function saveNominateNotice(){
+  if(!currentJobKey)return;
+  getNominateData(currentJobKey).notice=document.getElementById('nominateEditor').innerHTML;
+  getNominateData(currentJobKey).dateStart=document.getElementById('nominateDateStart').value;
+  getNominateData(currentJobKey).dateEnd=document.getElementById('nominateDateEnd').value;
+  showToast('✅ 公告已保存');
+}
+function saveNominateTemplateUrl(){
+  if(!currentJobKey)return;
+  const url=document.getElementById('nominateTemplateUrl').value.trim();
+  getNominateData(currentJobKey).templateUrl=url;
+  const link=document.getElementById('nominateTemplateLink');
+  if(url){link.href=url;link.style.display='block';}else{link.style.display='none';}
+  showToast('✅ 下载地址已保存');
+}
+
+// ========== 渲染村模板表 ==========
+const villageJobData={};
+function renderVillageTable(){
+  const forms=[];
+  document.querySelectorAll('#vStep4 .form-opt.active').forEach(f=>forms.push(f.textContent.trim()));
+  document.getElementById('vHint').style.display='none';
+  const tbody=document.querySelector('#vTable tbody');
+  const formStr=forms.map(f=>{
+    if(f.includes('自荐'))return '<span class="tag self">自荐</span>';
+    if(f.includes('联名'))return '<span class="tag group">联名</span>';
+    return '';
+  }).join('');
+  const formVal=formsToValue(forms);
+
+  const rows=[
+    ['村委会主任','1'],
+    ['村委会副主任','1-2'],
+    ['村委委员','3-5'],
+  ];
+
+  tbody.innerHTML=rows.map(([job,quota],idx)=>{
+    const jKey='v_'+idx;
+    if(!villageJobData[jKey]){
+      villageJobData[jKey]={job,session:'',quota,form:formVal,status:job.includes('委会主任')?'在岗':'竞选报名',signup:'',nominateMode:'',nominator:'',candidate:'',votes:'',review:'',reviewer:'',winner:'',voteCount:'',resultNote:'',remark:''};
+    }
+    const jd=villageJobData[jKey];
+    jd.form=formVal;
+    return `<tr>
+      <td><input class="roster-input" type="text" value="${jd.session||''}" placeholder="如：第12届" onchange="updateJobField('${jKey}','session',this.value)"></td>
+      <td><a class="job-link" href="javascript:void(0)" onclick="openJobDetail('${jKey}','village')">${job}</a></td>
+      <td>${formStr}</td>
+      <td><input class="roster-input" type="text" value="${jd.quota||''}" placeholder="人数" onchange="updateJobField('${jKey}','quota',this.value)"></td>
+      <td>${genStatusSelect(jKey,jd)}</td>
+      <td><button class="detail-btn" onclick="openJobDetail('${jKey}','village')">📋 进入详情</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('vTable').style.display='';
+  updateSteps('village');
+}
+
+// ========== 渲染社区模板表 ==========
+const communityJobData={};
+function renderCommunityTable(mode){
+  if(!mode||mode==='—')return;
+  const forms=[];
+  document.querySelectorAll('#cStep4 .form-opt.active').forEach(f=>forms.push(f.textContent.trim()));
+  document.getElementById('cHint').style.display='none';
+  const tbody=document.querySelector('#cTable tbody');
+  const formStr=forms.map(f=>{
+    if(f.includes('自荐'))return '<span class="tag self">自荐</span>';
+    if(f.includes('联名'))return '<span class="tag group">联名</span>';
+    return '';
+  }).join('');
+  const formVal=formsToValue(forms);
+
+  const rows=[
+    ['居委会主任','1'],
+    ['居委会副主任','1-2'],
+    ['居委会委员','3-5'],
+  ];
+
+  tbody.innerHTML=rows.map(([job,quota],idx)=>{
+    const jKey='c_'+idx;
+    if(!communityJobData[jKey]){
+      communityJobData[jKey]={job,session:'',quota,form:formVal,status:job.includes('委会主任')?'在岗':'竞选报名',signup:'',nominateMode:'',nominator:'',candidate:'',votes:'',review:'',reviewer:'',winner:'',voteCount:'',resultNote:'',remark:''};
+    }
+    const jd=communityJobData[jKey];
+    jd.form=formVal;
+    return `<tr>
+      <td><input class="roster-input" type="text" value="${jd.session||''}" placeholder="如：第12届" onchange="updateJobField('${jKey}','session',this.value)"></td>
+      <td><a class="job-link" href="javascript:void(0)" onclick="openJobDetail('${jKey}','community')">${job}</a></td>
+      <td>${formStr}</td>
+      <td><input class="roster-input" type="text" value="${jd.quota||''}" placeholder="人数" onchange="updateJobField('${jKey}','quota',this.value)"></td>
+      <td>${genStatusSelect(jKey,jd)}</td>
+      <td><button class="detail-btn" onclick="openJobDetail('${jKey}','community')">📋 进入详情</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('cTable').style.display='';
+  updateSteps('community');
+}
+
+// ========== 更新岗位字段 ==========
+function updateJobField(jKey,field,value){
+  const data=jKey.startsWith('v_')?villageJobData:communityJobData;
+  if(data[jKey])data[jKey][field]=value;
+}
+
+// ========== 打开岗位详情弹窗（状态联动） ==========
+let currentJobKey=null;
+function openJobDetail(jKey,panelType){
+  currentJobKey=jKey;
+  const data=jKey.startsWith('v_')?villageJobData:communityJobData;
+  const jd=data[jKey];
+  if(!jd)return;
+
+  document.getElementById('jmJobName').value=jd.job;
+  const formsNow=[];
+  document.querySelectorAll('#'+(panelType==='village'?'vStep4':'cStep4')+' .form-opt.active').forEach(f=>formsNow.push(f.textContent.trim()));
+  document.getElementById('jmForm').value=formsToValue(formsNow);
+  document.getElementById('jmQuota').value=jd.quota||'';
+  document.getElementById('jmStatus').value=jd.status||'在岗';
+  loadSignupData(jKey);
+  loadNominateData(jKey);
+  document.getElementById('jmNominateMode').value=jd.nominateMode||'';
+  document.getElementById('jmNominator').value=jd.nominator||'';
+  document.getElementById('jmCandidate').value=jd.candidate||'';
+  document.getElementById('jmVotes').value=jd.votes||'';
+  document.getElementById('jmReview').value=jd.review||'';
+  document.getElementById('jmReviewer').value=jd.reviewer||'';
+  document.getElementById('jmWinner').value=jd.winner||'';
+  document.getElementById('jmVoteCount').value=jd.voteCount||'';
+  document.getElementById('jmResultNote').value=jd.resultNote||'';
+  document.getElementById('jmRemark').value=jd.remark||'';
+
+  document.getElementById('jobModalTitle').textContent='📋 '+jd.job;
+  const panelLabel=panelType==='village'?'🏡 村换届':'🏙️ 社区换届';
+  document.getElementById('jobModalSub').innerHTML=panelLabel+' <span class="tpl-badge '+panelType+'">'+(panelType==='village'?'村委会 · 全民直选':'居委会 · 三选一')+'</span>';
+  document.getElementById('jmTemplateInfo').innerHTML='📌 当前阶段：<strong>'+(jd.status||'—')+'</strong> | 表格所选岗位状态与此详情联动，保存后同步回表格';
+
+  currentRosterPanel=panelType;
+  currentRosterJob=jd.job;
+  rosterCardIdx=0;
+  refreshStageBlocks();
+  document.getElementById('jobModalOverlay').classList.add('show');
+}
+
+function closeJobModal(){
+  document.getElementById('jobModalOverlay').classList.remove('show');
+  document.body.classList.remove('incumbent-mode');
+  currentJobKey=null;
+}
+
+function saveJobDetail(){
+  if(!currentJobKey)return;
+  const data=currentJobKey.startsWith('v_')?villageJobData:communityJobData;
+  const jd=data[currentJobKey];
+  if(!jd)return;
+
+  jd.form=document.getElementById('jmForm').value;
+  jd.quota=document.getElementById('jmQuota').value;
+  jd.status=document.getElementById('jmStatus').value;
+  // 竞选报名数据由 signupData 独立管理，无需存 jd
+  jd.nominateMode=document.getElementById('jmNominateMode').value;
+  jd.nominator=document.getElementById('jmNominator').value;
+  jd.candidate=document.getElementById('jmCandidate').value;
+  jd.votes=document.getElementById('jmVotes').value;
+  jd.review=document.getElementById('jmReview').value;
+  jd.reviewer=document.getElementById('jmReviewer').value;
+  jd.winner=document.getElementById('jmWinner').value;
+  jd.voteCount=document.getElementById('jmVoteCount').value;
+  jd.resultNote=document.getElementById('jmResultNote').value;
+  jd.remark=document.getElementById('jmRemark').value;
+
+  const panelType=currentJobKey.startsWith('v_')?'village':'community';
+  if(panelType==='village')renderVillageTable();
+  else renderCommunityTable(document.getElementById('cStep2').querySelector('.sel-val').textContent);
+
+  closeJobModal();
+  showToast('✅ '+jd.job+' 已保存');
+}
+
+function showToast(msg){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const toast=document.createElement('div');
+  toast.className='toast';
+  toast.textContent=msg;
+  document.body.appendChild(toast);
+  setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),300);},1500);
+}
+
+// ========== 干部花名册（村/社区） ==========
+const rosterData={ village:[
+  {term:'第12届',year:'2021',post:'村委会主任',name:'陈志强',phone:'138-0594-1234',intro:'主持村委会全面工作，分管财务审批与重大项目协调。'},
+  {term:'第12届',year:'2021',post:'村委会主任',name:'林秀英',phone:'139-0504-5566',intro:'2024年补选上任，协管民政与综治，推进村道硬化与路灯工程。'},
+  {term:'第12届',year:'2021',post:'村委会副主任',name:'黄国华',phone:'137-0504-1278',intro:'分管农业生产、水利设施维护与防汛抗旱。'},
+  {term:'第12届',year:'2021',post:'村委委员',name:'吴丽娟',phone:'135-0594-1290',intro:'负责妇联、计生、文书档案与便民服务。'},
+  {term:'第12届',year:'2021',post:'村委委员',name:'郑文斌',phone:'188-0504-1234',intro:'负责民兵、综治与夜间治安巡逻。'}
+], community:[
+  {term:'第11届',year:'2022',post:'居委会主任',name:'王建国',phone:'138-0594-8888',intro:'统筹社区全面事务，重点推进老旧小区改造与物业协调。'},
+  {term:'第11届',year:'2022',post:'居委会主任',name:'赵敏',phone:'139-0504-7777',intro:'2025年补选，分管网格化服务、志愿服务与信访调解。'},
+  {term:'第11届',year:'2022',post:'居委会副主任',name:'孙立',phone:'137-0504-6666',intro:'分管民政、低保、退役军人及残联事务。'},
+  {term:'第11届',year:'2022',post:'居委会委员',name:'周晓梅',phone:'135-0594-9999',intro:'负责文体活动、社区教育与科普宣传。'},
+  {term:'第11届',year:'2022',post:'居委会委员',name:'李浩然',phone:'188-0504-5555',intro:'负责综治、安全生产与普法宣传。'}
+] };
+
+function rosterOptions(panel){
+  return panel==='village'
+    ? ['村委会主任','村委会副主任','村委委员']
+    : ['居委会主任','居委会副主任','居委会委员'];
+}
+
+function renderRoster(panel){
+  const tbody=document.querySelector('#'+(panel==='village'?'vRosterTable':'cRosterTable')+' tbody');
+  const data=rosterData[panel];
+  if(!data.length){
+    tbody.innerHTML='<tr><td colspan="7" class="roster-empty">暂无记录，点击「＋ 添加一行」开始登记</td></tr>';
+    return;
+  }
+  const opts=rosterOptions(panel);
+  tbody.innerHTML=data.map((r,idx)=>{
+    const optHtml=opts.map(o=>`<option value="${o}"${r.post===o?' selected':''}>${o}</option>`).join('');
+    return `<tr>
+      <td><input class="roster-input" type="text" value="${r.term||''}" placeholder="如：第12届" onchange="updRoster('${panel}',${idx},'term',this.value)"></td>
+      <td><input class="roster-input" type="text" value="${r.year||''}" placeholder="如：2021" onchange="updRoster('${panel}',${idx},'year',this.value)"></td>
+      <td><select class="roster-select" onchange="updRoster('${panel}',${idx},'post',this.value)">${optHtml}</select></td>
+      <td><input class="roster-input" type="text" value="${r.name||''}" placeholder="姓名" onchange="updRoster('${panel}',${idx},'name',this.value)"></td>
+      <td><input class="roster-input" type="text" value="${r.phone||''}" placeholder="手机" onchange="updRoster('${panel}',${idx},'phone',this.value)"></td>
+      <td><input class="roster-input" type="text" value="${r.intro||''}" placeholder="简介" onchange="updRoster('${panel}',${idx},'intro',this.value)"></td>
+      <td><div class="roster-actions">
+        <button class="roster-btn add" title="在该岗位下加一行" onclick="addRosterRow('${panel}',${idx})">＋</button>
+        <button class="roster-btn del" title="删除此行" onclick="delRosterRow('${panel}',${idx})">－</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// 末尾加行；传 afterIdx 则在指定行下方插入同岗位新行
+function addRosterRow(panel, afterIdx){
+  const blank={ term:'', year:'', post:rosterOptions(panel)[0], name:'', phone:'', intro:'' };
+  if(afterIdx===undefined){
+    rosterData[panel].push(blank);
+  } else {
+    const copy={ ...blank, post:rosterData[panel][afterIdx].post };
+    rosterData[panel].splice(afterIdx+1,0,copy);
+  }
+  renderRoster(panel);
+}
+
+function delRosterRow(panel, idx){
+  rosterData[panel].splice(idx,1);
+  renderRoster(panel);
+}
+
+function updRoster(panel, idx, field, val){
+  rosterData[panel][idx][field]=val;
+}
+
+function saveRoster(panel){
+  // 内存持久化（用户决策：放内存）
+  showToast('✅ '+(panel==='village'?'村委':'社区')+'干部花名册已保存（内存）');
+}
+
+renderRoster('village');
+renderRoster('community');
+
+document.getElementById('jobModalOverlay').addEventListener('click',function(e){
+  if(e.target===this)closeJobModal();
+});
+
+// ========== 刷新本村日历（原步骤条已改为日程看板） ==========
+function updateSteps(type){
+  renderVillageCalendar();
+  if(!document.getElementById('sn1'))return;
+  const v1=document.getElementById('vStep1').classList.contains('done');
+  const c1=document.getElementById('cStep1').classList.contains('done');
+  const c2=document.getElementById('cStep2').classList.contains('done');
+
+  let vProgress=0,cProgress=0;
+  if(v1)vProgress=2;
+  if(document.getElementById('vTable').style.display!=='none')vProgress=5;
+  if(c1)cProgress=1;
+  if(c2)cProgress=2;
+  if(document.getElementById('cTable').style.display!=='none')cProgress=5;
+
+  const progress=Math.max(vProgress,cProgress);
+
+  for(let i=1;i<=5;i++){
+    const sn=document.getElementById('sn'+i);
+    const sl=document.getElementById('sl'+i);
+    sn.classList.remove('done','current');
+    sl.classList.remove('done');
+    if(i<progress){sn.classList.add('done');sl.classList.add('done');}
+    if(i===progress){sn.classList.add('current');sl.classList.add('done');}
+  }
+  for(let i=1;i<=4;i++){
+    const sp=document.getElementById('sp'+i);
+    sp.classList.remove('done');
+    if(i<progress)sp.classList.add('done');
+  }
+}
+
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.select-header')){
+    document.querySelectorAll('.select-box.open').forEach(b=>b.classList.remove('open'));
+  }
+});
+
+// ========== 岗位说明 / 表格下载 全屏弹层 ==========
+const positionMeta={
+  v_dir:{name:'村委会主任',desc:'',url:''},
+  v_dep:{name:'村委会副主任',desc:'',url:''},
+  v_mem:{name:'村委委员',desc:'',url:''},
+  c_dir:{name:'居委会主任',desc:'',url:''},
+  c_dep:{name:'居委会副主任',desc:'',url:''},
+  c_mem:{name:'居委会委员',desc:'',url:''},
+};
+let curPosId=null;
+
+// ---- 岗位说明（富文本：编辑 + 预览 + 保存） ----
+function openDesc(id){
+  curPosId=id;
+  const m=positionMeta[id];
+  document.getElementById('descTitle').textContent='📋 '+m.name+' · 岗位说明';
+  const ed=document.getElementById('descEditor');
+  ed.innerHTML=m.desc||'';
+  ed.style.display='';
+  document.getElementById('descToolbar').style.display='';
+  const pv=document.getElementById('descPreview');
+  pv.style.display='none';pv.innerHTML='';
+  document.getElementById('descPreviewBtn').textContent='👁 预览';
+  document.getElementById('descOverlay').classList.add('show');
+  setTimeout(()=>ed.focus(),50);
+}
+function rtCmd(cmd,val){
+  document.getElementById('descEditor').focus();
+  document.execCommand(cmd,false,val||null);
+}
+function toggleDescPreview(){
+  const ed=document.getElementById('descEditor');
+  const pv=document.getElementById('descPreview');
+  const btn=document.getElementById('descPreviewBtn');
+  if(pv.style.display==='none'){
+    pv.innerHTML=ed.innerHTML&&ed.innerHTML.trim()!==''
+      ?ed.innerHTML:'<span class="dl-empty">（暂无内容）</span>';
+    pv.style.display='';ed.style.display='none';
+    document.getElementById('descToolbar').style.display='none';
+    btn.textContent='✏️ 编辑';
+  }else{
+    if(pv.innerHTML.indexOf('dl-empty')===-1)ed.innerHTML=pv.innerHTML;
+    ed.style.display='';pv.style.display='none';
+    document.getElementById('descToolbar').style.display='';
+    btn.textContent='👁 预览';
+  }
+}
+function saveDesc(){
+  if(!curPosId)return;
+  positionMeta[curPosId].desc=document.getElementById('descEditor').innerHTML;
+  closeDesc();
+  showToast('✅ 岗位说明已保存');
+}
+function closeDesc(){
+  document.getElementById('descOverlay').classList.remove('show');
+  curPosId=null;
+}
+document.getElementById('descOverlay').addEventListener('click',function(e){
+  if(e.target===this)closeDesc();
+});
+
+// ---- 表格下载（地址编辑 + 快捷跳转 + 保存） ----
+function renderDlPreview(){
+  const url=document.getElementById('dlUrl').value.trim();
+  const jump=document.getElementById('dlJump');
+  const pv=document.getElementById('dlPreview');
+  if(url){
+    pv.innerHTML='当前下载地址：<a href="'+url+'" target="_blank" rel="noopener">'+url+'</a>';
+    jump.href=url;jump.classList.remove('disabled');
+  }else{
+    pv.innerHTML='<span class="dl-empty">尚未设置下载地址</span>';
+    jump.href='javascript:void(0)';jump.classList.add('disabled');
+  }
+}
+function openDownload(id){
+  curPosId=id;
+  const m=positionMeta[id];
+  document.getElementById('dlTitle').textContent='⬇️ '+m.name+' · 表格下载';
+  document.getElementById('dlUrl').value=m.url||'';
+  renderDlPreview();
+  document.getElementById('dlOverlay').classList.add('show');
+}
+function saveDl(){
+  if(!curPosId)return;
+  positionMeta[curPosId].url=document.getElementById('dlUrl').value.trim();
+  closeDl();
+  showToast('✅ 下载地址已保存');
+}
+function closeDl(){
+  document.getElementById('dlOverlay').classList.remove('show');
+  curPosId=null;
+}
+document.getElementById('dlOverlay').addEventListener('click',function(e){
+  if(e.target===this)closeDl();
+});
+</script>
+
+<!-- ============ 岗位说明全屏弹层 ============ -->
+<div class="full-overlay" id="descOverlay">
+  <div class="full-modal">
+    <div class="full-header">
+      <h3 id="descTitle">📋 岗位说明</h3>
+      <div class="anchor-note">
+        💾 岗位编辑字段 · ID: <code>position-desc-edit-fields-001</code><br>
+        表: <code>positions.id/election_id/name/quota/duty/material_requirements/enabled</code>；保存: <code>POST /position-v2/update</code>。<br>
+        规则: 编辑岗位必须带 <code>election_id</code> / 当前母活动 ID；不能把某一届岗位说明写成全局通用真相。
+      </div>
+      <div class="full-tools">
+        <button id="descPreviewBtn" onclick="toggleDescPreview()">👁 预览</button>
+        <button onclick="closeDesc()">✕ 关闭</button>
+      </div>
+    </div>
+    <div class="full-body">
+      <div class="rt-toolbar" id="descToolbar">
+        <button onclick="rtCmd('bold')"><b>加粗</b></button>
+        <button onclick="rtCmd('italic')"><i>斜体</i></button>
+        <button onclick="rtCmd('underline')"><u>下划线</u></button>
+        <button onclick="rtCmd('insertUnorderedList')">• 项目符号</button>
+        <button onclick="rtCmd('insertOrderedList')">1. 编号</button>
+        <button onclick="rtCmd('formatBlock','H3')">标题</button>
+        <button onclick="rtCmd('formatBlock','P')">正文</button>
+        <button onclick="rtCmd('removeFormat')">清除格式</button>
+      </div>
+      <div class="rt-editor" id="descEditor" contenteditable="true" data-ph="在此输入岗位说明（支持加粗、斜体、列表、标题等富文本格式）…"></div>
+      <div class="rt-preview" id="descPreview" style="display:none;"></div>
+    </div>
+    <div class="full-footer">
+      <button class="btn-cancel" onclick="closeDesc()">取消</button>
+      <button class="btn-save" onclick="saveDesc()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 表格下载全屏弹层 ============ -->
+<div class="full-overlay" id="dlOverlay">
+  <div class="full-modal">
+    <div class="full-header">
+      <h3 id="dlTitle">⬇️ 表格下载</h3>
+      <div class="anchor-note">
+        📥 岗位下载字段 · ID: <code>position-download-fields-001</code><br>
+        交互: 岗位卡片点“表格下载” → 弹窗 → 编辑下载地址 → 预览链接 → 保存 → 快捷跳转下载。<br>
+        下载资源优先挂 <code>positions.material_requirements</code> JSON，建议结构含 <code>name/type/url/required</code>；如需独立模板库，再由夏夏确认字段/表。<br>
+        规则: 下载资源也必须跟 <code>positions.election_id</code> 关联，同岗位不同届次可不同；下载资源给前端下载，不能和后台上传的 <code>materials.scope=archive</code> 存档材料混。
+      </div>
+      <button onclick="closeDl()">✕ 关闭</button>
+    </div>
+    <div class="full-body">
+      <label class="dl-label">表格下载地址（超链接）</label>
+      <input class="dl-input" id="dlUrl" type="text" placeholder="https://… 粘贴表格文件下载链接" oninput="renderDlPreview()">
+      <div class="field-map">字段：<code>positions.material_requirements[].url</code>；当前岗位：<code>positions.id</code>；当前母活动：<code>positions.election_id</code></div>
+      <div class="dl-preview" id="dlPreview"></div>
+    </div>
+    <div class="full-footer">
+      <a class="btn-jump disabled" id="dlJump" href="javascript:void(0)" target="_blank">⬇️ 快捷跳转下载</a>
+      <button class="btn-cancel" onclick="closeDl()">取消</button>
+      <button class="btn-save" onclick="saveDl()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
