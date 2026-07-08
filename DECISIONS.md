@@ -4,6 +4,7 @@
 
 ## 当前决策
 
+- 2026-07-08 母版阶段公告口径：母版主体表的“公告编辑”列不是单公告字段，而是该阶段子公告集合入口。一个阶段可以挂多条公告；点击进入弹窗列表后可 `+新增`。新增公告必须继承当前 `electionId + stageKey`，再选择或生成 `notice_no/template_key`。现有 `notice-v2/list` 可先按 `electionId` 拉取再前端按 `stage_key` 过滤，后续建议补后端 `stageKey` 查询参数。
 - 2026-07-08 母版详情页时间轴表口径：表头固定为 `#/阶段名称/开始日期/结束日期/天数/核心工作/关联材料/上传文件/公告编辑`，但阶段行由当前选举模板决定，不能所有类型硬套 11 阶段。村委会默认“村民委员会 · 全民直选”模板；社区按 `elections.election_method` 分为居民直接选举、户代表选举、居民代表选举三类模板。`elections.content.timeline` 保存当前母活动实际采用的 `templateKey + stages[]`，日历、公告、归档材料都跟这份 stages 对齐。
 - 2026-07-08 花名册进入一期：需要新增最小 roster 表承接“本村/社区在职干部花名册”。范围只做在岗展示和岗位详情联动，不扩复杂干部履历系统。最小字段建议：`id/village_id/session_no/year_start/year_end/post/name/phone/intro/status/created_by/created_at/updated_at`；联动规则：岗位状态为“在岗”时，岗位详情按 `village_id + session_no + post=positions.name + status=active` 读取当前在任干部。
 - 2026-07-08 UI 原型施工口径：先压实子管理视角。子管理登录后只看当前村/社区；超级管理只是外围归属地列表与下钻壳，下钻后复用子管理内容，不把“总管理/全区管理”混入子管理首屏。岗位详情、岗位说明、表格下载、材料提交、候选人、公告、结果回填都必须带同一个 `elections.id + positions.id` 上下文；母版活动详情 `/election/:id` 采用可编辑时间轴表作为最小单元，字段为阶段名称、开始/结束日期、天数、核心工作、关联材料、上传文件、公告编辑，真相源是 `elections.content.timeline`。

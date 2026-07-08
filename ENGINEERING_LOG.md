@@ -1505,3 +1505,36 @@ flowchart LR
 ### 接力棒
 
 - 下一步继续按页面主体往下压：先把母版表每一列的字段/事件/失败态补全，再决定是否进入 Vue 页面施工；不要跳去弹层或花名册实现。
+
+## 2026-07-08 母版阶段公告一对多口径
+
+### 输入
+
+- 用户截图说明：母版主体表每个阶段已经分类好；实际可能出现同一阶段要发布多个小公告，点击“编辑公告”进入弹窗列表，弹窗中可 `+新增` 关联公告。
+
+### 代码事实
+
+- `koaLite/api/notice-v2.js` 当前 `add/generate/update` 已能写入 `notice_no/stage_key/template_key`。
+- `notice-v2/list` 当前筛选参数有 `electionId/type/status/title`，暂未直接支持 `stageKey` 查询。
+- `admin/src/views/election/detail.vue` 现有逻辑已经按 `stage.noticeNos.includes(n.notice_no) || n.stage_key === stage.stageKey` 将本活动公告归入阶段。
+
+### 动作
+
+- 更新 `换届选举系统-UI优化.html`：
+  - 把母版主体表“公告编辑”列从单按钮改成“阶段子公告集合入口”。
+  - 表格示例中改为“查看列表 + `+新增`”。
+  - 新增锚点 `election-stage-notice-list-001`。
+- 更新 `DECISIONS.md`、`PROJECT_STATE.md`、`当前接力图.md`，记录“一个阶段可以挂多条子公告”。
+
+### 规则
+
+- 打开公告弹窗：带 `electionId + stageKey`。
+- 弹窗列表：可先 `GET /notice-v2/list?electionId` 拉本活动公告，再按 `stage_key` 前端过滤。
+- 弹窗新增：必须继承当前 `electionId + stageKey`；`notice_no/template_key` 在弹窗内选择或生成。
+- 后续建议：给后端 `notice-v2/list` 补 `stageKey` 查询参数，避免前端拉全量再筛。
+
+### 验证
+
+- `node --check` 已解析 HTML 内 1 个 `<script>`，结果：`script syntax ok 1`。
+- `Select-String` 已确认 `election-stage-notice-list-001`、`阶段子公告集合`、`多条子公告`、`查看列表` 等锚点/文字已落到 HTML 与接力记录。
+- `git diff --check` 对本轮相关文件无空白错误；仅有 Windows LF/CRLF 提示。

@@ -760,6 +760,10 @@ body{
 .stage-files{display:grid;gap:3px;color:#536359;}
 .mother-table-actions{display:flex;gap:6px;flex-wrap:wrap;}
 .tiny-action{border:1px solid #d7e7de;border-radius:8px;background:#fbfffc;color:var(--green-d);font-size:11px;font-weight:800;padding:5px 7px;}
+.notice-list-preview{display:grid;gap:4px;min-width:118px;}
+.notice-list-preview span{display:block;color:#536359;font-size:11px;line-height:1.35;}
+.notice-list-preview code{font-size:10px;color:#205b3b;}
+.notice-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;}
 .sidebar-flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px;}
 .sidebar-flow-item{position:relative;border:1px solid #e2eaf0;border-radius:10px;background:#fbfcfd;padding:9px 10px;min-height:74px;}
 .sidebar-flow-item strong{display:block;color:var(--ink);font-size:12px;margin-bottom:5px;}
@@ -1022,7 +1026,13 @@ body{
             <td><code>stages[].work</code><br>制定方案、成立选委会等模板工作。</td>
             <td><div class="stage-files"><span><code>stages[].files[]</code></span><span><code>material_no/template_file</code></span></div></td>
             <td><button class="tiny-action">上传归档</button><br><code>materials.scope=archive</code></td>
-            <td><button class="tiny-action">编辑公告</button><br><code>notices.stage_key</code></td>
+            <td>
+              <div class="notice-list-preview">
+                <span>2 条子公告</span>
+                <code>notices.stage_key=S1</code>
+                <div class="notice-actions"><button class="tiny-action">查看列表</button><button class="tiny-action">+新增</button></div>
+              </div>
+            </td>
           </tr>
           <tr>
             <td><span class="stage-key">S2</span></td>
@@ -1033,7 +1043,13 @@ body{
             <td>阶段名跟模板走，不同选举类型这里可以不同。</td>
             <td><div class="stage-files"><span>登记表、名单、公示材料</span><span>按 <code>stageKey</code> 归档</span></div></td>
             <td><button class="tiny-action">上传材料</button><br><code>election_id + stage_key</code></td>
-            <td><button class="tiny-action">生成公告</button><br><code>notice_no/template_key</code></td>
+            <td>
+              <div class="notice-list-preview">
+                <span>可多条公告</span>
+                <code>notice_no/template_key</code>
+                <div class="notice-actions"><button class="tiny-action">查看列表</button><button class="tiny-action">+新增</button></div>
+              </div>
+            </td>
           </tr>
           <tr>
             <td><span class="stage-key">Sx</span></td>
@@ -1044,7 +1060,13 @@ body{
             <td>与岗位、材料提交、候选人管理发生交叉时，只传递 <code>election_id + position_id + stage_key</code>。</td>
             <td><div class="stage-files"><span>报名材料不在这里审核</span><span><code>scope=candidate</code> 走材料提交管理</span></div></td>
             <td><button class="tiny-action">阶段归档</button><br><code>scope=archive</code></td>
-            <td><button class="tiny-action">公告编辑</button><br><code>notice-v2</code></td>
+            <td>
+              <div class="notice-list-preview">
+                <span>公告集合入口</span>
+                <code>notice-v2</code>
+                <div class="notice-actions"><button class="tiny-action">查看列表</button><button class="tiny-action">+新增</button></div>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -1054,6 +1076,12 @@ body{
       读取: <code>GET /election-v2/detail?id</code>；保存时间轴: <code>POST /election-v2/update</code>，字段 <code>content.timeline</code>。<br>
       上传文件: <code>POST /material-v2/submit</code>，参数 <code>election_id/scope=archive/stage_key/material_no/file_url</code>；公告编辑: <code>POST /notice-v2/generate</code> 或 <code>POST /notice-v2/update</code>，参数 <code>election_id/stage_key/notice_no/template_key</code>。<br>
       ⚠️ API 名称以当前后端为准；缺字段时只标 TODO，不在页面稿里编第二套字段。
+    </div>
+    <div class="anchor-note">
+      🔌 阶段子公告集合 · ID: <code>election-stage-notice-list-001</code><br>
+      规则: 一个阶段可以有多条子公告；主体表“公告编辑”列不是直接编辑单条公告，而是打开该阶段公告列表弹窗，弹窗内支持 <code>+新增</code>。<br>
+      读取: 现有前端可先 <code>GET /notice-v2/list?electionId</code> 拉本活动公告，再按 <code>notices.stage_key === stages[].stageKey</code> 过滤；后续建议后端补 <code>stageKey</code> 查询参数，避免前端全量筛。<br>
+      新增: <code>POST /notice-v2/generate</code> 或 <code>POST /notice-v2/add</code> 必须继承当前 <code>electionId + stageKey</code>，公告编号 <code>notice_no</code> 与模板 <code>template_key</code> 在弹窗里选择或生成。
     </div>
     <div class="anchor-note">
       📦 主体表字段转换 · ID: <code>election-mother-table-transform-001</code><br>
