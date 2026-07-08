@@ -205,6 +205,27 @@ CREATE TABLE IF NOT EXISTS `election_voters` (
   KEY `idx_phone` (`phone`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='选民登记关系表';
 
+-- ⑨-2 在职干部花名册（只承接岗位详情“在岗”和历史在任名录，不做复杂干部履历）
+CREATE TABLE IF NOT EXISTS `roster` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '花名册ID',
+  `village_id` int(11) NOT NULL COMMENT '所属村居',
+  `session_no` varchar(20) DEFAULT '' COMMENT '届次，如第十五届',
+  `year_start` int(4) DEFAULT NULL COMMENT '任期开始年份',
+  `year_end` int(4) DEFAULT NULL COMMENT '任期结束年份',
+  `post` varchar(50) NOT NULL COMMENT '岗位，如主任/副主任/委员',
+  `name` varchar(100) NOT NULL COMMENT '姓名',
+  `phone` varchar(20) DEFAULT '' COMMENT '联系电话',
+  `intro` text COMMENT '简介',
+  `status` varchar(20) DEFAULT 'active' COMMENT 'active在任/inactive离任',
+  `created_by` int(11) DEFAULT NULL COMMENT '创建人',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_village_session_post` (`village_id`, `session_no`, `post`),
+  KEY `idx_status` (`status`),
+  FOREIGN KEY (`village_id`) REFERENCES `villages`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='在职干部花名册';
+
 -- ⑩ 日志表（三合一·kind区分·规范书硬要求）
 CREATE TABLE IF NOT EXISTS `logs` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '日志ID',

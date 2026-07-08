@@ -1633,3 +1633,50 @@ flowchart LR
 
 - 后续如果要给甲方口头或书面汇报，优先摘 `阶段性进度与全局认知说明-2026-07-08.md` 第 2 节、第 10 节、第 12 节。
 - 下一刀仍按上一轮优先级：`roster` 最小闭环 -> `notice-v2/list stageKey` -> `elections.content templateKey` 合同 -> `position-v2` 输出字段。
+
+## 2026-07-08 roster 花名册最小闭环第一刀
+
+### 输入
+
+- 用户要求：继续项目，小 mini 一起分工推进。根据上一份离线主文档，下一刀先补 `roster` 花名册最小闭环。
+
+### 小 mini 分工结论
+
+- 结构官：`roster` 不替代 `positions`，只承接本村/社区在职干部花名册和岗位详情“在岗”。
+- 字段官：`positions.incumbent*` 只能当摘要，不能承接届次、任期、简介、历史在任名录；需要独立最小表。
+- UI 官：本轮不大改页面，只先补后端和前端 API 包装，让后续岗位详情弹窗可接。
+- 接力官：`delete` 不硬删历史记录，先置 `inactive`；未跑完整 build，只跑最小验证。
+
+### 动作
+
+- 更新 `koaLite/db/init_v2.sql`：新增 `roster` 表。
+- 新增 `koaLite/api/roster-v2.js`：提供 `GET list/detail`、`POST add/update/delete`。
+- 更新 `admin/src/api/api.ts`：新增 `getRosters/getRoster/createRoster/updateRoster/deleteRoster`。
+- 新增 `koaLite/scripts/check-roster-v2.js`：验证 payload 归一化、字段校验和返回映射。
+- 更新 `koaLite/db/db.js`：初始化日志去掉固定“10张业务表”数字，避免新增表后误导。
+
+### roster 表边界
+
+- 字段：`id/village_id/session_no/year_start/year_end/post/name/phone/intro/status/created_by/created_at/updated_at`。
+- 状态：`active` 表示在任，`inactive` 表示离任/停用。
+- 查询：支持 `villageId/sessionNo/post/status/name/page/pageSize`。
+- 权限：非超管查询走 `villageWhere(ctx)`；写操作用 `checkVillageWrite(ctx, villageId)` 限定本村/社区。
+- 不负责：不做复杂干部履历、不做附件、不做组织树、不做候选人结果。
+
+### 验证
+
+- `node --check koaLite/api/roster-v2.js` 通过。
+- `node --check koaLite/db/db.js` 通过。
+- `node koaLite/scripts/check-roster-v2.js` 通过。
+- live schema 查询 `SHOW COLUMNS FROM roster` 返回完整字段。
+- `node koaLite/scripts/check-router-api-prefix.js` 通过。
+- roster 路由路径断言通过：`/roster-v2/list`、`/api/roster-v2/list`、`/roster-v2/add`、`/api/roster-v2/add`。
+
+### 已知注意
+
+- 一次验证中曾因 `koaLite/db/db.js` require 时会自动初始化，又手动调用 `initDatabase()`，导致并发初始化尾部打印 connection closed 噪音；已改用 `koaLite/config/mysql` 做干净 live schema 查询。
+- 本轮不改岗位详情页面 UI；下一步可在岗位详情弹窗按 `village_id + session_no + post + status=active` 接 `roster-v2/list`。
+
+### 接力棒
+
+- 下一刀按顺序补 `notice-v2/list stageKey` 查询；然后再做 `elections.content templateKey` 兼容合同和 `position-v2` 输出字段补齐。

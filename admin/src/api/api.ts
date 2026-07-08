@@ -210,6 +210,23 @@ export function generatePositions(data: {
   return http.post('/position-v2/generate', data);
 }
 
+// 花名册 roster-v2（岗位详情“在岗”和历史在任名录）
+export function getRosters(params?: any) {
+  return http.get('/roster-v2/list', { params }).then(normalizeResponse);
+}
+export function getRoster(id: string) {
+  return http.get('/roster-v2/detail', { params: { id } }).then(normalizeResponse);
+}
+export function createRoster(data: any) {
+  return http.post('/roster-v2/add', data);
+}
+export function updateRoster(id: string, data: any) {
+  return http.post('/roster-v2/update', { id, ...data });
+}
+export function deleteRoster(id: string) {
+  return http.post('/roster-v2/delete', { id });
+}
+
 // 档案（走 material-v2 scope=archive）
 export function getArchives(params?: any) {
   return http.get('/material-v2/list', { params: { ...params, scope: 'archive' } }).then(normalizeResponse);

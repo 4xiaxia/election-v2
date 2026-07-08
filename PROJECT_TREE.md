@@ -30,14 +30,16 @@
 - `koaLite/db/init_v2.sql`：主表与新增字段。
 - `koaLite/api/election-v2.js`：母档案增改查、选举方式规则。
 - `koaLite/api/position-v2.js`：主任/副主任/委员岗位生成。
+- `koaLite/api/roster-v2.js`：花名册最小 API，承接岗位详情“在岗”和历史在任名录。
 - `koaLite/api/candidate-v2.js`：候选人导入、审核、结果。
 - `koaLite/api/material-v2.js`：candidate/archive 材料分流与审核。
 - `koaLite/api/notice-v2.js`：18 公告模板生成与公告归档字段。
 - `koaLite/scripts/seed-election-timeline.js`：给演示活动写入 11 阶段母表，并把 18 公告挂回阶段。
+- `koaLite/scripts/check-roster-v2.js`：花名册 payload/校验/映射自检。
 - `admin/src/views/dashboard/index.vue`：村/社区运营工作台，活动日历优先读取 `elections.content.timeline`。
 
 ## 下一刀
 
 ```text
-按角色视角盘点的优先级收口：先补 `roster` 最小表/API、`notice-v2/list stageKey` 查询、`elections.content templateKey` 兼容合同，再盘 `position-v2` 输出字段。
+`roster` 最小表/API 已落。下一刀补 `notice-v2/list stageKey` 查询，再做 `elections.content templateKey` 兼容合同和 `position-v2` 输出字段。
 ```

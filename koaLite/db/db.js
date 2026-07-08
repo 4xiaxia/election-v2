@@ -61,7 +61,7 @@ async function initDatabase() {
       }
     }
 
-    console.log('选举系统 election_v2 · 10张业务表已就绪');
+    console.log('选举系统 election_v2 · 业务表已就绪');
     connection.release();
   } catch (error) {
     console.error('Database connection / initialization failed:');

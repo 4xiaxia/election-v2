@@ -1,5 +1,7 @@
 # PROJECT_STATE
 
+- 2026-07-08 `roster` 花名册最小闭环第一刀完成：新增 `koaLite/db/init_v2.sql` 中 `roster` 最小表，字段为 `id/village_id/session_no/year_start/year_end/post/name/phone/intro/status/created_by/created_at/updated_at`；新增 `koaLite/api/roster-v2.js`，提供 `list/detail/add/update/delete`，其中 `delete` 只将 `status` 置为 `inactive`，不硬删历史在任名录；新增 `admin/src/api/api.ts` 的 `getRosters/getRoster/createRoster/updateRoster/deleteRoster` 包装；新增 `koaLite/scripts/check-roster-v2.js` 最小自检。验证：`node --check koaLite/api/roster-v2.js`、`node --check koaLite/db/db.js`、`node koaLite/scripts/check-roster-v2.js`、live schema `SHOW COLUMNS FROM roster`、`node koaLite/scripts/check-router-api-prefix.js`、roster 路由路径断言均通过。本轮未跑完整 build。
+
 - 2026-07-08 阶段性离线主文档完成：新增根目录 `阶段性进度与全局认知说明-2026-07-08.md`。定位为无上下文可读的阶段报告和全局认知底图，上半部分可摘给甲方看当前进度、边界、未完成项和下一阶段安排；下半部分给产品/UI/前端/后端/数据库接手，细化到角色视角、页面单元、侧边栏目录、数据库表、缺口、风险、验收和下一步实施顺序。本轮不改业务代码，不跑完整 build。
 
 - 2026-07-08 角色视角数据库盘点完成：新增 `副船长的航海接力日志/数据库角色视角盘点-2026-07-08.md`，按结构官/字段官/UI 官/接力官四个视角，把子管理、超管、运营、审核、普通用户的动作链路走了一遍。结论：旧主表继续保留并补强；优先微调 `elections.content` 合同、`notice-v2/list stageKey`、`position-v2` 输出字段；新增最小 `roster` 表承接花名册；短信通道配置先定 `system_configs` 或 `sms_channels` 边界，不把短信能力过度承诺为已落库。本轮只做文档盘点和计划，未改业务代码。
