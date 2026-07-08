@@ -7,6 +7,7 @@ assert.deepEqual(village.map(p => [p.name, p.quota]), [
   ['副主任', 1],
   ['委员', 3],
 ]);
+assert.deepEqual(village.map(p => p.postCategory), ['director', 'deputy_director', 'member']);
 
 const smallVillage = buildGeneratedPositions('village', 3);
 assert.deepEqual(smallVillage.map(p => [p.name, p.quota]), [

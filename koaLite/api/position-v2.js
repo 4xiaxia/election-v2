@@ -10,6 +10,16 @@ function parseJSON(str, fallback) {
 
 const P0_POSITION_NAMES = ['主任', '副主任', '委员'];
 
+function valueOr(...values) {
+  return values.find(v => v !== undefined && v !== null && v !== '');
+}
+
+function toTiny(value, defaultValue = 1) {
+  if (value === undefined || value === null || value === '') return defaultValue;
+  if (value === false || value === 0 || value === '0') return 0;
+  return 1;
+}
+
 function normalizeDeputyCount(orgType, committeeSize, opts = {}) {
   if (opts.deputyCount !== undefined && opts.deputyCount !== null && opts.deputyCount !== '') {
     return Number(opts.deputyCount);
@@ -51,8 +61,10 @@ const api = {
         if (!electionId) return response.paramError(ctx, '选举活动ID不能为空');
 
         const params = [electionId];
-        let sql = `SELECT p.id, p.election_id, p.name, p.quota, p.duty, p.material_requirements,
-                  p.sort_weight, p.enabled, p.elected_candidates,
+        let sql = `SELECT p.id, p.election_id, p.name, p.quota, p.duty, p.post_category,
+                  p.can_self_recommend, p.on_ballot, p.produce_way, p.post_status,
+                  p.incumbent, p.incumbent_phone, p.incumbent_duty, p.is_reelection,
+                  p.material_requirements, p.sort_weight, p.enabled, p.elected_candidates,
                   DATE_FORMAT(p.enroll_start_at,"%Y-%m-%d") as enroll_start_at,
                   DATE_FORMAT(p.enroll_end_at,"%Y-%m-%d") as enroll_end_at
            FROM positions p JOIN elections e ON p.election_id = e.id
@@ -109,9 +121,18 @@ const api = {
 
         const reqJSON = typeof materialRequirements === 'string' ? materialRequirements : JSON.stringify(materialRequirements);
         const [result] = await pool.execute(
-          `INSERT INTO positions (election_id, name, quota, duty, material_requirements, sort_weight, enroll_start_at, enroll_end_at)
-           VALUES (?,?,?,?,?,?,?,?)`,
-          [electionId, name, quota, duty, reqJSON, sortWeight, b.enrollStartAt || null, b.enrollEndAt || null]
+          `INSERT INTO positions
+            (election_id, name, quota, duty, post_category, can_self_recommend, on_ballot, produce_way,
+             post_status, incumbent, incumbent_phone, incumbent_duty, is_reelection,
+             material_requirements, sort_weight, enroll_start_at, enroll_end_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [electionId, name, quota, duty, valueOr(b.postCategory, b.post_category, ''),
+           toTiny(b.canSelfRecommend ?? b.can_self_recommend, 1),
+           toTiny(b.onBallot ?? b.on_ballot, 1),
+           valueOr(b.produceWay, b.produce_way, ''), valueOr(b.postStatus, b.post_status, 'active'),
+           valueOr(b.incumbent, ''), valueOr(b.incumbentPhone, b.incumbent_phone, ''), valueOr(b.incumbentDuty, b.incumbent_duty, ''),
+           toTiny(b.isReelection ?? b.is_reelection, 1),
+           reqJSON, sortWeight, b.enrollStartAt || null, b.enrollEndAt || null]
         );
         response.success(ctx, { id: result.insertId }, '添加岗位成功');
       } catch (error) {
@@ -139,12 +160,20 @@ const api = {
           p.name,
           p.quota,
           p.duty,
+          p.postCategory,
+          1,
+          1,
+          '选举产生',
+          'active',
+          1,
           JSON.stringify([]),
           p.sortWeight,
           1,
         ]);
         await pool.query(
-          `INSERT INTO positions (election_id, name, quota, duty, material_requirements, sort_weight, enabled)
+          `INSERT INTO positions
+            (election_id, name, quota, duty, post_category, can_self_recommend, on_ballot, produce_way,
+             post_status, is_reelection, material_requirements, sort_weight, enabled)
            VALUES ?`,
           [values]
         );
@@ -160,14 +189,33 @@ const api = {
         const b = ctx.request.body;
         if (!b.id) return response.paramError(ctx, '岗位ID不能为空');
 
-        const reqJSON = typeof b.materialRequirements === 'string'
-          ? b.materialRequirements
-          : JSON.stringify(b.materialRequirements || []);
+        const [rows] = await pool.execute('SELECT * FROM positions WHERE id=?', [b.id]);
+        const old = rows[0];
+        if (!old) return response.paramError(ctx, '岗位不存在');
+
+        const reqJSON = b.materialRequirements === undefined
+          ? old.material_requirements
+          : (typeof b.materialRequirements === 'string'
+            ? b.materialRequirements
+            : JSON.stringify(b.materialRequirements || []));
         await pool.execute(
-          `UPDATE positions SET name=?, quota=?, duty=?, material_requirements=?, sort_weight=?,
-             enabled=?, enroll_start_at=?, enroll_end_at=? WHERE id=?`,
-          [b.name, b.quota || 1, b.duty || '', reqJSON, b.sortWeight || 99,
-           b.enabled === undefined ? 1 : b.enabled, b.enrollStartAt || null, b.enrollEndAt || null, b.id]
+          `UPDATE positions SET name=?, quota=?, duty=?, post_category=?, can_self_recommend=?, on_ballot=?,
+             produce_way=?, post_status=?, incumbent=?, incumbent_phone=?, incumbent_duty=?, is_reelection=?,
+             material_requirements=?, sort_weight=?, enabled=?, enroll_start_at=?, enroll_end_at=? WHERE id=?`,
+          [valueOr(b.name, old.name), valueOr(b.quota, old.quota, 1), valueOr(b.duty, old.duty, ''),
+           valueOr(b.postCategory, b.post_category, old.post_category, ''),
+           toTiny(b.canSelfRecommend ?? b.can_self_recommend, old.can_self_recommend ?? 1),
+           toTiny(b.onBallot ?? b.on_ballot, old.on_ballot ?? 1),
+           valueOr(b.produceWay, b.produce_way, old.produce_way, ''),
+           valueOr(b.postStatus, b.post_status, old.post_status, 'active'),
+           valueOr(b.incumbent, old.incumbent, ''),
+           valueOr(b.incumbentPhone, b.incumbent_phone, old.incumbent_phone, ''),
+           valueOr(b.incumbentDuty, b.incumbent_duty, old.incumbent_duty, ''),
+           toTiny(b.isReelection ?? b.is_reelection, old.is_reelection ?? 1),
+           reqJSON, valueOr(b.sortWeight, b.sort_weight, old.sort_weight, 99),
+           b.enabled === undefined ? old.enabled : b.enabled,
+           b.enrollStartAt === undefined ? old.enroll_start_at : (b.enrollStartAt || null),
+           b.enrollEndAt === undefined ? old.enroll_end_at : (b.enrollEndAt || null), b.id]
         );
         response.success(ctx, null, '修改岗位成功');
       } catch (error) {

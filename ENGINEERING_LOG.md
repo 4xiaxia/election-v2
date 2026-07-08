@@ -1700,3 +1700,39 @@ flowchart LR
 ### 验证
 
 - `git status --short` 不再打印 `.aionrs/skills/...` warning，只显示本轮 `.gitignore` 与记录文件改动。
+
+## 2026-07-08 P0 后端闭环收口
+
+### 输入
+
+- 用户问：今天后端这个闭环可以搞定吗。
+- 本轮将“后端闭环”限定为 P0 承接：`roster` 已落，继续补 `notice-v2/list stageKey`、`elections.content templateKey` 兼容合同、`position-v2` 输出字段。不含短信通道、完整模板库、前端大改。
+
+### 动作
+
+- `koaLite/api/notice-v2.js`：`list` 增加 `stageKey` 查询参数。
+- `koaLite/api/election-v2.js`：新增 `inferTemplateKey/normalizeContent/serializeContent`，详情返回 JSON content 时补 `templateKey/timeline/stages`；写入对象 content 时规范化后 stringify；普通富文本字符串保持原样。
+- `koaLite/db/init_v2.sql`：`positions` fresh schema 和轻迁移段补齐 `post_category/can_self_recommend/on_ballot/produce_way/post_status/incumbent/incumbent_phone/incumbent_duty/is_reelection`。
+- `koaLite/api/position-v2.js`：列表输出岗位扩展字段；生成岗位写入 `post_category` 等默认字段；新增/更新支持扩展字段；更新时未传字段保留旧值，避免旧表单清空在任和岗位状态。
+- `koaLite/scripts/check-position-generate.js`：补 `postCategory` 校验。
+- 新增 `koaLite/scripts/check-election-content-contract.js`：校验模板 key 推断、`timeline/stages` 兼容和富文本保持原样。
+
+### 验证
+
+- `node --check koaLite/api/notice-v2.js` 通过。
+- `node --check koaLite/api/election-v2.js` 通过。
+- `node --check koaLite/api/position-v2.js` 通过。
+- `node koaLite/scripts/check-position-generate.js` 通过。
+- `node koaLite/scripts/check-election-content-contract.js` 通过。
+- `node koaLite/scripts/check-roster-v2.js` 通过。
+- live schema 查询确认 `positions` 扩展字段和 `roster` 字段存在。
+- `node koaLite/scripts/check-router-api-prefix.js` 通过。
+
+### 闭环边界
+
+- 已闭：花名册、阶段公告筛选、母表 content 兼容合同、岗位字段后端承接。
+- 未闭：短信通道配置、完整模板库表、岗位详情 UI 弹窗、母活动详情页前端大改。
+
+### 接力棒
+
+- 下一步转前端/接口联调时，优先让岗位详情按 `roster-v2/list?villageId&sessionNo&post&status=active` 接在岗详情；母表公告弹窗改用 `notice-v2/list?electionId&stageKey`。

@@ -75,6 +75,15 @@ CREATE TABLE IF NOT EXISTS `positions` (
   `name` varchar(50) NOT NULL COMMENT '主任/副主任/委员',
   `quota` int(4) DEFAULT 1 COMMENT '应选名额',
   `duty` text COMMENT '职责简介',
+  `post_category` varchar(50) DEFAULT '' COMMENT '岗位机器分类 director/deputy_director/member',
+  `can_self_recommend` tinyint(1) DEFAULT 1 COMMENT '是否允许自荐',
+  `on_ballot` tinyint(1) DEFAULT 1 COMMENT '是否上票',
+  `produce_way` varchar(50) DEFAULT '' COMMENT '产生方式',
+  `post_status` varchar(20) DEFAULT 'active' COMMENT '岗位状态 active/inactive/in_election/completed',
+  `incumbent` varchar(100) DEFAULT '' COMMENT '当前在任人员摘要',
+  `incumbent_phone` varchar(20) DEFAULT '' COMMENT '当前在任联系电话',
+  `incumbent_duty` text COMMENT '当前在任职责摘要',
+  `is_reelection` tinyint(1) DEFAULT 1 COMMENT '是否参与本届换届',
   `material_requirements` text COMMENT '材料要求（JSON·金山表单·=报名表单）',
   `sort_weight` int(4) DEFAULT 99 COMMENT '展示排序',
   `enabled` tinyint(1) DEFAULT 1 COMMENT '是否启用',
@@ -253,6 +262,16 @@ ALTER TABLE `users` ADD KEY `idx_wx_openid` (`wx_openid`);
 ALTER TABLE `elections` ADD COLUMN `session_no` varchar(20) DEFAULT '第十五届' COMMENT '届次';
 ALTER TABLE `elections` ADD COLUMN `committee_size` int(4) DEFAULT NULL COMMENT '班子总人数';
 ALTER TABLE `elections` ADD COLUMN `deputy_count` int(4) DEFAULT NULL COMMENT '副主任名额';
+
+ALTER TABLE `positions` ADD COLUMN `post_category` varchar(50) DEFAULT '' COMMENT '岗位机器分类 director/deputy_director/member';
+ALTER TABLE `positions` ADD COLUMN `can_self_recommend` tinyint(1) DEFAULT 1 COMMENT '是否允许自荐';
+ALTER TABLE `positions` ADD COLUMN `on_ballot` tinyint(1) DEFAULT 1 COMMENT '是否上票';
+ALTER TABLE `positions` ADD COLUMN `produce_way` varchar(50) DEFAULT '' COMMENT '产生方式';
+ALTER TABLE `positions` ADD COLUMN `post_status` varchar(20) DEFAULT 'active' COMMENT '岗位状态 active/inactive/in_election/completed';
+ALTER TABLE `positions` ADD COLUMN `incumbent` varchar(100) DEFAULT '' COMMENT '当前在任人员摘要';
+ALTER TABLE `positions` ADD COLUMN `incumbent_phone` varchar(20) DEFAULT '' COMMENT '当前在任联系电话';
+ALTER TABLE `positions` ADD COLUMN `incumbent_duty` text COMMENT '当前在任职责摘要';
+ALTER TABLE `positions` ADD COLUMN `is_reelection` tinyint(1) DEFAULT 1 COMMENT '是否参与本届换届';
 
 ALTER TABLE `candidates` ADD COLUMN `gender` varchar(10) DEFAULT '' COMMENT '性别';
 

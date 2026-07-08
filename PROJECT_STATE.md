@@ -1,5 +1,7 @@
 # PROJECT_STATE
 
+- 2026-07-08 P0 后端闭环收口：继 `roster` 后继续补齐 `notice-v2/list stageKey` 查询、`elections.content templateKey + timeline/stages` 兼容合同、`position-v2` 岗位扩展字段输出/写入。`init_v2.sql` 已补 `positions` 扩展字段 fresh schema 和轻迁移段；`election-v2` 现在 JSON content 会补 `templateKey/timeline/stages`，普通富文本仍保持原样；`position-v2` 更新时未传字段会保留旧值，避免岗位编辑表单清空在任/状态字段。新增 `koaLite/scripts/check-election-content-contract.js`，并扩展 `check-position-generate.js` 校验 `postCategory`。验证：`node --check` 三个 API、`check-position-generate`、`check-election-content-contract`、`check-roster-v2`、live schema positions/roster 字段检查、`check-router-api-prefix` 均通过。短信通道、完整模板库、前端页面大改不在本轮闭环内。
+
 - 2026-07-08 Git 扫描噪音处理：`.aionrs/skills/cron`、`officecli`、`skill-creator` 是本机 AionUi junction，目标目录不存在时 `git status` 会反复报 `could not open directory`。已在 `.gitignore` 屏蔽 `.aionrs/`，验证 `git status --short` 不再打印这三个目录 warning。
 
 - 2026-07-08 `roster` 花名册最小闭环第一刀完成：新增 `koaLite/db/init_v2.sql` 中 `roster` 最小表，字段为 `id/village_id/session_no/year_start/year_end/post/name/phone/intro/status/created_by/created_at/updated_at`；新增 `koaLite/api/roster-v2.js`，提供 `list/detail/add/update/delete`，其中 `delete` 只将 `status` 置为 `inactive`，不硬删历史在任名录；新增 `admin/src/api/api.ts` 的 `getRosters/getRoster/createRoster/updateRoster/deleteRoster` 包装；新增 `koaLite/scripts/check-roster-v2.js` 最小自检。验证：`node --check koaLite/api/roster-v2.js`、`node --check koaLite/db/db.js`、`node koaLite/scripts/check-roster-v2.js`、live schema `SHOW COLUMNS FROM roster`、`node koaLite/scripts/check-router-api-prefix.js`、roster 路由路径断言均通过。本轮未跑完整 build。

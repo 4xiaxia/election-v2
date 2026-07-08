@@ -35,11 +35,13 @@
 - `koaLite/api/material-v2.js`：candidate/archive 材料分流与审核。
 - `koaLite/api/notice-v2.js`：18 公告模板生成与公告归档字段。
 - `koaLite/scripts/seed-election-timeline.js`：给演示活动写入 11 阶段母表，并把 18 公告挂回阶段。
+- `koaLite/scripts/check-position-generate.js`：岗位生成和 `postCategory` 自检。
+- `koaLite/scripts/check-election-content-contract.js`：母活动 `content` 的 `templateKey/timeline/stages` 兼容合同自检。
 - `koaLite/scripts/check-roster-v2.js`：花名册 payload/校验/映射自检。
 - `admin/src/views/dashboard/index.vue`：村/社区运营工作台，活动日历优先读取 `elections.content.timeline`。
 
 ## 下一刀
 
 ```text
-`roster` 最小表/API 已落。下一刀补 `notice-v2/list stageKey` 查询，再做 `elections.content templateKey` 兼容合同和 `position-v2` 输出字段。
+P0 后端闭环已落：`roster`、`notice-v2/list stageKey`、`elections.content templateKey`、`position-v2` 扩展字段。下一刀转前端联调和页面承接。
 ```

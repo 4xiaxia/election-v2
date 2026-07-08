@@ -20,6 +20,38 @@ function isLegalMethod(type, method) {
   return allowed.includes(method);
 }
 
+function inferTemplateKey(electionType = '', electionMethod = '') {
+  if (String(electionType).includes('村委会')) return 'TEMPLATE_VILLAGE';
+  if (String(electionMethod).includes('户代表')) return 'TEMPLATE_COMMUNITY_HOUSEHOLD';
+  if (String(electionMethod).includes('居民代表')) return 'TEMPLATE_COMMUNITY_REPRESENTATIVE';
+  return 'TEMPLATE_COMMUNITY_DIRECT';
+}
+
+function parseContentJSON(content) {
+  if (!content) return null;
+  if (typeof content === 'object') return content;
+  try { return JSON.parse(content); } catch { return null; }
+}
+
+function normalizeContent(content, election = {}) {
+  const parsed = parseContentJSON(content);
+  if (!parsed) return content || '';
+  const timeline = Array.isArray(parsed.timeline)
+    ? parsed.timeline
+    : (Array.isArray(parsed.stages) ? parsed.stages : []);
+  const templateKey = parsed.templateKey || parsed.timelineTemplateKey || inferTemplateKey(election.election_type, election.election_method);
+  return { ...parsed, templateKey, timeline, stages: Array.isArray(parsed.stages) ? parsed.stages : timeline };
+}
+
+function serializeContent(content, election = {}) {
+  if (!content) return '';
+  if (typeof content === 'string') {
+    const normalized = normalizeContent(content, election);
+    return typeof normalized === 'string' ? content : JSON.stringify(normalized);
+  }
+  return JSON.stringify(normalizeContent(content, election));
+}
+
 module.exports = {
   get: {
     // 选举活动分页列表（JOIN 村居名）
@@ -79,6 +111,7 @@ module.exports = {
         if (rows.length === 0) return response.notFound(ctx, '选举活动不存在');
 
         const election = rows[0];
+        election.content = normalizeContent(election.content, election);
         const [positions] = await pool.query(
           'SELECT id, name, quota, duty, sort_weight, enabled FROM positions WHERE election_id = ? ORDER BY sort_weight ASC',
           [id]
@@ -111,6 +144,7 @@ module.exports = {
           return response.businessError(ctx, `选举方式"${electionMethod}"不符合"${electionType}"的法定规则`);
         }
 
+        const contentValue = serializeContent(content, { election_type: electionType, election_method: electionMethod });
         const [result] = await pool.execute(
           `INSERT INTO elections
             (village_id, name, election_type, election_method, content, session_no, committee_size, deputy_count,
@@ -118,7 +152,7 @@ module.exports = {
              publicity_start_at, publicity_end_at, election_end_date,
              status, approval_status, created_by)
            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'draft', '待审批', ?)`,
-          [villageId, name, electionType, electionMethod, content, sessionNo, committeeSize, deputyCount,
+          [villageId, name, electionType, electionMethod, contentValue, sessionNo, committeeSize, deputyCount,
            b.enrollStartAt || null, b.enrollEndAt || null, b.reviewStartAt || null, b.reviewEndAt || null,
            b.publicityStartAt || null, b.publicityEndAt || null, b.electionEndDate || null,
            b.createdBy || null]
@@ -139,12 +173,13 @@ module.exports = {
           return response.businessError(ctx, `选举方式"${b.electionMethod}"不符合"${b.electionType}"的法定规则`);
         }
 
+        const contentValue = serializeContent(b.content || '', { election_type: b.electionType, election_method: b.electionMethod });
         await pool.execute(
           `UPDATE elections SET village_id=?, name=?, election_type=?, election_method=?, content=?,
              session_no=?, committee_size=?, deputy_count=?,
              enroll_start_at=?, enroll_end_at=?, review_start_at=?, review_end_at=?,
              publicity_start_at=?, publicity_end_at=?, election_end_date=? WHERE id=?`,
-          [b.villageId, b.name, b.electionType, b.electionMethod, b.content || '',
+          [b.villageId, b.name, b.electionType, b.electionMethod, contentValue,
            b.sessionNo || '第十五届', b.committeeSize || null, b.deputyCount ?? null,
            b.enrollStartAt || null, b.enrollEndAt || null, b.reviewStartAt || null, b.reviewEndAt || null,
            b.publicityStartAt || null, b.publicityEndAt || null, b.electionEndDate || null, b.id]
@@ -214,3 +249,7 @@ module.exports = {
     delete: requireRole('超级管理'),            // 删活动：仅超管
   }
 };
+
+Object.defineProperty(module.exports, '_private', {
+  value: { ELECTION_METHOD_MAP, isLegalMethod, inferTemplateKey, normalizeContent, serializeContent },
+});

@@ -38,6 +38,13 @@
 
 时间：2026-07-08
 来自：小 mini 联合收口
+类别：后端 / 接力
+位置：P0 后端闭环
+留言：P0 后端闭环已收：`roster`、`notice-v2/list stageKey`、`elections.content templateKey/timeline/stages`、`position-v2` 扩展字段均已承接并跑最小验证。短信通道和完整模板库不算本轮完成。
+建议下一步：转前端联调和页面承接，优先岗位详情接 `roster-v2/list`、阶段公告弹窗接 `notice-v2/list?electionId&stageKey`。
+
+时间：2026-07-08
+来自：小 mini 联合收口
 类别：结构 / 字段 / UI / 接力
 位置：roster-v2 最小闭环
 留言：`roster` 已落最小表/API/前端 API 包装/自检脚本。它只负责花名册、在岗详情、历史在任名录；不替代 `positions`，不做复杂干部履历。`delete` 只置 `inactive`，不硬删历史记录。

@@ -36,7 +36,7 @@ function buildNoticeFromTemplate({ seq, orgType, fields = {} }) {
 
 async function list(ctx) {
   try {
-    const { page = 1, pageSize = 10, electionId, type, status, title } = ctx.query;
+    const { page = 1, pageSize = 10, electionId, type, status, title, stageKey } = ctx.query;
     const limit = Number(pageSize);
     const offset = (Number(page) - 1) * limit;
     const params = [];
@@ -53,6 +53,7 @@ async function list(ctx) {
     if (type) { sql += ' AND n.type=?'; countSql += ' AND n.type=?'; params.push(type); countParams.push(type); }
     if (status) { sql += ' AND n.status=?'; countSql += ' AND n.status=?'; params.push(status); countParams.push(status); }
     if (title) { sql += ' AND n.title LIKE ?'; countSql += ' AND n.title LIKE ?'; params.push(`%${title}%`); countParams.push(`%${title}%`); }
+    if (stageKey) { sql += ' AND n.stage_key=?'; countSql += ' AND n.stage_key=?'; params.push(stageKey); countParams.push(stageKey); }
 
     // @@村级隔离：非超管强制限定只看自己村
     const { wherePart: vw, params: vp } = villageWhere(ctx);
