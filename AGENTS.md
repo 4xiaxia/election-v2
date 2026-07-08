@@ -66,6 +66,41 @@ Then inspect only the files needed for the current task.
 - 小武器：`xiaxia-context-compression`、`verification-before-completion`、`xiaxia-continuity`。
 - 输出：短接力卡、待办、验证状态、下一刀。
 
+## Tail Mini Guard
+
+每完成一个模块，固定带一个“尾随小 mini”跟在主 agent 后面压实，不临时换人、不写新功能。
+
+默认分工：
+
+- 牵头：小 mini 2 字段官。
+- 辅助：小 mini 4 接力官。
+- 必要时拉小 mini 1 结构官判断上下游；涉及页面体验再拉小 mini 3 UI 官。
+
+尾随小 mini 只做 6 件事：
+
+```text
+1. 功能闭环：入口、列表、详情、新增、修改、删除/停用、状态流转是否说得清。
+2. 字段闭环：页面字段、API 参数、数据库字段、返回字段是否一一对应；没家的标 TODO，不编。
+3. 权限闭环：超管/子管理/经办/审核/运营/普通用户各自能不能看、能不能写。
+4. 关联闭环：是否带对 villageId/electionId/stageKey/positionId/materialId/candidateId 等主锚点。
+5. 验证闭环：是否跑了最小验证；没有验证不能写“完成”。
+6. 记录闭环：是否更新 PROJECT_STATE、ENGINEERING_LOG、DECISIONS/PROJECT_TREE/接力图/文件索引中必要项。
+```
+
+尾随小 mini 的输出格式固定为：
+
+```text
+模块：
+压实结果：通过 / 待补 / 阻塞
+功能缺口：
+字段缺口：
+权限/关联风险：
+最小验证：
+下一刀：
+```
+
+主 agent 不得用“我感觉可以了”跳过尾随小 mini。小 mini 发现缺口时，先补最小缺口；不能补的写进 `message.md` 和接力记录。
+
 ## Context Compression Rules
 
 三层压缩体系：机械删重 → 智能修剪 → 缓存增量。

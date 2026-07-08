@@ -1,5 +1,7 @@
 # PROJECT_STATE
 
+- 2026-07-08 尾随小 mini 机制落地：`AGENTS.md` 新增 `Tail Mini Guard`。以后每完成一个模块，默认由小 mini 2 字段官牵头、小 mini 4 接力官辅助，从功能闭环、字段闭环、权限闭环、关联闭环、验证闭环、记录闭环 6 个维度跟在主 agent 后面压实。尾随小 mini 不写新功能，只查缺口；发现缺口先补最小缺口，不能补的写入 `message.md` 和接力记录。
+
 - 2026-07-08 P0 后端闭环收口：继 `roster` 后继续补齐 `notice-v2/list stageKey` 查询、`elections.content templateKey + timeline/stages` 兼容合同、`position-v2` 岗位扩展字段输出/写入。`init_v2.sql` 已补 `positions` 扩展字段 fresh schema 和轻迁移段；`election-v2` 现在 JSON content 会补 `templateKey/timeline/stages`，普通富文本仍保持原样；`position-v2` 更新时未传字段会保留旧值，避免岗位编辑表单清空在任/状态字段。新增 `koaLite/scripts/check-election-content-contract.js`，并扩展 `check-position-generate.js` 校验 `postCategory`。验证：`node --check` 三个 API、`check-position-generate`、`check-election-content-contract`、`check-roster-v2`、live schema positions/roster 字段检查、`check-router-api-prefix` 均通过。短信通道、完整模板库、前端页面大改不在本轮闭环内。
 
 - 2026-07-08 Git 扫描噪音处理：`.aionrs/skills/cron`、`officecli`、`skill-creator` 是本机 AionUi junction，目标目录不存在时 `git status` 会反复报 `could not open directory`。已在 `.gitignore` 屏蔽 `.aionrs/`，验证 `git status --short` 不再打印这三个目录 warning。
