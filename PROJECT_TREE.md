@@ -35,6 +35,7 @@
 - `koaLite/api/material-v2.js`：candidate/archive 材料分流与审核。
 - `koaLite/api/notice-v2.js`：18 公告模板生成与公告归档字段。
 - `koaLite/scripts/seed-election-timeline.js`：给演示活动写入 11 阶段母表，并把 18 公告挂回阶段。
+- `koaLite/scripts/seed-subadmin-roster-demo.js`：幂等填充涧口子管理账号 `15000000000 / 123456 / 经办` 和第十五届主任/副主任/委员 active 在岗花名册样例。
 - `koaLite/scripts/check-position-generate.js`：岗位生成和 `postCategory` 自检。
 - `koaLite/scripts/check-election-content-contract.js`：母活动 `content` 的 `templateKey/timeline/stages` 兼容合同自检。
 - `koaLite/scripts/check-roster-v2.js`：花名册 payload/校验/映射自检。
@@ -43,5 +44,5 @@
 ## 下一刀
 
 ```text
-P0 后端闭环已落：`roster`、`notice-v2/list stageKey`、`elections.content templateKey`、`position-v2` 扩展字段。下一刀转前端联调和页面承接。
+子管理岗位页 roster 小闭环已跑通：账号、演示数据、前端弹窗、roster 读写停用已验证。下一刀转材料提交/审核/候选人闭环，不要回头重做 roster 主链。
 ```

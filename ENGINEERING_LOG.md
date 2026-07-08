@@ -1758,3 +1758,64 @@ flowchart LR
 ### 接力棒
 
 - 下一模块开始执行时，收尾阶段按 `AGENTS.md` 的 `Tail Mini Guard` 清单跑一遍，再写完成记录。
+
+## 2026-07-08 Pearl mini 接力保护
+
+### 输入
+
+- 用户触发 `pearl-mini-trigger: due`，强调劳动成果不能丢，尤其不能丢从前已经压实过的主线。
+
+### 动作
+
+- 更新 `message.md`：新增 Pearl mini 接力留言，标记当前未提交劳动成果在 `admin/src/views/positions/index.vue`。
+- 更新 `副船长的航海接力日志/上下文保护接力卡-2026-07-05.md`：新增 2026-07-08 当前断点，写清岗位页 roster 前端小闭环的已做、已验证、未验证和下一刀。
+- 更新 `副船长的航海接力日志/当前接力图.md`：新增 Pearl mini 保护点，明确从前已压实成果不能重做或覆盖，当前前端改动不能丢。
+
+### 当前断点
+
+- 已有未提交前端改动：岗位页新增“在岗”入口、在岗花名册弹窗、active roster 列表、新增、停用。
+- 后端 `roster-v2`、`notice-v2/list stageKey`、`elections.content templateKey/timeline/stages`、`position-v2` 扩展字段已完成最小验证。
+- 页面 runtime 未验证，不能写“页面闭环已完成”。
+
+### 接力棒
+
+- 下一步只做 `/positions` 小闭环运行验证：点“在岗” -> 新增 active roster -> 停用 -> active 列表消失；再跑 Tail Mini Guard、更新记录、提交。
+
+## 2026-07-08 子管理岗位页 roster 小闭环
+
+### 输入
+
+- 用户明确：当前是子管理视角，当然要创建一个子管理账号；同时要求把数据填充一些，方便页面真实可用。
+
+### 动作
+
+- `admin/src/views/positions/index.vue`：岗位行新增“在岗”入口；新增在岗花名册弹窗；按当前选举的 `village_id + session_no + positions.name + status=active` 读取 roster；支持新增 active 在岗人员和停用记录。
+- `admin/src/api/api.ts`：补 `submitMaterial` 兼容导出，消除 Vite 依赖扫描时 `election-proposals` 旧导入断点。
+- 新增 `koaLite/scripts/seed-subadmin-roster-demo.js`：幂等填充涧口子管理账号 `15000000000 / 123456 / 经办`，绑定 `village_id=28`；给涧口第十五届 `主任/副主任/委员` 填 3 条 active 在岗花名册，并同步 `positions.incumbent*` 摘要字段。
+
+### 验证
+
+- 后端 1116 启动成功；因本机缺 `koa2-swagger-ui`，本轮用 `NODE_ENV=production` 跳过 swagger 做最小验证。
+- 前端 3000 启动成功；`http://127.0.0.1:3000/` 返回 200。
+- Vite 编译通过：`/src/views/positions/index.vue` 返回 200；`/src/views/election-proposals/index.vue` 返回 200。
+- 子管理登录通过：`15000000000 / 123456 / 经办`，返回 `villageId=28`。
+- 子管理 `GET /api/election-v2/list` 只返回涧口活动。
+- 子管理 `GET /api/position-v2/list?electionId=1` 可见一期岗位 `主任/副主任/委员`。
+- 子管理 `GET /api/roster-v2/list?villageId=28&sessionNo=第十五届&post=主任&status=active` 返回陈建民。
+- 子管理 `POST /api/roster-v2/add` 新增测试在岗成功；`POST /api/roster-v2/delete` 停用成功；再次查 active 列表该测试记录消失。
+- `node --check koaLite/scripts/seed-subadmin-roster-demo.js` 通过。
+- `node --check koaLite/api/roster-v2.js` 通过。
+- `node koaLite/scripts/check-roster-v2.js` 通过。
+- `git diff --check` 无空白错误，仅 Windows LF/CRLF 提示。
+
+### Tail Mini Guard
+
+```text
+模块：岗位页 roster 页面小闭环
+压实结果：通过
+功能缺口：本轮只闭岗位页“在岗”读/新增/停用；未做复杂干部履历、附件、完整岗位详情大弹窗。
+字段缺口：页面字段已对上 roster.village_id/session_no/post/name/phone/year_start/year_end/intro/status；positions.incumbent* 只作为摘要同步。
+权限/关联风险：子管理在当前代码中对应 users.role='经办'；已绑定 village_id=28。不要另造“子管理”角色名。
+最小验证：子管理账号登录、只看涧口活动、读一期岗位、读 active roster、新增、停用、active 消失均通过。
+下一刀：提交本轮；后续转材料提交/审核/候选人闭环。
+```

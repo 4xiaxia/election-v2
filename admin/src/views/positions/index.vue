@@ -98,6 +98,7 @@
       <!-- 职位行关联入口（夏夏草图：查看材料要求 + 已收材料） -->
       <template #actions="{ row, edit, remove }">
         <el-button type="primary" link @click="showReqs(row)">材料要求({{ (row.materialRequirements||[]).length }})</el-button>
+        <el-button type="warning" link @click="openRoster(row)">在岗</el-button>
         <el-button type="success" link @click="goMaterials(row)">已收材料</el-button>
         <el-button type="primary" link @click="edit">编辑</el-button>
         <el-button type="danger" link @click="remove">删除</el-button>
@@ -159,14 +160,54 @@
       </el-table>
       <el-empty v-if="!(reqRow?.materialRequirements || []).length" description="该职位还没设置材料要求，请在「编辑」里添加" :image-size="80" />
     </el-dialog>
+
+    <el-dialog v-model="rosterDialog" :title="`${rosterRow?.name || ''} — 在岗花名册`" width="720px" @closed="resetRosterForm">
+      <div class="roster-head">
+        <el-tag effect="plain">{{ ctxElection?.name || '未选择活动' }}</el-tag>
+        <el-tag effect="plain">{{ rosterSessionNo || '届次未设置' }}</el-tag>
+        <el-tag effect="plain">{{ rosterVillageName || '归属地未设置' }}</el-tag>
+      </div>
+      <el-table :data="rosterRows" v-loading="rosterLoading" size="small" border>
+        <el-table-column prop="name" label="姓名" min-width="100" />
+        <el-table-column prop="phone" label="联系电话" min-width="120" />
+        <el-table-column label="任期" min-width="120">
+          <template #default="{ row: r }">{{ fmtRosterYears(r) }}</template>
+        </el-table-column>
+        <el-table-column prop="intro" label="简介" min-width="180" show-overflow-tooltip />
+        <el-table-column label="操作" width="88" align="center">
+          <template #default="{ row: r }">
+            <el-button type="danger" link @click="deactivateRoster(r)">停用</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-empty v-if="!rosterLoading && !rosterRows.length" description="暂无在岗花名册记录" :image-size="80" />
+
+      <el-divider content-position="left"><span class="divider-title">新增在岗人员</span></el-divider>
+      <el-form :model="rosterForm" label-width="82px" class="roster-form">
+        <el-form-item label="姓名" required><el-input v-model="rosterForm.name" placeholder="请输入姓名" /></el-form-item>
+        <el-form-item label="手机号"><el-input v-model="rosterForm.phone" placeholder="请输入联系电话" /></el-form-item>
+        <el-form-item label="任期">
+          <div class="year-row">
+            <el-input-number v-model="rosterForm.yearStart" :min="1900" :max="2100" controls-position="right" />
+            <span>至</span>
+            <el-input-number v-model="rosterForm.yearEnd" :min="1900" :max="2100" controls-position="right" />
+          </div>
+        </el-form-item>
+        <el-form-item label="简介"><el-input v-model="rosterForm.intro" type="textarea" :rows="2" placeholder="职责或备注，选填" /></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="rosterDialog=false">关闭</el-button>
+        <el-button type="primary" :loading="rosterSaving" @click="saveRoster">保存在岗人员</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRouter } from 'vue-router';
-import { getElections, getPositions, createPosition, updatePosition, deletePosition, generatePositions } from '@/api/api';
+import { getElections, getPositions, createPosition, updatePosition, deletePosition, generatePositions, getRosters, createRoster, deleteRoster } from '@/api/api';
 import CrudPage from '@/components/CrudPage.vue';
 
 const router = useRouter();
@@ -264,6 +305,97 @@ function showReqs(row: any) { reqRow.value = row; reqDialog.value = true; }
 // 跳转到材料审核页，带上活动+职位上下文，看该职位已收材料
 function goMaterials(row: any) {
   router.push({ path: '/materials', query: { electionId: currentElectionId.value, positionId: row.id } });
+}
+
+const rosterDialog = ref(false);
+const rosterLoading = ref(false);
+const rosterSaving = ref(false);
+const rosterRow = ref<any>(null);
+const rosterRows = ref<any[]>([]);
+const rosterForm = ref({ name: '', phone: '', yearStart: new Date().getFullYear(), yearEnd: new Date().getFullYear() + 5, intro: '' });
+const rosterVillageId = computed(() => ctxElection.value?.villageId ?? ctxElection.value?.village_id ?? '');
+const rosterVillageName = computed(() => ctxElection.value?.villageName ?? ctxElection.value?.village_name ?? ctxElection.value?.village ?? '');
+const rosterSessionNo = computed(() => ctxElection.value?.sessionNo ?? ctxElection.value?.session_no ?? '');
+
+function fmtRosterYears(row: any) {
+  if (!row.yearStart && !row.yearEnd) return '—';
+  return `${row.yearStart || ''}—${row.yearEnd || ''}`;
+}
+
+function resetRosterForm() {
+  rosterForm.value = { name: '', phone: '', yearStart: new Date().getFullYear(), yearEnd: new Date().getFullYear() + 5, intro: '' };
+}
+
+async function loadRosters() {
+  if (!rosterVillageId.value || !rosterRow.value?.name) {
+    rosterRows.value = [];
+    return;
+  }
+  rosterLoading.value = true;
+  try {
+    const res: any = await getRosters({
+      villageId: rosterVillageId.value,
+      sessionNo: rosterSessionNo.value,
+      post: rosterRow.value.name,
+      status: 'active',
+      pageSize: 50,
+    });
+    rosterRows.value = res.data?.list || [];
+  } catch (err: any) {
+    ElMessage.error(err?.msg || err?.message || '花名册加载失败');
+  } finally {
+    rosterLoading.value = false;
+  }
+}
+
+async function openRoster(row: any) {
+  if (!rosterVillageId.value) {
+    ElMessage.warning('当前活动缺少归属地，无法读取花名册');
+    return;
+  }
+  rosterRow.value = row;
+  rosterDialog.value = true;
+  await loadRosters();
+}
+
+async function saveRoster() {
+  if (!rosterForm.value.name.trim()) {
+    ElMessage.warning('请填写姓名');
+    return;
+  }
+  rosterSaving.value = true;
+  try {
+    await createRoster({
+      villageId: rosterVillageId.value,
+      sessionNo: rosterSessionNo.value,
+      post: rosterRow.value?.name || '',
+      name: rosterForm.value.name.trim(),
+      phone: rosterForm.value.phone.trim(),
+      yearStart: rosterForm.value.yearStart,
+      yearEnd: rosterForm.value.yearEnd,
+      intro: rosterForm.value.intro,
+      status: 'active',
+    });
+    ElMessage.success('在岗人员已保存');
+    resetRosterForm();
+    await loadRosters();
+  } catch (err: any) {
+    ElMessage.error(err?.msg || err?.message || '保存花名册失败');
+  } finally {
+    rosterSaving.value = false;
+  }
+}
+
+async function deactivateRoster(row: any) {
+  try {
+    await ElMessageBox.confirm(`确定停用 ${row.name} 的在岗记录吗？`, '停用花名册记录', { type: 'warning' });
+    await deleteRoster(String(row.id));
+    ElMessage.success('已停用');
+    await loadRosters();
+  } catch (err: any) {
+    if (err === 'cancel' || err === 'close') return;
+    ElMessage.error(err?.msg || err?.message || '停用失败');
+  }
 }
 
 onMounted(async () => {
@@ -398,4 +530,7 @@ const crudConfig = computed(() => ({
 .sample-replace { position: absolute; left: 0; right: 0; bottom: 0; font-size: 10px; text-align: center; color: #fff; background: rgba(0,0,0,.5); padding: 1px 0; }
 .req-tip { font-size: 12px; color: var(--ink-light, #a8a29e); background: var(--paper-bg, #fafaf9); padding: 8px 12px; border-radius: 4px; margin: 0 0 12px; line-height: 1.6; }
 .form-tip { display: block; font-size: 12px; color: var(--ink-light, #a8a29e); line-height: 1.5; margin-top: 4px; }
+.roster-head { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.roster-form { margin-top: 6px; }
+.year-row { display: flex; align-items: center; gap: 8px; }
 </style>

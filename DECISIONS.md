@@ -4,6 +4,7 @@
 
 ## 当前决策
 
+- 2026-07-08 子管理账号口径：当前代码里的“子管理视角”落到 `users.role='经办'`，不新增 `子管理` 角色名，避免登录页、侧边栏、后端 `ADMIN_ROLES` 三处不一致。演示子管理账号固定为 `15000000000 / 123456 / 经办`，绑定 `village_id=28` 涧口，用于验证子管理只看本归属地的小闭环。
 - 2026-07-08 P0 后端闭环范围：本轮后端闭环只包含 `roster` 花名册、`notice-v2/list stageKey` 查询、`elections.content templateKey + timeline/stages` 兼容合同、`position-v2` 岗位扩展字段承接。短信通道配置、完整模板库表、前端页面大改不计入本轮闭环，避免过度承诺。
 - 2026-07-08 `roster` 花名册落库策略：一期新增最小 `roster` 表和 `roster-v2` API，只承接本村/社区在职干部花名册、岗位详情“在岗”和历史在任名录；不扩复杂干部履历。字段为 `village_id/session_no/year_start/year_end/post/name/phone/intro/status` 等最小集。`delete` 接口不硬删，统一将 `status` 置为 `inactive`，保留历史可追溯性。
 - 2026-07-08 角色视角承接策略：子管理、超管、运营、审核、普通用户不各建一套业务结构；角色只决定入口、筛选和可操作动作，业务事实统一回到 `villages -> elections -> timeline/positions -> notices/materials/candidates/notifications`。下一步按最小缺口承接，不重建主表：新增 `roster` 最小表；给 `notice-v2/list` 补 `stageKey` 查询；统一 `elections.content` 的 `templateKey + timeline[]` 兼容合同；短信通道配置未落库前只能标为待定能力。

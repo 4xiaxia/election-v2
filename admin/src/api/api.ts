@@ -145,6 +145,9 @@ export function getMaterial(id: string) {
 export function createMaterial(data: any) {
   return http.post('/material-v2/submit', data);
 }
+export function submitMaterial(data: any) {
+  return createMaterial(data);
+}
 // @@TODO-无后端 material-v2 无 update/delete 端点
 export function updateMaterial(id: string, data: any) {
   return http.post('/material-v2/update', { id, ...data });

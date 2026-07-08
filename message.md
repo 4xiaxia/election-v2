@@ -51,6 +51,20 @@
 建议下一步：转前端联调和页面承接，优先岗位详情接 `roster-v2/list`、阶段公告弹窗接 `notice-v2/list?electionId&stageKey`。
 
 时间：2026-07-08
+来自：Pearl mini 接力官
+类别：接力 / 风险
+位置：岗位页 roster 前端小闭环
+留言：当前劳动成果在 `admin/src/views/positions/index.vue`，还未提交。已加岗位行“在岗”入口、在岗花名册弹窗、`getRosters/createRoster/deleteRoster` 调用、新增在岗人员和停用记录。后端 `roster-v2` 已完成并通过最小自检；前端运行验证还没收口。
+建议下一步：先不要扩范围。下一刀只做岗位页运行验证：打开 `/positions`，点“在岗”，新增一条 active roster，再停用并确认列表消失；然后跑 Tail Mini Guard，更新工程日志并提交。
+
+时间：2026-07-08
+来自：Pearl mini 接力官
+类别：接力 / 验证
+位置：岗位页 roster 子管理小闭环
+留言：已创建并验证子管理账号 `15000000000 / 123456 / 经办`，绑定涧口 `village_id=28`。`seed-subadmin-roster-demo.js` 已填主任/副主任/委员 active 在岗花名册。子管理登录、只看涧口活动、读岗位、读 roster、新增测试 roster、停用后 active 消失均通过。
+建议下一步：提交本轮；下一刀转材料提交/审核/候选人闭环，不再重做 roster 主链。
+
+时间：2026-07-08
 来自：小 mini 联合收口
 类别：结构 / 字段 / UI / 接力
 位置：roster-v2 最小闭环
