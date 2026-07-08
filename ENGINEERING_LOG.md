@@ -1256,3 +1256,170 @@
 
 - 若下轮仍出现相同报错，优先检查 `C:\Users\admin\.codex\config.toml` 是否被外部程序重新写回 `node_repl` 段。
 - 若后续想继续降噪，可再盘点全局 `.codex/skills` 与缺失软链接项，但不要在本项目工作流里主动展开无关 skills 说明。
+
+## 2026-07-08 `node_repl` 反复删不掉复查
+
+### 输入
+
+- 用户追问：`node repl` 怎么老是删不掉。
+- 已知上一轮只从 `C:\Users\admin\.codex\config.toml` 删除 `[mcp_servers.node_repl]`。
+
+### 根因
+
+- 当前 `C:\Users\admin\.codex\config.toml` 已无 `node_repl`。
+- 另一个活动配置 `C:\Users\admin\.codex\confwg.toml` 仍保留 `[mcp_servers.node_repl]` 与 `[mcp_servers.node_repl.env]`。
+- 该段指向旧路径：`C:\Users\admin\AppData\Local\OpenAI\Codex\bin\3c238e29bbc930ff\node_repl.exe`。
+- 实测旧路径不存在，新版 `34ab3e1324cc55b5\node_repl.exe` 存在；所以如果 Codex 加载 `confwg.toml`，就会继续报 `node_repl` 启动失败。
+- `chrome-native-hosts*.json` 里也有 `nodeReplPath`，但它们指向当前存在的新路径，不是这次 MCP 服务名 `node_repl` 失败的主因。
+
+### 动作
+
+- 备份 `C:\Users\admin\.codex\confwg.toml` 为 `confwg.toml.bak-node-repl-20260708-052339`。
+- 删除 `confwg.toml` 中旧的 `[mcp_servers.node_repl]` 与 `[mcp_servers.node_repl.env]` 两段。
+- 保留 `lean-ctx` 与 `memory-cache` MCP。
+
+### 验证
+
+- `Select-String` 复查 `C:\Users\admin\.codex\config.toml` 与 `C:\Users\admin\.codex\confwg.toml`：
+  - 无 `node_repl`；
+  - 无 `3c238e29bbc930ff`。
+- `Get-Content` 抽查 `confwg.toml` 前 80 行，MCP 段结构正常。
+
+### 接力棒
+
+- 需要重开 Codex 会话验证启动时是否仍报 `MCP client for node_repl failed to start`。
+- 若仍复现，下一刀查谁生成 `confwg.toml`：优先搜 `confwg.toml` 写入进程/同步脚本，而不是再删 `config.toml`。
+
+## 2026-07-08 固定小 mini 与留言栏落地
+
+### 输入
+
+- 用户要求：固定 3-4 个可延续的小 mini 助手，给每个安排职责和 skills；告诉它们本项目是 Windows 系统；建立所有小 agent 可写悄悄话/建议的公用留言栏 `message.md`，不要捂嘴。
+
+### 动作
+
+- 更新 `AGENTS.md`：
+  - 新增固定小 mini 机制；
+  - 小 mini 1：结构官；
+  - 小 mini 2：字段官；
+  - 小 mini 3：UI 官；
+  - 小 mini 4：接力官；
+  - 写入 Windows/PowerShell/`-LiteralPath`/禁止破坏性命令/本项目不使用 ctx 的提醒；
+  - 写入“有悄悄话、担心、建议、矛盾发现，写进 `message.md`，不要捂嘴”。
+- 新增根目录 `message.md`：
+  - 作为小 mini / 小 agent / 主 agent 公用留言栏；
+  - 写入使用规则、留言格式、固定小 mini 名单和首条接力留言。
+- 更新索引：
+  - `PROJECT_TREE.md` 增加 `message.md`；
+  - `副船长的航海接力日志/文件索引.md` 增加 `../message.md`。
+- 更新 `PROJECT_STATE.md` 记录当前状态。
+
+### 验证
+
+- `Test-Path message.md` 初始为 `False`，本轮已新建。
+- `AGENTS.md`、`PROJECT_TREE.md`、`PROJECT_STATE.md`、`ENGINEERING_LOG.md`、`副船长的航海接力日志/文件索引.md` 已成功写入。
+
+### 接力棒
+
+- 后续页面对齐时，固定按结构官/字段官/UI 官/接力官四路检查。
+- 任何 agent 有担心或建议，先写 `message.md`，不要只留在聊天上下文。
+
+## 2026-07-08 子管理仪表盘 UI 原型锚点继续压实
+
+### 输入
+
+- 用户继续按子管理视角讲解 `换届选举系统-UI优化.html`：仪表盘首屏、历史选举活动列表、岗位管理、岗位详情弹窗、花名册、表格下载、母版活动详情入口。
+- 用户要求：慢一点同步，不先落正式代码；把 UI、程序结构、数据库字段、侧边栏模块关系一次性压实，避免后续重复返工。
+
+### 动作
+
+- 按 SessionStart 顺序读取 `当前接力图.md`、`文件索引.md`、`PROJECT_STATE.md`、`ENGINEERING_LOG.md` 末条、`DECISIONS.md`。
+- 读取 `xiaxia-anchor-marking`、`xiaxia-draw`、`work-mode-conduct` 等本轮触发技能；`using-codegraph` 要求 codegraph 优先，但本轮没有可用 codegraph MCP 工具，退回 PowerShell + `rg`。
+- 更新 `message.md`，追加结构官、字段官、UI 官、接力官四条本轮预检留言。
+- 更新被 `.gitignore` 忽略的 `换届选举系统-UI优化.html`：
+  - 岗位详情弹窗新增 `position-detail-election-context-001`，明确必须带当前 `elections.id/session_no`。
+  - 岗位状态弹层路由补强 `position-status-modal-route-001`，把在岗、报名、提名、公示、竞选/投票、审核、结果分别接回花名册、材料提交、候选人、公告、审核、结果回填。
+  - 新增报名模板、公示模板、竞选/投票进度锚点：`position-signup-template-download-001`、`position-nominate-template-download-001`、`candidate-campaign-progress-001`。
+  - 本村/本社区活动列表新增母版详情最小单元锚点：`election-mother-detail-unit-001`、`election-community-mother-detail-unit-001`。
+  - 岗位主按钮从打开岗位说明改为 `openJobDetail(...)`；岗位说明和表格下载仍保留独立按钮。
+
+### 验证
+
+- `Select-String` 验证新增锚点和 `openJobDetail` 入口均可搜索。
+- `node -e` 解析 HTML 内 `<script>`，结果：`script syntax ok 1`。
+- `git diff --check -- '换届选举系统-UI优化.html' 'message.md'` 无输出；注意这两个文件被 `.gitignore:5 *` 忽略，`git diff` 不显示内容变化。
+- 未跑完整 build，符合 Windows 开发中只跑最小验证规则。
+
+### 接力棒
+
+- 下一步继续和夏夏对齐“母版活动详情页”：进入 `/election/:id` 后的时间轴表最小单元应包含阶段名称、开始/结束日期、天数、核心工作、关联材料、上传文件、公告编辑。
+- 继续保持子管理视角先行；超级管理只作为外层列表/下钻，不混入子管理首屏。
+- 花名册当前无正式表，仍是 TODO；不要在原型里写成已落库。
+
+## 2026-07-08 全局结构计划与花名册决策
+
+### 输入
+
+- 用户要求从系统化全局视角深思结构和表关联，并制定下一步计划。
+- 用户确认：花名册要进入一期。
+
+### 结构判断
+
+- 当前一期主链路仍是：`villages` 归属地 → `elections` 母活动 → `elections.content.timeline` 11 阶段 → `positions` 岗位 → `materials/candidates/notices/notifications/archive`。
+- `materials` 必须继续分两条血缘：
+  - `scope=candidate`：报名材料，挂 `election_id + position_id + applicant_phone`，审核通过后生成/关联候选人。
+  - `scope=archive`：阶段归档材料，挂 `election_id + stage_key + material_no + file_url`，不生成候选人。
+- 花名册不是 `users`，也不是 `election_voters`；它是村/社区在职干部名单，用来支撑岗位详情“在岗”状态。
+
+### 决策
+
+- 花名册进入一期，新增最小 roster 表。
+- 边界：只做本村/社区在职干部花名册录入、列表、编辑，以及岗位详情“在岗”联动。
+- 不做复杂干部履历系统，不做跨届统计，不做组织任免流程。
+- 最小字段建议：`id/village_id/session_no/year_start/year_end/post/name/phone/intro/status/created_by/created_at/updated_at`。
+- 读取规则：岗位状态为“在岗”时，按 `village_id + session_no + post=positions.name + status=active` 读取当前在任干部。
+
+### 下一步计划
+
+1. 先做结构施工图：把 `/election/:id` 母版详情页、`roster` 最小表、岗位详情弹窗三者的输入输出画清楚。
+2. 再落数据库迁移和后端最小 API：`roster-v2/list/add/update/delete`，只支撑当前 UI，不扩复杂功能。
+3. 再回到 HTML demo 补字段锚点：花名册区域从 TODO 改为 `roster` 表字段；岗位详情在岗卡片标 API 和字段。
+4. 最后才接 Vue 页面和最小验证。
+
+### 验证
+
+- 本轮只做计划和真相文件更新，未改业务代码，未跑 build。
+- 已更新 `DECISIONS.md`、`PROJECT_STATE.md`、`当前接力图.md`。
+
+### 接力棒
+
+- 下一刀从 roster 最小闭环开始时，先写 migration/API 的最小测试或脚本检查；不要先改 UI。
+
+## 2026-07-08 UI 稿子补全局漏斗与侧边栏字段导览
+
+### 输入
+
+- 用户要求：同时把系统逻辑、侧边栏目录结构、数据库字段漏斗、谁在谁前面、谁决定谁，一起写在稿子里，做到没有上下文也能第一次上手。
+
+### 动作
+
+- 更新被 `.gitignore` 忽略的 `换届选举系统-UI优化.html`，在主页面顶部、日历前新增“系统施工导览：业务漏斗 × 侧边栏目录 × 数据库字段”。
+- 新增三列导览：
+  - 业务漏斗：`villages` → `elections` → `elections.content.timeline` → `positions` → `materials/candidates`。
+  - 侧边栏目录：村居管理、选举活动管理、岗位管理、材料提交管理、候选人管理、审核/通知/归档分别吃哪层数据。
+  - 字段决定链：`users.village_id`、`villages.type`、`elections.id`、`timeline[].stageKey`、`positions.id`、`roster.post`、`materials.candidate_id` 谁决定谁。
+- 新增可搜索锚点：
+  - `system-global-funnel-001`
+  - `system-truth-order-001`
+  - `system-sidebar-route-map-001`
+  - `system-field-decision-chain-001`
+
+### 验证
+
+- `Select-String` 搜索新增锚点和“系统施工导览”，均存在。
+- `node -e` 解析 HTML 内 `<script>`，结果：`script syntax ok 1`。
+- `git diff --check -- '换届选举系统-UI优化.html'` 无输出；该 HTML 被 `.gitignore` 忽略，记录以 `PROJECT_STATE.md` 和本日志为准。
+
+### 接力棒
+
+- 下一位打开 HTML，先看 `systemBlueprint` 区，再看日历/岗位/母版详情，不要从碎页面猜业务结构。

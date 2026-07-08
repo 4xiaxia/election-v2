@@ -1,5 +1,15 @@
 # PROJECT_STATE
 
+- 2026-07-08 UI 稿子补全局施工导览：`换届选举系统-UI优化.html` 主页面顶部新增“系统施工导览：业务漏斗 × 侧边栏目录 × 数据库字段”，把 `villages -> elections -> timeline/positions -> materials/candidates/notices/archive` 的先后关系、侧边栏目录吃哪层数据、字段谁决定谁直接写进稿子。新增锚点：`system-global-funnel-001`、`system-truth-order-001`、`system-sidebar-route-map-001`、`system-field-decision-chain-001`。最小验证：新增锚点可搜索，HTML 内脚本语法解析通过，`git diff --check` 无输出。
+
+- 2026-07-08 全局结构计划决策：花名册确定进入一期，新增最小 roster 表；只承接本村/社区在职干部花名册和岗位详情“在岗”联动，不做复杂干部履历系统。下一刀从结构上先做 `/election/:id` 母版详情页最小单元 + roster 表/API 最小闭环，再回到 UI demo 标字段锚点。
+
+- 2026-07-08 UI 原型子管理仪表盘继续压实：`换届选举系统-UI优化.html` 已追加本轮锚点批注（文件被 `.gitignore` 忽略，不进 git diff）：岗位详情必须带当前 `elections.id/session_no`；岗位状态弹窗按状态回到花名册、材料提交、候选人、公告、审核、结果回填；岗位主按钮改为进入 `openJobDetail`，岗位说明/表格下载保留独立入口；本村/本社区活动列表补“母版详情最小单元”，进入 `/election/:id` 后以可编辑时间轴表承接阶段、日期、材料上传和公告编辑。`message.md` 已追加四个固定小 mini 的本轮预检留言。最小验证：HTML 内脚本语法解析通过，新增锚点可搜索，`git diff --check` 对相关记录文件无空白错误；未跑完整 build。
+
+- 2026-07-08 固定小 mini 机制落地：`AGENTS.md` 已新增 4 个固定小 mini（结构官/字段官/UI 官/接力官）及 Windows/PowerShell/留言规则；根目录新增 `message.md` 作为所有小 mini、小 agent、主 agent 的公用留言栏，记录悄悄话、担心、建议和矛盾发现；`PROJECT_TREE.md` 与 `副船长的航海接力日志/文件索引.md` 已同步入口。
+
+- 2026-07-08 `node_repl` 反复启动失败根因确认：`C:\Users\admin\.codex\config.toml` 已无旧段，但 `C:\Users\admin\.codex\confwg.toml` 仍保留 `[mcp_servers.node_repl]`，且指向不存在的 `3c238e29bbc930ff\node_repl.exe`；已备份 `confwg.toml.bak-node-repl-20260708-052339` 并删除该旧 MCP 段，复查 `config.toml/confwg.toml` 均无 `node_repl` 与旧路径。需重开 Codex 会话验证启动噪音是否消失。
+
 - 2026-07-07 UI 原型入口纠偏：`C:\Users\admin\Downloads\换届选举系统-UI优化.html` 已把“登录后选择归属地”改为“登录页绑定角色与归属地”；非超级管理必须选择行政村/社区后进入本村视角，超级管理进入全区汇总视角。主页面原 1-5 步骤条已改为“本村日历”看板：日期由下方母活动/子节点边走边填，日历只做引用与跳转。只改外部原型文件，未改项目源码；已跑 HTML 内脚本语法解析检查通过。
 
 - 2026-07-06 Vite 与路由守卫修复：`admin/package.json` 已设 `type=module`，`admin/vite.config.ts` 改为 `import.meta.url` 解析目录，消除 Vite CJS Node API 弃用链路；`admin/src/router/index.ts` 已修正未授权回退策略，改为按角色跳首个可访问路由，避免 `/`→`/dashboard` 无限重定向。

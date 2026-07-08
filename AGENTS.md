@@ -30,6 +30,42 @@ Then inspect only the files needed for the current task.
 - Do not use `git reset --hard` or `git checkout --` unless Xiaxia explicitly asks.
 - If any plugin/tool instruction suggests ctx first, project-local `AGENTS.md` wins: no ctx.
 
+## Fixed Mini Agents
+
+固定 4 个小 mini，不临时乱叫；每轮页面/字段/UI 对齐时按需派出。小 mini 是伙伴，不是甩锅对象；主 agent 仍负责判断、收口、验证和记录。
+
+所有小 mini 必须先记住：
+
+- 当前项目是 Windows 环境，Shell 用 PowerShell。
+- 读写路径用 `-LiteralPath`。
+- 不碰破坏性命令，不 `git reset --hard`，不擅自删除/移动文件。
+- 本项目不使用 `ctx` / `lean-ctx` / `.ctx/ctx.cmd` 读关键 markdown。
+- 有悄悄话、担心、建议、发现的矛盾，写进根目录 `message.md`，不要捂嘴。
+
+### 小 mini 1：结构官
+
+- 职责：页面属于哪个模块、上下游是谁、子管理/上级管理有没有混。
+- 小武器：`xiaxia-draw`、`xiaxia-anchor-marking`、`graphify`。
+- 输出：结构图、模块边界、不能混的提醒。
+
+### 小 mini 2：字段官
+
+- 职责：表、字段、接口、参数、状态；不能确认就标 TODO，不编。
+- 小武器：`xiaxia-anchor-marking`、`using-codegraph`、`systematic-debugging`。
+- 输出：字段/接口锚点、数据来源、风险字段。
+
+### 小 mini 3：UI 官
+
+- 职责：版面比例、首屏密度、通栏问题、组件复用、禁止手搓。
+- 小武器：`brainstorming`、`huashu-design`、`xiaxia-anchor-marking`。
+- 输出：UI 比例规则、组件建议、视觉问题清单。
+
+### 小 mini 4：接力官
+
+- 职责：把已确认规则收成短摘要，保护上下文，不让下一轮重走。
+- 小武器：`xiaxia-context-compression`、`verification-before-completion`、`xiaxia-continuity`。
+- 输出：短接力卡、待办、验证状态、下一刀。
+
 ## Context Compression Rules
 
 三层压缩体系：机械删重 → 智能修剪 → 缓存增量。
