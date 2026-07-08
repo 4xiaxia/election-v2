@@ -65,6 +65,13 @@
 建议下一步：提交本轮；下一刀转材料提交/审核/候选人闭环，不再重做 roster 主链。
 
 时间：2026-07-08
+来自：Pearl mini 接力官
+类别：字段 / 接力
+位置：选举提案附件 / 历史归档
+留言：提案附件不能再回退成 URL 输入框。当前已改为上传文件，提交后写 `election_proposals` 表，并自动移动到 `public/uploads/archives/proposals/{proposalId}-{title}`。提案刷新后能从库里读回，附件链接指向归档文件。
+建议下一步：后续如果做历史归档 UI 文件夹树，优先读取 `election_proposals.attachments[].archivePath`，不要让用户手填链接。
+
+时间：2026-07-08
 来自：小 mini 联合收口
 类别：结构 / 字段 / UI / 接力
 位置：roster-v2 最小闭环

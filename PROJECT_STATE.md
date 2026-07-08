@@ -1,5 +1,7 @@
 # PROJECT_STATE
 
+- 2026-07-08 选举提案上传与持久化闭环完成：`admin/src/views/election-proposals/index.vue` 的附件材料从“文件URL输入框”改为上传按钮；新增 `koaLite/api/election-proposal-v2.js`，提案写入旧资产 `election_proposals` 表，不再伪装成 `materials.scope=proposal`；`koaLite/api/upload.js` 上传地址改为浏览器可打开的 `127.0.0.1`。提交提案时后端自动创建 `public/uploads/archives/proposals/{proposalId}-{title}` 文件夹并移动附件，列表刷新可从库里读回。验证：Vite 编译提案页 200；上传附件成功；子管理提交提案成功返回 `id=1`；列表可读回；归档文件夹中文件存在。
+
 - 2026-07-08 子管理新建选举现场修复：夏夏用子管理账号在选举管理中新建保存失败，根因是旧字段链断开：新建时未默认带当前子管理 `villageId`，村居下拉只取分页前 10 条导致涧口 `id=28` 不在选项里，保存校验看 `village` 文本而不是 `villageId`，且隐藏的 `electionType` 默认“村委会选举”会让社区“居民代表选举”被后端法定校验拒绝。已修 `admin/src/views/election/index.vue`：子管理锁定当前归属地，村居下拉改用 `village-v2/all`，选举类型按村居类型自动联动，选举方式只显示合法项，保存以 `villageId` 为准。验证：Vite 编译选举页 200；子管理 `15000000000 / 123456 / 经办` 调 `election-v2/add` 创建涧口居委会选举成功，并用超管清理测试记录。
 
 - 2026-07-08 子管理岗位页 roster 小闭环已跑通：新增 `koaLite/scripts/seed-subadmin-roster-demo.js`，幂等填充 `15000000000 / 123456 / 经办` 子管理账号并绑定涧口 `village_id=28`，同时给涧口第十五届 `主任/副主任/委员` 填 3 条 active 在岗花名册样例，并同步 `positions.incumbent*` 摘要字段。已用该子管理账号验证：登录成功、`election-v2/list` 只返回涧口活动、`position-v2/list` 可见一期 3 岗、`roster-v2/list` 可读主任在岗、`roster-v2/add/delete` 可新增后停用，停用后 active 列表消失。Vite 3000 可编译 `positions/index.vue`；为消除既有扫描断点，`admin/src/api/api.ts` 补 `submitMaterial` 兼容导出到 `createMaterial`。

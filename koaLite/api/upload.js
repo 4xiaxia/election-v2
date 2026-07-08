@@ -51,7 +51,7 @@ module.exports = {
     async saveFile(ctx) {
       const file = ctx.req.file;
       if (!file) return response.paramError(ctx, '请选择上传文件');
-      const url = `http://${env.HOST}:${env.PORT}/${file.path}`;
+      const url = `http://127.0.0.1:${env.PORT}/${file.path.replace(/\\/g, '/')}`;
       response.success(ctx, { filename: file.filename, url }, '上传成功');
     },
   },

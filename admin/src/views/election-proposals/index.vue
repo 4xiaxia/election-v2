@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <header class="page-head">
-      <h2 class="page-title">{{ isSuperAdmin ? '选举提案审批' : '我的选举申请' }}</h2>
+      <h2 class="page-title">{{ isSuperAdmin ? '选举提案审批' : '提案审批' }}</h2>
       <p class="page-desc">{{ isSuperAdmin ? '审批各村提交的选举活动申请' : '向上级提交选举活动申请' }}</p>
     </header>
 
@@ -17,8 +17,8 @@
       </div>
 
       <el-table :data="list" v-loading="loading" stripe>
-        <el-table-column prop="id" label="提案ID" width="80">
-          <template #header>提案ID<span class="field-hint">materials.id</span></template>
+        <el-table-column prop="id" label="选举活动ID" width="80">
+          <template #header>选举活动ID<span class="field-hint">materials.id</span></template>
         </el-table-column>
         <el-table-column prop="villageName" label="申请村居" width="140" v-if="isSuperAdmin">
           <template #header>申请村居<span class="field-hint">villages.name(关联)</span></template>
@@ -71,7 +71,17 @@
                 <el-option label="候选人提名表" value="候选人提名表" />
                 <el-option label="选举结果报告" value="选举结果报告" />
               </el-select>
-              <el-input v-model="att.url" placeholder="文件URL" style="width:260px" />
+              <el-upload
+                v-if="dialogMode !== 'view'"
+                action="/api/upload/saveFile"
+                :show-file-list="false"
+                :on-success="(resp, file) => onAttachmentUploaded(resp, file, idx)"
+                :on-error="onAttachmentUploadError"
+              >
+                <el-button size="small" plain>{{ att.url ? '重新上传' : '上传文件' }}</el-button>
+              </el-upload>
+              <a v-if="att.url" :href="att.url" target="_blank" class="attachment-link">{{ att.name || '查看文件' }}</a>
+              <span v-else class="archive-hint">提交后进入历史归档</span>
               <el-button type="danger" link @click="removeAttachment(idx)">删除</el-button>
             </div>
             <el-button type="primary" plain size="small" @click="addAttachment" v-if="dialogMode !== 'view'">+ 添加附件</el-button>
@@ -104,7 +114,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
-import { getMaterials, submitMaterial, reviewMaterial } from '@/api/api';
+import { getElectionProposals, createElectionProposal, reviewElectionProposal } from '@/api/api';
 
 const currentUser = (() => {
   try { return JSON.parse(localStorage.getItem('user') || 'null') || {} } catch { return {} }
@@ -122,7 +132,7 @@ const dialogTitle = computed(() => dialogMode.value === 'create' ? '新建选举
 const form = ref({
   title: '',
   reportContent: '',
-  attachments: [] as Array<{ name: string; url: string; category: string }>,
+  attachments: [] as Array<{ name: string; url: string; category: string; archivePath?: string }>,
   status: '待审核',
   rejectReason: '',
 });
@@ -138,10 +148,10 @@ onMounted(() => {
 async function loadList() {
   loading.value = true;
   try {
-    const params: any = { scope: 'proposal' };
+    const params: any = {};
     if (statusFilter.value) params.status = statusFilter.value;
     if (searchKeyword.value) params.keyword = searchKeyword.value;
-    const res: any = await getMaterials(params);
+    const res: any = await getElectionProposals(params);
     list.value = res.data?.list || res.list || [];
   } catch (err) {
     console.error(err);
@@ -153,8 +163,7 @@ async function loadList() {
 
 function getProposalSummary(row: any) {
   try {
-    const items = typeof row.items === 'string' ? JSON.parse(row.items) : row.items;
-    return items?.reportContent?.substring(0, 50) + '...' || '（无内容）';
+    return row.reportContent?.substring(0, 50) + '...' || '（无内容）';
   } catch {
     return '（无内容）';
   }
@@ -180,11 +189,10 @@ function openCreateDialog() {
 function viewDetail(row: any) {
   dialogMode.value = 'view';
   try {
-    const items = typeof row.items === 'string' ? JSON.parse(row.items) : row.items;
     form.value = {
-      title: items?.title || '',
-      reportContent: items?.reportContent || '',
-      attachments: items?.attachments || [],
+      title: row.title || '',
+      reportContent: row.reportContent || '',
+      attachments: row.attachments || [],
       status: row.status,
       rejectReason: row.rejectReason || '',
     };
@@ -198,6 +206,18 @@ function addAttachment() {
   form.value.attachments.push({ name: '', url: '', category: '会议记录' });
 }
 
+function onAttachmentUploaded(resp: any, file: any, idx: number) {
+  const att = form.value.attachments[idx];
+  if (!att) return;
+  att.name = att.name || resp?.data?.filename || file?.name || '';
+  att.url = resp?.data?.url || '';
+  ElMessage.success('附件已上传');
+}
+
+function onAttachmentUploadError() {
+  ElMessage.error('附件上传失败');
+}
+
 function removeAttachment(idx: number) {
   form.value.attachments.splice(idx, 1);
 }
@@ -207,21 +227,18 @@ async function submitProposal() {
     ElMessage.warning('请填写标题和文本报告');
     return;
   }
+  const missingUpload = form.value.attachments.some((att) => !att.url);
+  if (missingUpload) {
+    ElMessage.warning('附件请先上传文件，不能手填或留空');
+    return;
+  }
   try {
-    const payload = {
-      scope: 'proposal',
-      electionId: 0, // 提案阶段暂无election_id
-      positionId: 0,
-      applicantName: currentUser.name || '',
-      applicantPhone: currentUser.phone || '',
-      items: JSON.stringify({
-        title: form.value.title,
-        reportContent: form.value.reportContent,
-        attachments: form.value.attachments,
-      }),
-      status: '待审核',
-    };
-    await submitMaterial(payload);
+    await createElectionProposal({
+      villageId: currentUser.villageId || currentUser.village_id,
+      title: form.value.title,
+      reportContent: form.value.reportContent,
+      attachments: form.value.attachments,
+    });
     ElMessage.success('提案已提交，等待审批');
     dialogVisible.value = false;
     loadList();
@@ -234,7 +251,7 @@ async function submitProposal() {
 function approve(row: any) {
   ElMessage.confirm('确认通过该提案？', '提示', { type: 'warning' }).then(async () => {
     try {
-      await reviewMaterial(row.id, { action: 'approve' });
+      await reviewElectionProposal(row.id, { action: 'approve' });
       ElMessage.success('提案已通过');
       loadList();
     } catch {
@@ -255,7 +272,7 @@ async function confirmReject() {
     return;
   }
   try {
-    await reviewMaterial(pendingRejectRow.value.id, { action: 'reject', reason: rejectReason.value });
+    await reviewElectionProposal(pendingRejectRow.value.id, { action: 'reject', reason: rejectReason.value });
     ElMessage.success('提案已驳回');
     rejectDialogVisible.value = false;
     loadList();
@@ -270,6 +287,8 @@ async function confirmReject() {
 .proposal-summary { font-size: 13px; color: #666; line-height: 1.4; }
 .attachments-list { display: flex; flex-direction: column; gap: 8px; }
 .attachment-item { display: flex; gap: 8px; align-items: center; }
+.attachment-link { color: #2563eb; font-size: 13px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.archive-hint { color: #a8a29e; font-size: 12px; }
 .reject-reason { padding: 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 4px; color: #b91c1c; }
 .field-hint { display:block; font-size:10px; color:#bbb; font-weight:400; font-family:Consolas,monospace; line-height:1.2; margin-top:2px; }
 </style>

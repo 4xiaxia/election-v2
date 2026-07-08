@@ -160,6 +160,17 @@ export function reviewMaterial(id: string, data: any) {
   return http.post('/material-v2/review', toMaterialReviewPayload(id, data));
 }
 
+// 选举提案 election-proposal-v2
+export function getElectionProposals(params?: any) {
+  return http.get('/election-proposal-v2/list', { params }).then(normalizeResponse);
+}
+export function createElectionProposal(data: any) {
+  return http.post('/election-proposal-v2/add', data);
+}
+export function reviewElectionProposal(id: string, data: any) {
+  return http.post('/election-proposal-v2/review', { id, ...data });
+}
+
 // 通知 notification-v2
 export function getNotifications(params?: any) {
   return http.get('/notification-v2/list', { params }).then(normalizeResponse);

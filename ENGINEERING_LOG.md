@@ -1850,3 +1850,44 @@ flowchart LR
 ### 接力棒
 
 - 夏夏当前页面刷新后再新建选举，应自动锁到涧口，选举方式只显示居委会合法三项。
+
+## 2026-07-08 选举提案上传与持久化闭环
+
+### 输入
+
+- 夏夏指出提案页附件不能是“输入 URL”，上传文件必须进入系统存档；提案创建时历史归档里要自动创建文件夹；点击提交申请后内容必须存下来，不能弹窗关闭或刷新后全没。
+
+### 根因
+
+- 提案页附件区域使用 `att.url` 文本输入框，要求用户手填 URL，不符合系统存档链路。
+- 前端把提案伪装成 `materials.scope=proposal`，但 `materials.election_id` 有外键且提案阶段没有 election，`electionId=0` 本来就不应成立。
+- 旧资产里已有 `election_proposals` 表迁移稿，但缺少后端 API 和前端接线。
+
+### 动作
+
+- 新增 `koaLite/api/election-proposal-v2.js`：
+  - `GET /election-proposal-v2/list`
+  - `POST /election-proposal-v2/add`
+  - `POST /election-proposal-v2/review`
+  - API 内确保 `election_proposals` 表存在。
+  - 提交时创建 `public/uploads/archives/proposals/{proposalId}-{title}` 并移动附件。
+- `admin/src/views/election-proposals/index.vue`：
+  - 附件材料从 URL 输入框改为 `el-upload`。
+  - 列表/提交/审核改接 `election-proposal-v2`。
+  - 提交前校验已添加的附件必须上传成功。
+- `admin/src/api/api.ts`：新增 `getElectionProposals/createElectionProposal/reviewElectionProposal`。
+- `koaLite/api/upload.js`：上传返回地址改为 `http://127.0.0.1:1116/...`，避免 `0.0.0.0` 链接不可打开。
+
+### 验证
+
+- `node --check koaLite/api/election-proposal-v2.js` 通过。
+- `node --check koaLite/api/upload.js` 通过。
+- `GET http://127.0.0.1:3000/src/views/election-proposals/index.vue` 返回 200。
+- 上传 `proposal-demo-attachment.txt` 成功。
+- 子管理 `15000000000 / 123456 / 经办` 提交提案成功，返回 `id=1`。
+- `GET /api/election-proposal-v2/list` 可读回该提案。
+- 文件存在于 `koaLite/public/uploads/archives/proposals/1-涧口社区第十五届换届选举申请/proposal-demo-attachment.txt`。
+
+### 接力棒
+
+- 夏夏刷新提案页后，应能看到刚提交的提案；附件链接指向后端归档文件夹。

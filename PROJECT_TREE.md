@@ -29,6 +29,7 @@
 
 - `koaLite/db/init_v2.sql`：主表与新增字段。
 - `koaLite/api/election-v2.js`：母档案增改查、选举方式规则。
+- `koaLite/api/election-proposal-v2.js`：选举提案提交/审批，附件自动进入 `public/uploads/archives/proposals/{proposalId}-{title}`。
 - `koaLite/api/position-v2.js`：主任/副主任/委员岗位生成。
 - `koaLite/api/roster-v2.js`：花名册最小 API，承接岗位详情“在岗”和历史在任名录。
 - `koaLite/api/candidate-v2.js`：候选人导入、审核、结果。
@@ -44,5 +45,5 @@
 ## 下一刀
 
 ```text
-子管理岗位页 roster 小闭环已跑通：账号、演示数据、前端弹窗、roster 读写停用已验证。下一刀转材料提交/审核/候选人闭环，不要回头重做 roster 主链。
+子管理岗位页 roster 小闭环已跑通；选举提案上传和持久化已闭环。下一刀转材料提交/审核/候选人闭环，不要回头重做 roster 或提案主链。
 ```
