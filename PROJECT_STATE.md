@@ -1,5 +1,7 @@
 # PROJECT_STATE
 
+- 2026-07-08 母版活动详情页主体表与侧边栏分流：`换届选举系统-UI优化.html` 已新增 `motherDetailBlueprint` 区块，明确 `/election/:id` 主体表只看 `#/阶段名称/开始日期/结束日期/天数/核心工作/关联材料/上传文件/公告编辑`，并把 `elections.content.timeline.templateKey + stages[]`、`materials.scope=archive`、`notices.stage_key`、`materials.scope=candidate`、`candidates.election_id + position_id` 写成可搜索锚点。侧边栏分流已压成同一条链：选举活动管理进母表，阶段公告看 `notices`，阶段归档看 `materials.scope=archive`，材料提交管理看 `scope=candidate`，候选人管理看 `candidates`。本轮未做弹层、未做后端 API、未跑完整 build。
+
 - 2026-07-08 母版详情页时间轴表口径纠偏：参考 `选举系统_填空模板 (1).html` 时只看主体表，不看弹层和顶部非主体部分；母版详情页表头固定为 `#/阶段名称/开始日期/结束日期/天数/核心工作/关联材料/上传文件/公告编辑`，但阶段行必须由当前选举模板决定。村委会默认村民直选模板；社区按 `elections.election_method` 分居民直接选举、户代表选举、居民代表选举三类模板。已修正 `换届选举系统-UI优化.html` 中把所有类型硬套 11 阶段的锚点文字。
 
 - 2026-07-08 UI 稿子补全局施工导览：`换届选举系统-UI优化.html` 主页面顶部新增“系统施工导览：业务漏斗 × 侧边栏目录 × 数据库字段”，把 `villages -> elections -> timeline/positions -> materials/candidates/notices/archive` 的先后关系、侧边栏目录吃哪层数据、字段谁决定谁直接写进稿子。新增锚点：`system-global-funnel-001`、`system-truth-order-001`、`system-sidebar-route-map-001`、`system-field-decision-chain-001`。最小验证：新增锚点可搜索，HTML 内脚本语法解析通过，`git diff --check` 无输出。

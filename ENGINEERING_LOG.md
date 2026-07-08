@@ -1458,3 +1458,50 @@
 ### 接力棒
 
 - 下一步做母版详情页时，先落“模板选择/继承”再落阶段表；不能从旧 11 阶段 seed 直接推所有类型。
+
+## 2026-07-08 母版主体表与侧边栏分流锚点
+
+### 输入
+
+- 用户确认先做 1、2：
+  - 1. 母版活动详情页主体表。
+  - 2. 侧边栏目录如何接这张母表。
+- 边界：不看弹层和上方非主体区域；不做花名册/API 实装；不跑完整 build。
+
+### 动作
+
+- 更新 `换届选举系统-UI优化.html`：新增 `motherDetailBlueprint` 区块，放在系统施工导览后、日历前。
+- 新增主体表施工锚点：
+  - `election-mother-main-table-001`
+  - `election-mother-table-truth-001`
+  - `election-mother-table-api-001`
+  - `election-mother-table-transform-001`
+  - `sidebar-to-mother-table-flow-001`
+- 主体表列固定：`#/阶段名称/开始日期/结束日期/天数/核心工作/关联材料/上传文件/公告编辑`。
+- 字段链写入页面：
+  - `elections.content.timeline.templateKey + stages[]` 是母表真相。
+  - 阶段归档走 `materials.scope=archive + election_id + stage_key + material_no + file_url`。
+  - 阶段公告走 `notices.election_id + stage_key + notice_no/template_key`。
+  - 报名材料走 `materials.scope=candidate`，候选人走 `candidates.election_id + position_id`。
+- 修正全局导览旧字眼：`elections.content.timeline` 不再写“决定 11 个阶段”，改为“决定当前模板阶段”。
+
+### 侧边栏分流图
+
+```mermaid
+flowchart LR
+    A[选举活动管理<br/>/election/:id] --> B[母版主体表<br/>content.timeline.stages]
+    B --> C[阶段公告<br/>notices.election_id + stage_key]
+    B --> D[阶段归档<br/>materials.scope=archive]
+    B --> E[材料提交管理<br/>materials.scope=candidate]
+    E --> F[候选人管理<br/>candidates.election_id + position_id]
+```
+
+### 验证
+
+- `node --check` 已解析 HTML 内 1 个 `<script>`，结果：`script syntax ok 1`。
+- `Select-String` 已确认新增锚点存在：`motherDetailBlueprint`、`election-mother-main-table-001`、`election-mother-table-truth-001`、`election-mother-table-api-001`、`election-mother-table-transform-001`、`sidebar-to-mother-table-flow-001`。
+- `git diff --check` 对本轮相关文件无空白错误；仅有 Windows LF/CRLF 提示。
+
+### 接力棒
+
+- 下一步继续按页面主体往下压：先把母版表每一列的字段/事件/失败态补全，再决定是否进入 Vue 页面施工；不要跳去弹层或花名册实现。
