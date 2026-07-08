@@ -1,5 +1,7 @@
 # PROJECT_STATE
 
+- 2026-07-08 角色视角数据库盘点完成：新增 `副船长的航海接力日志/数据库角色视角盘点-2026-07-08.md`，按结构官/字段官/UI 官/接力官四个视角，把子管理、超管、运营、审核、普通用户的动作链路走了一遍。结论：旧主表继续保留并补强；优先微调 `elections.content` 合同、`notice-v2/list stageKey`、`position-v2` 输出字段；新增最小 `roster` 表承接花名册；短信通道配置先定 `system_configs` 或 `sms_channels` 边界，不把短信能力过度承诺为已落库。本轮只做文档盘点和计划，未改业务代码。
+
 - 2026-07-08 数据库立足点核对完成：已恢复 `koaLite` 运行依赖并跑 live schema 只读核对，新增 `副船长的航海接力日志/数据库立足点核对-2026-07-08.md`。结论：主链 `villages -> elections -> timeline/positions -> notices/materials/candidates/notifications/election_voters` 都有数据库根；当前没找到家的主要是 `roster` 花名册表、短信通道配置表、定时通知执行器、母版模板库表。半对上的主要是 `elections.content` 当前为 `timeline[]` 且缺 `templateKey`、`notice-v2/list` 暂无 `stageKey` 后端筛选、提案审批借用 `materials.scope=proposal` 口径不够干净。live DB 当前 `villages=124`，仍需另核甲方 122 名单。
 
 - 2026-07-08 母版阶段公告一对多口径：根据截图继续压实母版主体表，`换届选举系统-UI优化.html` 已把“公告编辑”列改成阶段子公告集合入口。一个阶段可以挂多条公告，点击进入该阶段公告列表弹窗，弹窗内再 `+新增` 关联公告；新增公告继承 `electionId + stageKey`，再选择/生成 `notice_no/template_key`。现有 `notice-v2/list` 先按 `electionId` 拉本活动公告再按 `stage_key` 过滤；后续建议补后端 `stageKey` 查询参数。本轮只写主体表锚点，不展开弹窗细节。

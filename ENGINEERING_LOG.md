@@ -1577,3 +1577,35 @@ flowchart LR
 ### 接力棒
 
 - 下一刀建议按缺口优先级走：先 `roster` 最小表/API，或先补 `notice-v2/list stageKey` 这种小而稳的接口承接。不要重建已有 `materials/notices/candidates` 主链。
+
+## 2026-07-08 角色视角数据库盘点
+
+### 输入
+
+- 用户要求：小 sub 们一起核对、盘点，带入角色视角把 UI、侧边栏、数据库结构和业务流走一遍。
+
+### 动作
+
+- 新增 `副船长的航海接力日志/数据库角色视角盘点-2026-07-08.md`。
+- 按固定四个小 mini 视角整理：
+  - 结构官：子管理、超管、运营、审核、普通用户如何进入同一条主链。
+  - 字段官：每个页面动作对应的表、字段、接口、缺口状态。
+  - UI 官：仪表盘、母活动详情、岗位详情的页面承接规则。
+  - 接力官：保留旧表、微调旧表/API、新增小表、暂缓不做的决策矩阵。
+- 更新 `PROJECT_STATE.md`、`PROJECT_TREE.md`、`副船长的航海接力日志/当前接力图.md`、`副船长的航海接力日志/文件索引.md`。
+
+### 结论
+
+- 主链继续保留：`users/villages/elections/positions/materials/notices/candidates/notifications/message_reads/election_voters/logs`。
+- 下一刀优先最小承接：`roster` 最小表/API、`notice-v2/list stageKey` 查询、`elections.content templateKey` 兼容合同、`position-v2` 输出字段补齐。
+- 短信通道配置不能过度承诺为已落库；要么明确一期占位，要么补最小 `system_configs` 或 `sms_channels`。
+
+### 验证
+
+- 本轮是文档盘点和接力记录，未改业务代码，未跑完整 build。
+- 已用 `rg` 检查新增盘点稿入口、关键缺口词和接力记录是否可搜索。
+- 已用 `git diff --check` 做空白检查；仅保留既有 Windows LF/CRLF 提示。
+
+### 接力棒
+
+- 下一步不要泛泛“优化数据库”。按顺序做最小闭环：先 `roster`，再 `notice-v2/list stageKey`，再 `elections.content` 合同兼容，最后盘 `position-v2` 输出字段。
