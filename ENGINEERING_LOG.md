@@ -1,5 +1,60 @@
 # ENGINEERING_LOG
 
+## 2026-07-11 HTML最低交付：四模块对称走查闭环
+
+### 输入
+
+- 夏夏确认明天至少要把 HTML 处理好，并再次钉死：母版单一真相、三岗位限流、历届只读、材料血缘翻转、候选人阶段按钮由母版驱动、公告/归档只读镜像。
+- `E:\zeta-family\接续摘要-2026-07-11.md` 与项目内真相文件口径一致，工程现状仍以 `E:\w\0\election-v2` 为准。
+
+### 动作
+
+- 新增 `页面-业务模块.html`，用 `module=materials|candidates|notices|archives` 对称复用同一套本期/历届列表和三级母活动小看板。
+- 接通仪表盘四个侧栏入口、四个状态快捷入口和三条最近活动；所有母版入口携带完整活动上下文，历史届强制追加 `readonly=1`。
+- 材料/候选人展示 `materialId/candidateId/positionId` 走查锚点；候选人阶段节点可演示资格审查、确认入围、无审批和线下结果回填四种动作。
+- 公告/归档只做 `electionId + stageKey` 镜像，历史届返回母版仍保持只读。
+- 修复母版历史届被归属地弹窗锁住、公告保存后空索引报错；导出合同补 `electionId/templateKey/stageKey`。
+- 统一 HTML 种子口径为第十五/十四/十三届；纠正字段连线表的 v2 路由及 timeline 过期结论。
+
+### 验证
+
+- `村长仪表盘-美化版.html`、`页面-活动总列表.html`、`选举系统_填空模板 (1).html`、`页面-业务模块.html` 内联脚本均通过 `vm.Script` 语法检查。
+- 页面引用目标存在；`git diff --check` 无空白错误，仅有现有 LF/CRLF 提示。
+- 使用 `G:\Users\Administrator\.cache\puppeteer` 的 Chrome 生成 1440×1000 材料页和 390×844 候选人页截图；修复 650px 以下筛选、导航和页头裁切后，手机复验通过。
+
+### 边界与下一刀
+
+- 当前是可点击 HTML 走查原型，不是已接真实 API 的生产页面；页面 seed ID 尚未与 live DB 逐条核对。
+- 下一刀先让 HTML 读取真实 `election-v2` 母活动与统一阶段计算器，再接 `material-v2/review -> candidates.material_id/materials.candidate_id -> candidate-v2/review/result`；公告/归档只接 `notice-v2` 与 `material-v2?scope=archive` 的镜像查询。
+
+## 2026-07-11 HTML走查原型：二级列表与三级下钻承接
+
+### 输入
+
+- 夏夏要求先补点击后的列表页，否则三级页面没有跳转落点；新增口径：母版阶段有“相关资料下载 / 发公告 / 上传档案”，岗位二级页插入当前在岗花名册并允许手工编辑。
+
+### 动作
+
+- 新增 `页面-提案审批.html`、`页面-活动总列表.html`、`页面-岗位管理.html`。
+- 接通仪表盘侧栏和卡片快捷入口。
+- 母版模板增加 `readonly=1` 历史届锁，禁用表单、上传、删除和公告保存。
+- 字段抽取汇总到 `字段连线表-走查用.md`。
+
+### 验证
+
+- 5 个 HTML 内联脚本均通过 `node --check`，引用文件均存在。
+- `git diff --check` 无空白错误，仅有 LF/CRLF 提示。
+- 尾随 sub 调用失败：`401 Invalid token`，由主 agent 本地接管功能、字段、权限、关联、验证、记录检查。
+
+### 已知缺口
+
+- 提案表没有 `election_method`/`election_id`，线稿“选举方式”目前是演示字段，后续须关联母活动或补关系，不能伪称已落库。
+- 当前新增页面是 UI 走查种子数据，尚未接真实 API。
+
+### 下一刀
+
+- 复用同一列表→三级骨架补材料、候选人、公告、归档；材料通过保留 `materials.candidate_id` 血缘翻转，公告/归档只做母版镜像。
+
 ## 2026-07-07 UI 原型入口纠偏：登录页绑定归属地
 
 ### 输入

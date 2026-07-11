@@ -274,6 +274,24 @@ td input.day-num { width: 48px; text-align: center; min-width: 48px; }
 <input type="file" id="hiddenFileInput" style="display:none" multiple onchange="handleFileUpload(this)">
 
 <script>
+const PAGE_PARAMS = new URLSearchParams(window.location.search);
+const READ_ONLY_MODE = PAGE_PARAMS.get('readonly') === '1';
+const ELECTION_ID = PAGE_PARAMS.get('electionId') || '';
+const ELECTION_NAME = PAGE_PARAMS.get('electionName') || '';
+
+function applyReadOnlyMode() {
+  if (!READ_ONLY_MODE) return;
+  document.getElementById('locationModal').classList.remove('show');
+  document.getElementById('header-title').textContent = '📋 选举活动历史明细（只读）';
+  document.getElementById('header-sub').textContent = '该届已归档，仅供查看与下载，不可修改、上传或发布公告';
+  document.querySelectorAll('input, select, textarea').forEach(function(el) { el.disabled = true; });
+  document.querySelectorAll('.upload-btn, .file-delete, .edit-notice-btn').forEach(function(el) { el.style.display = 'none'; });
+  document.querySelectorAll('button').forEach(function(btn) {
+    const label = btn.textContent || '';
+    if (/重新生成|保存公告|确认归属|重置/.test(label)) btn.style.display = 'none';
+  });
+}
+
 // ========== 城厢区完整数据（社区29 + 村93） ==========
 // 社区：只属于社区，楼房小区、城镇居民片区
 const COMMUNITIES = {
@@ -726,7 +744,8 @@ function autoGenerate() {
   if (!tpl) return;
 
   runtimeStages = JSON.parse(JSON.stringify(tpl.stages));
-  runtimeStages.forEach(stage => {
+  runtimeStages.forEach((stage, index) => {
+    stage.stageKey = stage.stageKey || `S${index + 1}`;
     const start = addDays(electionDate, stage.offset);
     const end = addDays(start, stage.days - 1);
     stage.startDate = start;
@@ -779,9 +798,10 @@ function renderTimeline() {
   document.getElementById('timeline-body').innerHTML = html;
   const tplKey = document.getElementById('displayTemplate').value;
   updateStats(TEMPLATES[tplKey]);
+  applyReadOnlyMode();
 }
 
-function updateStage(idx, field, value) { runtimeStages[idx][field] = value; }
+function updateStage(idx, field, value) { if (!READ_ONLY_MODE) runtimeStages[idx][field] = value; }
 function recalcDays(idx) {
   const s = runtimeStages[idx];
   s.days = Math.max(1, Math.round((new Date(s.endDate+'T00:00:00') - new Date(s.startDate+'T00:00:00')) / 86400000) + 1);
@@ -791,11 +811,11 @@ function recalcEnd(idx) {
   runtimeStages[idx].endDate = addDays(runtimeStages[idx].startDate, runtimeStages[idx].days - 1);
   renderTimeline();
 }
-function removeTemplateFile(si, fi) { runtimeStages[si].files.splice(fi,1); renderTimeline(); toast('模板文件已移除'); }
-function removeUploadedFile(si, fi) { runtimeStages[si].uploadedFiles.splice(fi,1); renderTimeline(); toast('已上传文件已删除'); }
+function removeTemplateFile(si, fi) { if (READ_ONLY_MODE) return; runtimeStages[si].files.splice(fi,1); renderTimeline(); toast('模板文件已移除'); }
+function removeUploadedFile(si, fi) { if (READ_ONLY_MODE) return; runtimeStages[si].uploadedFiles.splice(fi,1); renderTimeline(); toast('已上传文件已删除'); }
 function downloadFile(f) { toast(`演示模式：实际系统中下载「${f}」`); }
 
-function triggerUpload(rowIdx) { currentUploadRow = rowIdx; document.getElementById('hiddenFileInput').click(); }
+function triggerUpload(rowIdx) { if (READ_ONLY_MODE) return; currentUploadRow = rowIdx; document.getElementById('hiddenFileInput').click(); }
 function handleFileUpload(input) {
   if (!input.files.length) return;
   const stage = runtimeStages[currentUploadRow];
@@ -816,17 +836,21 @@ function openNoticeEditor(idx) {
 }
 function closeNoticeModal() { document.getElementById('noticeModal').classList.remove('show'); currentNoticeStageIdx = null; }
 function saveNotice() {
+  if (READ_ONLY_MODE) return;
   if (currentNoticeStageIdx === null) return;
-  runtimeStages[currentNoticeStageIdx].noticeContent = document.getElementById('noticeContent').value;
+  const stage = runtimeStages[currentNoticeStageIdx];
+  stage.noticeContent = document.getElementById('noticeContent').value;
   closeNoticeModal();
-  toast(`「${runtimeStages[currentNoticeStageIdx].name}」公告已保存`);
+  toast(`「${stage.name}」公告已保存`);
 }
 
 function exportData() {
   const tplKey = document.getElementById('displayTemplate').value;
   const tpl = TEMPLATES[tplKey];
   const data = {
+    electionId: ELECTION_ID,
     town: selectedTown, village: selectedVillage, type: selectedType,
+    templateKey: tplKey,
     templateName: tpl ? tpl.name : '',
     electionDate: document.getElementById('electionDate').value,
     stages: runtimeStages
@@ -847,8 +871,21 @@ document.getElementById('noticeModal').addEventListener('click', function(e) {
   if (e.target === this) closeNoticeModal();
 });
 
-// 初始化
-initTownSelect();
+function bootstrapPage() {
+  initTownSelect();
+  if (ELECTION_ID) {
+    selectedTown = PAGE_PARAMS.get('townName') || '华亭镇';
+    selectedVillage = PAGE_PARAMS.get('villageName') || '涧口';
+    selectedType = PAGE_PARAMS.get('orgType') || 'community';
+    document.getElementById('locationModal').classList.remove('show');
+    confirmLocation();
+    if (ELECTION_NAME) document.getElementById('header-title').textContent = `📋 ${ELECTION_NAME}`;
+  }
+  applyReadOnlyMode();
+}
+
+// 初始化：从活动列表下钻时沿用 electionId，不再重复选择归属地。
+bootstrapPage();
 </script>
 
 </body>

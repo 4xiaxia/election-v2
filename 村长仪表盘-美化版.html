@@ -150,51 +150,53 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-pri
     <div class="nav-group">
       <div class="nav-item active"><span class="ic">🏠</span>首页工作台</div>
 
-      <div class="nav-item has-sub"><span class="ic">📝</span>选举提案审批<span class="arrow">▶</span></div>
+      <div class="nav-item has-sub"><span class="ic">📄</span>提案审批<span class="arrow">▶</span></div>
       <div class="sub-menu">
-        <div class="sub-item">提案审批列表</div>
-        <div class="sub-item">提案详情<span class="s-note">下钻</span></div>
+        <div class="sub-item" data-page="页面-提案审批.html">提案列表<span class="s-note">本期+历届</span></div>
       </div>
 
-      <div class="nav-item has-sub"><span class="ic">🗳️</span>选举活动管理<span class="arrow">▶</span></div>
+      <div class="nav-item has-sub"><span class="ic">📋</span>选举活动管理<span class="arrow">▶</span></div>
       <div class="sub-menu">
-        <div class="sub-item">活动总列表</div>
-        <div class="sub-item">母活动小看板<span class="s-note">点节点进</span></div>
+        <div class="sub-item" data-page="页面-活动总列表.html">活动总列表<span class="s-note">⭐母版</span></div>
       </div>
     </div>
     <div class="nav-group">
       <div class="g-label">办理中</div>
 
-      <div class="nav-item has-sub"><span class="ic">💼</span>岗位管理<span class="arrow">▶</span></div>
+      <div class="nav-item has-sub"><span class="ic">👥</span>岗位管理<span class="arrow">▶</span></div>
       <div class="sub-menu">
-        <div class="sub-item">本期选举岗位</div>
-        <div class="sub-item">历届活动岗位需求</div>
+        <div class="sub-item" data-page="页面-岗位管理.html">历届岗位选举表<span class="s-note">本期+历届</span></div>
       </div>
 
-      <div class="nav-item has-sub"><span class="ic">📄</span>材料提交管理<span class="arrow">▶</span></div>
+      <div class="nav-item has-sub"><span class="ic">📝</span>材料提交管理<span class="arrow">▶</span></div>
       <div class="sub-menu">
-        <div class="sub-item">本期待审材料</div>
-        <div class="sub-item">历届材料记录</div>
+        <div class="sub-item" data-page="页面-业务模块.html?module=materials">历届材料记录<span class="s-note">本期+历届</span></div>
       </div>
 
-      <div class="nav-item has-sub"><span class="ic">👤</span>候选人管理<span class="arrow">▶</span></div>
+      <div class="nav-item has-sub"><span class="ic">🙋</span>候选人管理<span class="arrow">▶</span></div>
       <div class="sub-menu">
-        <div class="sub-item">本期候选人</div>
-        <div class="sub-item">历届当选名录</div>
+        <div class="sub-item" data-page="页面-业务模块.html?module=candidates">历届候选人名录<span class="s-note">含审批</span></div>
       </div>
 
       <div class="nav-item has-sub"><span class="ic">📢</span>公告通知<span class="arrow">▶</span></div>
       <div class="sub-menu">
-        <div class="sub-item">本期阶段公告</div>
-        <div class="sub-item">历届公告记录</div>
+        <div class="sub-item" data-page="页面-业务模块.html?module=notices">历届公告记录<span class="s-note">母版镜像</span></div>
       </div>
     </div>
     <div class="nav-group">
       <div class="g-label">收尾归档</div>
-      <div class="nav-item has-sub"><span class="ic">🗂️</span>历史归档<span class="arrow">▶</span></div>
+      <div class="nav-item has-sub"><span class="ic">🗄️</span>历史归档<span class="arrow">▶</span></div>
       <div class="sub-menu">
-        <div class="sub-item">本届归档件</div>
-        <div class="sub-item">历届归档库</div>
+        <div class="sub-item" data-page="页面-业务模块.html?module=archives">历届活动列表<span class="s-note">目录树</span></div>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="g-label">后台管理</div>
+      <div class="nav-item has-sub"><span class="ic">⚙️</span>后台管理<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item">人员管理<span class="s-note">users</span></div>
+        <div class="sub-item">短信配置</div>
+        <div class="sub-item">通知管理<span class="s-note">notifications</span></div>
       </div>
     </div>
   </aside>
@@ -203,7 +205,7 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-pri
     <!-- 顶部信息条 -->
     <div class="topbar">
       <span class="tb-item"><span class="dot"></span>归属地<b>涧口社区</b></span>
-      <span class="tb-item">角色<b>子管理（村长）</b></span>
+      <span class="tb-item">角色<b>经办（村/社区管理）</b></span>
       <span class="tb-item">账号<b>150****0000</b></span>
     </div>
 
@@ -281,7 +283,7 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-pri
               <span class="txt">选民登记实施细则（草案）</span>
               <div class="ops"><span class="link-op" onclick="toast('编辑')">编辑</span><span class="link-op" onclick="toast('删除')">删除</span></div>
             </div>
-            <div style="text-align:center;margin-top:10px;"><span class="more" onclick="toast('查看全部提案')">查看更多 →</span></div>
+            <div style="text-align:center;margin-top:10px;"><span class="more" onclick="window.location.href='页面-提案审批.html'">查看更多 →</span></div>
           </div>
         </div>
 
@@ -290,25 +292,25 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-pri
             <h3><span class="bar"></span>选举活动列表</h3>
           </div>
           <div class="card-body">
-            <div class="act-item" onclick="toast('进入母版详情')">
+            <div class="act-item" onclick="window.location.href='选举系统_填空模板 (1).html?electionId=1&amp;electionName=第15届涧口社区居委会换届选举&amp;villageName=涧口&amp;townName=华亭镇&amp;orgType=community'">
               <div><div class="an">第15届涧口社区居委会换届选举</div><div class="as">居民直接选举 · 候选人提名阶段</div></div>
               <span class="enter">进入管理 →</span>
             </div>
-            <div class="act-item" onclick="toast('进入母版详情')">
+            <div class="act-item" onclick="window.location.href='选举系统_填空模板 (1).html?electionId=2&amp;electionName=第14届涧口社区居委会换届选举&amp;villageName=涧口&amp;townName=华亭镇&amp;orgType=community&amp;readonly=1'">
               <div><div class="an">第14届涧口社区居委会换届选举</div><div class="as">已归档 · 2021年</div></div>
               <span class="enter" style="color:var(--text-muted);">查看 →</span>
             </div>
-            <div class="act-item" onclick="toast('进入母版详情')">
+            <div class="act-item" onclick="window.location.href='选举系统_填空模板 (1).html?electionId=3&amp;electionName=第13届涧口社区居委会换届选举&amp;villageName=涧口&amp;townName=华亭镇&amp;orgType=community&amp;readonly=1'">
               <div><div class="an">第13届涧口社区居委会换届选举</div><div class="as">已归档 · 2018年</div></div>
               <span class="enter" style="color:var(--text-muted);">查看 →</span>
             </div>
-            <div style="text-align:center;margin-top:10px;"><span class="more" onclick="toast('进入选举活动管理 · 本村历史活动列表')">查看更多 →</span></div>
+            <div style="text-align:center;margin-top:10px;"><span class="more" onclick="window.location.href='页面-活动总列表.html'">查看更多 →</span></div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-head">
-            <h3><span class="bar"></span>本期选举岗位</h3>
+            <h3 onclick="window.location.href='页面-岗位管理.html'" style="cursor:pointer;"><span class="bar"></span>本期选举岗位</h3>
             <span class="more" onclick="toast('岗位说明 / 资料下载')">资料下载 ↓</span>
           </div>
           <div class="card-body">
@@ -357,19 +359,19 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-pri
           </div>
           <div class="card-body">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div style="padding:14px;background:var(--info-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="toast('去材料提交管理')">
+              <div style="padding:14px;background:var(--info-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="window.location.href='页面-业务模块.html?module=materials'">
                 <div style="font-size:13px;color:var(--info);font-weight:600;margin-bottom:4px;">📄 竞选材料</div>
                 <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">3 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">份待审</span></div>
               </div>
-              <div style="padding:14px;background:var(--red-bg-soft);border-radius:var(--r-lg);cursor:pointer;" onclick="toast('去候选人管理')">
+              <div style="padding:14px;background:var(--red-bg-soft);border-radius:var(--r-lg);cursor:pointer;" onclick="window.location.href='页面-业务模块.html?module=candidates'">
                 <div style="font-size:13px;color:var(--red);font-weight:600;margin-bottom:4px;">👤 候选人</div>
                 <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">2 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">已入围</span></div>
               </div>
-              <div style="padding:14px;background:var(--warning-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="toast('去公告管理')">
+              <div style="padding:14px;background:var(--warning-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="window.location.href='页面-业务模块.html?module=notices'">
                 <div style="font-size:13px;color:var(--warning);font-weight:600;margin-bottom:4px;">📢 阶段公告</div>
                 <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">4 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">条已发</span></div>
               </div>
-              <div style="padding:14px;background:var(--success-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="toast('去归档')">
+              <div style="padding:14px;background:var(--success-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="window.location.href='页面-业务模块.html?module=archives'">
                 <div style="font-size:13px;color:var(--success);font-weight:600;margin-bottom:4px;">🗂️ 归档件</div>
                 <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">6 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">份</span></div>
               </div>
@@ -408,6 +410,8 @@ document.querySelectorAll('.nav-item').forEach(function(el){
 document.querySelectorAll('.sub-item').forEach(function(el){
   el.addEventListener('click',function(e){
     e.stopPropagation();
+    var page=this.getAttribute('data-page');
+    if(page){window.location.href=page;return;}
     toast('进入：'+this.childNodes[0].textContent.trim());
   });
 });

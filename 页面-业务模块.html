@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>换届选举业务管理</title>
+<style>
+:root{--red:#a2231d;--red-dark:#741712;--gold:#d4af37;--paper:#f9f5f0;--ink:#25211f;--muted:#746d68;--line:#e3dcd4;--white:#fff;--green:#287a4b;--blue:#246ca6;--shadow:0 5px 18px rgba(70,48,35,.08)}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:"Microsoft YaHei",Arial,sans-serif;font-size:14px;letter-spacing:0}.app{min-height:100vh;display:grid;grid-template-columns:252px minmax(0,1fr)}
+.sidebar{background:#2b2421;color:#fff;padding:24px 16px;position:sticky;top:0;height:100vh;overflow:auto}.brand{padding:0 10px 20px;border-bottom:1px solid rgba(255,255,255,.14)}.brand small{color:#d8b95d}.brand h1{font-size:18px;margin:7px 0 0}.nav{margin-top:18px}.nav a{display:flex;align-items:center;justify-content:space-between;color:#e9e4e0;text-decoration:none;padding:11px 12px;border-radius:6px;margin:4px 0}.nav a:hover,.nav a.active{background:var(--red);color:#fff}.nav b{font-size:12px;font-weight:400;color:#bdb4af}.main{min-width:0}.topbar{height:64px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:5}.context{display:flex;gap:24px;color:var(--muted)}.context strong{color:var(--ink);margin-left:6px}.online{color:var(--green);font-weight:700}.mobile-nav{display:none}.content{max-width:1320px;margin:0 auto;padding:24px 28px 48px}.crumb{color:var(--muted);font-size:13px;margin-bottom:16px}.crumb button{border:0;background:none;color:var(--red);cursor:pointer;padding:0}.heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}.heading h2{font-size:24px;margin:0}.heading p{margin:5px 0 0;color:var(--muted)}button{font:inherit;letter-spacing:0}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:9px 14px;border-radius:6px;cursor:pointer;font-weight:700}.btn:hover{border-color:var(--red)}.btn.primary{background:var(--red);border-color:var(--red);color:#fff}.btn.gold{background:#8b6b12;border-color:#8b6b12;color:#fff}.btn.danger{color:var(--red);border-color:#d9aaa7}.btn:disabled{cursor:not-allowed;opacity:.52}.filters{display:flex;gap:12px;align-items:end;background:#fff;border-top:3px solid var(--red);padding:16px;box-shadow:var(--shadow);margin-bottom:16px}.field{min-width:150px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}.field select,.field input{width:100%;height:38px;border:1px solid var(--line);border-radius:5px;padding:0 10px;background:#fff}.panel{background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}.panel-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.panel-head h3{margin:0;font-size:17px}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:820px}.table th{background:#f4eee8;color:#5f5752;font-size:12px;text-align:left;padding:12px 14px;white-space:nowrap}.table td{padding:14px;border-top:1px solid #eee8e1;vertical-align:middle}.table tr:hover td{background:#fffaf6}.status{display:inline-block;padding:4px 9px;border-radius:4px;font-size:12px;font-weight:700}.status.run{background:#fbe5e2;color:var(--red)}.status.done{background:#eeeae6;color:#68615c}.status.wait{background:#fff2cb;color:#7e5e00}.status.pass{background:#e1f2e7;color:var(--green)}.route{min-width:126px}.pager{padding:14px 18px;border-top:1px solid var(--line);color:var(--muted)}.hidden{display:none!important}
+.mother{background:#fff;border-top:4px solid var(--red);padding:17px 18px;margin-bottom:16px;box-shadow:var(--shadow)}.mother-top{display:flex;justify-content:space-between;gap:20px}.mother h3{margin:0 0 6px}.mother p{margin:0;color:var(--muted)}.timeline{display:grid;grid-template-columns:repeat(8,minmax(78px,1fr));gap:7px;margin-top:17px}.stage{border:1px solid var(--line);padding:9px 7px;text-align:center;font-size:12px;background:#fff;min-height:58px}.stage.done{background:#eeeae6;color:#756d68}.stage.current{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}.stage span{display:block;font-size:11px;margin-top:4px;opacity:.8}.readonly{padding:11px 14px;background:#f2efec;border-left:4px solid #8c8580;margin-bottom:16px;color:#625b56}.sync-note{padding:12px 14px;background:#fff7df;border:1px solid #ead28b;margin-bottom:16px}.detail-actions{display:flex;gap:8px;flex-wrap:wrap}.source{font-size:12px;color:var(--muted)}.blood{font-weight:700;color:var(--red)}.folder-tree{padding:16px 20px;line-height:2}.folder{font-weight:700}.file{padding-left:28px;color:#4f4844}.empty{color:#999;font-style:italic}.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#241f1d;color:#fff;padding:11px 20px;border-radius:6px;opacity:0;pointer-events:none;transition:.2s;z-index:20}.toast.show{opacity:1}
+@media(max-width:900px){.app{display:block}.sidebar{display:none}.topbar{height:auto;min-height:58px;padding:12px 16px;position:static}.context{gap:10px;flex-wrap:wrap;font-size:12px}.mobile-nav{display:grid;grid-template-columns:repeat(4,1fr);background:#2b2421;position:sticky;top:0;z-index:6}.mobile-nav a{color:#fff;text-align:center;text-decoration:none;padding:11px 4px;font-size:12px}.mobile-nav a.active{background:var(--red)}.content{padding:18px 12px 36px}.heading{align-items:flex-start}.filters{display:grid;grid-template-columns:1fr 1fr}.field{min-width:0}.timeline{grid-template-columns:repeat(4,1fr)}.mother-top{display:block}.mother-top .status{margin-top:10px}}
+@media(max-width:650px){.filters{grid-template-columns:1fr}.heading{display:block}.heading .btn{margin-top:10px}.mobile-nav{grid-template-columns:repeat(2,1fr)}.timeline{grid-template-columns:repeat(2,1fr)}.topbar{align-items:flex-start}.online{display:none}.context{display:grid;grid-template-columns:1fr 1fr}.panel-head{align-items:flex-start;gap:8px}.content{overflow:hidden}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><small>城厢区换届选举</small><h1>涧口社区 · 工作台</h1></div>
+    <nav class="nav">
+      <a href="村长仪表盘-美化版.html">首页工作台</a>
+      <a href="页面-活动总列表.html">选举活动管理 <b>母版</b></a>
+      <a href="页面-岗位管理.html">岗位管理 <b>本期+历届</b></a>
+      <a data-module="materials" href="?module=materials">材料提交管理 <b>血缘翻转</b></a>
+      <a data-module="candidates" href="?module=candidates">候选人管理 <b>含审批</b></a>
+      <a data-module="notices" href="?module=notices">公告通知 <b>母版镜像</b></a>
+      <a data-module="archives" href="?module=archives">历史归档 <b>目录树</b></a>
+    </nav>
+  </aside>
+  <main class="main">
+    <div class="topbar"><div class="context"><span>归属地<strong>涧口社区</strong></span><span>角色<strong>经办</strong></span><span>账号<strong>150****0000</strong></span></div><span class="online">● 在线</span></div>
+    <nav class="mobile-nav"><a data-module="materials" href="?module=materials">材料</a><a data-module="candidates" href="?module=candidates">候选人</a><a data-module="notices" href="?module=notices">公告</a><a data-module="archives" href="?module=archives">归档</a></nav>
+    <div class="content">
+      <div id="listView">
+        <div class="crumb"><button onclick="location.href='村长仪表盘-美化版.html'">首页工作台</button> / <span id="crumbModule"></span> / <span id="crumbList"></span></div>
+        <div class="heading"><div><h2 id="pageTitle"></h2><p>按具体换届活动下钻，本期可办理，历届只读。</p></div><button class="btn" onclick="location.href='页面-活动总列表.html'">查看母活动</button></div>
+        <div class="filters"><div class="field"><label>届次</label><select><option>全部届次</option><option>第十五届</option><option>第十四届</option><option>第十三届</option></select></div><div class="field"><label>年份</label><select><option>全部年份</option><option>2026</option><option>2021</option><option>2018</option></select></div><div class="field"><label>状态</label><select><option>全部状态</option><option>进行中</option><option>已归档</option></select></div><button class="btn primary" onclick="toast('筛选已应用')">查询</button></div>
+        <section class="panel"><div class="panel-head"><h3 id="listTitle"></h3><span>共 3 届</span></div><div class="table-wrap"><table class="table"><thead><tr><th>届次</th><th>关联活动</th><th id="metricHead"></th><th>状态</th><th>操作</th></tr></thead><tbody id="activityRows"></tbody></table></div><div class="pager">共 3 条　‹　1　›</div></section>
+      </div>
+      <div id="detailView" class="hidden">
+        <div class="crumb"><button onclick="showList()">返回历届列表</button> / <span id="detailCrumb"></span></div>
+        <div class="heading"><div><h2 id="detailTitle"></h2><p id="detailSubtitle"></p></div><button class="btn" onclick="showList()">返回列表</button></div>
+        <section class="mother"><div class="mother-top"><div><h3 id="motherName"></h3><p>居民直接选举 · electionId <span id="motherId"></span> · 当前第 18 天</p></div><span id="motherStatus" class="status run"></span></div><div class="timeline" id="timeline"></div></section>
+        <div id="readonlyTip" class="readonly hidden">该届已归档，仅供查看和下载；新增、编辑、审核、删除操作已隐藏。</div>
+        <div id="moduleDetail"></div>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const moduleKey=new URLSearchParams(location.search).get('module')||'materials';
+const modules={
+  materials:{name:'材料提交管理',list:'历届材料记录',detail:'材料审核明细',metric:'材料记录',counts:['12份 · 3待审','18份','15份']},
+  candidates:{name:'候选人管理',list:'历届候选人名录',detail:'候选人审批管理',metric:'候选人数',counts:['8人 · 3待审','7人','6人']},
+  notices:{name:'公告通知',list:'历届公告记录',detail:'阶段公告列表',metric:'公告数量',counts:['4条已发','18条','16条']},
+  archives:{name:'历史归档',list:'历届活动列表',detail:'文件夹目录树',metric:'归档文件',counts:['6份','42份','38份']}
+};
+const activities=[
+  {id:1,session:'第十五届',year:2026,name:'第15届涧口社区居委会换届选举',readonly:false,status:'进行中'},
+  {id:2,session:'第十四届',year:2021,name:'第14届涧口社区居委会换届选举',readonly:true,status:'已归档'},
+  {id:3,session:'第十三届',year:2018,name:'第13届涧口社区居委会换届选举',readonly:true,status:'已归档'}
+];
+const stages=['准备','选民登记','提名候选人','正式候选人公示','竞选活动','投票选举','结果公示','归档移交'];
+let currentActivity=null;
+let currentStage=2;
+function init(){
+  const cfg=modules[moduleKey]||modules.materials;
+  document.title=cfg.name+' · 城厢区换届选举';
+  document.getElementById('crumbModule').textContent=cfg.name;document.getElementById('crumbList').textContent=cfg.list;
+  document.getElementById('pageTitle').textContent=cfg.list;document.getElementById('listTitle').textContent=cfg.list+'（本期 + 历届）';document.getElementById('metricHead').textContent=cfg.metric;
+  document.querySelectorAll('[data-module]').forEach(a=>a.classList.toggle('active',a.dataset.module===moduleKey));
+  document.getElementById('activityRows').innerHTML=activities.map((a,i)=>`<tr><td><strong>${a.session}</strong><div class="source">${a.year}</div></td><td><strong>${a.name}</strong><div class="source">electionId ${a.id}</div></td><td>${cfg.counts[i]}</td><td><span class="status ${a.readonly?'done':'run'}">${a.status}</span></td><td><button class="btn ${a.readonly?'':'primary'} route" onclick="showDetail(${a.id})">${a.readonly?'查看明细':'进入管理'}</button></td></tr>`).join('');
+}
+function showDetail(id){
+  currentActivity=activities.find(a=>a.id===id);const cfg=modules[moduleKey];
+  document.getElementById('listView').classList.add('hidden');document.getElementById('detailView').classList.remove('hidden');
+  document.getElementById('detailCrumb').textContent=currentActivity.session+cfg.detail;document.getElementById('detailTitle').textContent=currentActivity.session+cfg.detail;
+  document.getElementById('detailSubtitle').textContent=currentActivity.readonly?'历史届只读明细':'当前活动可办理事项';document.getElementById('motherName').textContent=currentActivity.name;
+  document.getElementById('motherId').textContent=currentActivity.id;document.getElementById('motherStatus').textContent=currentActivity.readonly?'已归档':'提名候选人阶段';
+  document.getElementById('motherStatus').className='status '+(currentActivity.readonly?'done':'run');document.getElementById('readonlyTip').classList.toggle('hidden',!currentActivity.readonly);
+  renderStageTimeline();
+  document.getElementById('moduleDetail').innerHTML=renderDetail(moduleKey,currentActivity.readonly);window.scrollTo(0,0);
+}
+function showList(){document.getElementById('detailView').classList.add('hidden');document.getElementById('listView').classList.remove('hidden');window.scrollTo(0,0)}
+function renderStageTimeline(){
+  const clickable=moduleKey==='candidates'&&!currentActivity.readonly;
+  document.getElementById('timeline').innerHTML=stages.map((s,i)=>`<div class="stage ${currentActivity.readonly||i<currentStage?'done':i===currentStage?'current':''}" ${clickable?`onclick="setCurrentStage(${i})" style="cursor:pointer"`:''}>${i+1}. ${s}<span>S${i+1}</span></div>`).join('');
+}
+function setCurrentStage(index){currentStage=index;renderStageTimeline();document.getElementById('motherStatus').textContent=stages[index]+'阶段';document.getElementById('moduleDetail').innerHTML=renderCandidates(false)}
+function motherUrl(stageKey){const p=new URLSearchParams({electionId:String(currentActivity.id),electionName:currentActivity.name,villageName:'涧口',townName:'华亭镇',orgType:'community'});if(stageKey)p.set('stageKey',stageKey);if(currentActivity.readonly)p.set('readonly','1');return '选举系统_填空模板 (1).html?'+p.toString()}
+function renderDetail(key,readonly){if(key==='materials')return renderMaterials(readonly);if(key==='candidates')return renderCandidates(readonly);if(key==='notices')return renderNotices();return renderArchives()}
+function renderMaterials(readonly){return `<div class="filters"><div class="field"><label>参选形式</label><select><option>全部</option><option>个人自荐</option><option>群众联名推荐</option></select></div><div class="field"><label>竞选岗位</label><select><option>全部</option><option>主任</option><option>副主任</option><option>委员</option></select></div></div><div class="sync-note"><strong>血缘翻转关口：</strong>材料审核通过后生成候选人记录，并回写 <span class="blood">materials.candidate_id</span>；审核通过不可撤销。</div><section class="panel"><div class="panel-head"><h3>该届材料审核明细</h3><span>electionId ${currentActivity.id}</span></div><div class="table-wrap"><table class="table"><thead><tr><th>提交人</th><th>竞选岗位</th><th>参选形式</th><th>完整度</th><th>状态</th><th>操作</th></tr></thead><tbody><tr id="material1"><td><strong>李秀兰</strong><div class="source">materialId 31 · 138****2108</div></td><td>主任<div class="source">positionId 11</div></td><td>个人自荐</td><td>3/3 齐全</td><td><span class="status wait material-status">待审核</span></td><td><div class="detail-actions"><button class="btn">预览</button>${readonly?'':`<button class="btn danger" onclick="reviewMaterial(false)">驳回</button><button class="btn primary" onclick="reviewMaterial(true)">通过并生成候选人</button>`}</div></td></tr><tr><td><strong>陈晓梅</strong><div class="source">materialId 32</div></td><td>委员<div class="source">positionId 13</div></td><td>群众联名推荐</td><td>2/3 缺件</td><td><span class="status wait">待补充</span></td><td><button class="btn">预览</button></td></tr></tbody></table></div></section>`}
+function reviewMaterial(pass){const row=document.getElementById('material1');const status=row.querySelector('.material-status');status.className='status '+(pass?'pass':'done');status.textContent=pass?'已通过 · 候选人#101':'已驳回';row.querySelector('.detail-actions').innerHTML='<button class="btn">查看审核记录</button>';toast(pass?'已生成候选人记录，并回写材料血缘':'材料已驳回')}
+function candidateAction(readonly){if(readonly)return '<button class="btn">查看</button>';if(currentStage<=2)return '<button class="btn primary" onclick="qualifyCandidate(this)">通过资格审查</button> <button class="btn danger">驳回</button>';if(currentStage===3)return '<button class="btn primary" onclick="toast(\'已确认入围正式候选人\')">确认入围</button> <button class="btn danger">取消资格</button>';if(currentStage>=5)return '<button class="btn gold" onclick="toast(\'打开线下结果回填\')">回填线下结果</button>';return '<span class="source">竞选活动进行中，无审批操作</span>'}
+function renderCandidates(readonly){return `<div class="sync-note"><strong>母版驱动：</strong>当前阶段为“${stages[currentStage]}”。点击上方阶段节点走查：S3 资格审查，S4 确认入围，S5 审批按钮消失，S6 起只做线下结果回填。</div><section class="panel"><div class="panel-head"><h3>候选人池</h3>${readonly?'':`<button class="btn gold" onclick="toast('打开后台导入名单')">导入候选人</button>`}</div><div class="table-wrap"><table class="table"><thead><tr><th>姓名</th><th>竞选岗位</th><th>推荐形式</th><th>来源</th><th>当前状态</th><th>阶段操作</th></tr></thead><tbody><tr><td><strong>李秀兰</strong><div class="source">candidateId 101</div></td><td>主任<div class="source">positionId 11</div></td><td>个人自荐</td><td><span class="source">materialId 31 → candidateId 101</span></td><td><span class="status wait candidate-status">${stages[currentStage]}</span></td><td>${candidateAction(readonly)}</td></tr><tr><td><strong>陈建民</strong><div class="source">candidateId 102</div></td><td>副主任<div class="source">positionId 12</div></td><td>党组织推荐</td><td><span class="source">后台导入</span></td><td><span class="status pass">已通过资格审查</span></td><td><button class="btn">查看</button></td></tr></tbody></table></div></section>`}
+function qualifyCandidate(btn){const status=btn.closest('tr').querySelector('.candidate-status');status.className='status pass';status.textContent='已通过资格审查';btn.parentElement.innerHTML='<button class="btn">查看审批记录</button>';toast('资格审查已通过；后续按钮由母版阶段自动切换')}
+function renderNotices(){return `<div class="sync-note"><strong>只读镜像：</strong>公告按 electionId + stageKey 自动汇集；编辑或发布请回到母版时间表对应阶段。</div><section class="panel"><div class="panel-head"><h3>阶段公告存档</h3><button class="btn" onclick="location.href=motherUrl('S3')">前往母版</button></div><div class="table-wrap"><table class="table"><thead><tr><th>阶段</th><th>公告编号</th><th>公告标题</th><th>发布时间</th><th>操作</th></tr></thead><tbody><tr><td>S2 · 选民登记</td><td>2号公告<div class="source">templateKey notice_2</div></td><td>涧口社区第十五届选民名单</td><td>2026-07-15 10:00</td><td><button class="btn">预览</button> <button class="btn">下载 PDF</button></td></tr><tr><td>S3 · 提名候选人</td><td>4号公告<div class="source">templateKey notice_4</div></td><td>提名候选人资格审查结果</td><td>2026-07-25 16:30</td><td><button class="btn">预览</button> <button class="btn">下载 PDF</button></td></tr><tr><td>S4 · 正式候选人公示</td><td>—</td><td class="empty">等待母版发布</td><td>—</td><td><button class="btn" disabled>等待发布</button></td></tr></tbody></table></div></section>`}
+function renderArchives(){return `<div class="sync-note"><strong>只读镜像：</strong>文件来自 materials.scope=archive，并按 electionId + stageKey 映射成阶段文件夹；本页不可直接上传。</div><section class="panel"><div class="panel-head"><h3>${currentActivity.name}归档</h3><button class="btn" onclick="location.href=motherUrl('S1')">前往母版</button></div><div class="folder-tree"><div class="folder">▾ 1. 准备阶段 <span class="source">S1</span></div><div class="file">选委会成立批文.pdf <span class="source">materialId 201 · materialNo A-001</span>　<button class="btn">下载</button></div><div class="file">选民摸底表.xlsx <span class="source">materialId 202 · materialNo A-002</span>　<button class="btn">下载</button></div><div class="folder">▾ 2. 选民登记 <span class="source">S2</span></div><div class="file">选民资格公示.jpg <span class="source">materialId 203</span>　<button class="btn">下载</button></div><div class="folder">▾ 3. 提名候选人 <span class="source">S3</span></div><div class="file">候选人资格审查表.pdf <span class="source">materialId 204</span>　<button class="btn">下载</button></div><div class="folder">▾ 4. 正式候选人公示 <span class="source">S4</span></div><div class="file empty">空文件夹，母版尚未上传文件</div></div></section>`}
+let toastTimer;function toast(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),1800)}
+init();
+</script>
+</body>
+</html>

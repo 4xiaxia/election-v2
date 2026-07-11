@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提案审批 · 提案列表 / 详情</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#B22222;--red-hover:#961C1C;--red-bg:#FDE8E8;--red-bg-soft:#FFF5F5;
+  --gold:#C8A45C;--gold-hover:#B08E3A;--gold-light:#E8D5A0;--gold-bg:#FDF6E3;
+  --success:#2D8B55;--success-bg:#E8F5ED;--warning:#C27A1A;--warning-bg:#FEF5E7;
+  --info:#2874A6;--info-bg:#EBF5FB;
+  --text-primary:#1A1A1A;--text-secondary:#4A4A4A;--text-muted:#7A7A7A;
+  --border-light:#E8E5E0;--border:#D4D0CA;
+  --bg-page:#FAF8F5;--bg-container:#FFFFFF;--bg-muted:#F5F3F0;--bg-hover:#F0EDE8;
+  --r-md:6px;--r-lg:8px;--r-xl:12px;--r-full:9999px;
+  --shadow-sm:0 1px 4px rgba(0,0,0,.06);
+  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-primary);line-height:1.7;}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 28px 60px;}
+.crumb{font-size:13px;color:var(--text-muted);margin-bottom:18px;}
+.crumb a{color:var(--info);text-decoration:none;cursor:pointer;}
+.crumb a:hover{color:var(--red);}
+.crumb .sep{margin:0 7px;color:var(--border);}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.page-head h2{font-family:var(--font-serif);font-size:22px;font-weight:700;display:flex;align-items:center;gap:9px;}
+.page-head h2 .bar{width:5px;height:22px;background:var(--red);border-radius:2px;}
+.filters{background:var(--bg-container);border:1px solid var(--border-light);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);padding:16px 20px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:12px;color:var(--text-muted);font-weight:600;}
+.field select,.field input{font-family:inherit;font-size:13px;padding:7px 11px;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;color:var(--text-primary);min-width:140px;}
+.btn{border:none;cursor:pointer;font-family:inherit;font-weight:600;border-radius:var(--r-md);transition:all .15s;}
+.btn-primary{background:var(--red);color:#fff;padding:8px 18px;font-size:13px;}
+.btn-primary:hover{background:var(--red-hover);}
+.btn-ghost{background:var(--bg-muted);color:var(--text-secondary);padding:8px 16px;font-size:13px;border:1px solid var(--border);}
+.table-card{background:var(--bg-container);border:1px solid var(--border-light);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+.table-card .th-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border-light);}
+.table-card .th-bar h3{font-family:var(--font-serif);font-size:15px;font-weight:700;}
+.tb{width:100%;border-collapse:collapse;font-size:13.5px;}
+.tb th{text-align:left;padding:12px 16px;background:var(--gold-bg);color:var(--gold-hover);font-weight:700;font-size:12.5px;border-bottom:1px solid var(--gold-light);white-space:nowrap;}
+.tb td{padding:13px 16px;border-bottom:1px solid var(--border-light);color:var(--text-secondary);}
+.tb tr:hover td{background:var(--bg-hover);}
+.tb tr:last-child td{border-bottom:none;}
+.tb .tt{color:var(--text-primary);font-weight:500;}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 11px;border-radius:var(--r-full);font-weight:600;}
+.st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+.st.wait{background:var(--warning-bg);color:var(--warning);}
+.st.pass{background:var(--success-bg);color:var(--success);}
+.st.reject{background:var(--red-bg);color:var(--red);}
+.op{font-size:12.5px;color:var(--info);cursor:pointer;margin-right:10px;font-weight:600;}
+.op:hover{color:var(--red);}
+.op.approve{color:var(--success);}
+.op.deny{color:var(--red);}
+.pager{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:14px 20px;font-size:13px;color:var(--text-muted);}
+.pager .pg{padding:5px 10px;border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;background:#fff;}
+.pager .pg.on{background:var(--red);color:#fff;border-color:var(--red);}
+.fh{display:inline-block;font-size:10px;line-height:1.5;color:#9A9A9A;background:#F5F3F0;border:1px dashed #D4D0CA;border-radius:4px;padding:1px 6px;margin:2px 3px 0 0;font-weight:400;}
+.fh b{color:var(--gold-hover);font-weight:600;}
+.fh-row{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin:10px 0 2px;padding:8px 12px;background:#FBFAF8;border-radius:var(--r-md);}
+.fh-row .lead{font-size:11px;color:var(--text-muted);font-weight:600;margin-right:4px;}
+/* 详情页 */
+.detail-card{background:var(--bg-container);border:1px solid var(--border-light);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);padding:22px 24px;margin-bottom:16px;}
+.detail-card h3{font-family:var(--font-serif);font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.detail-card h3 .bar{width:4px;height:15px;background:var(--red);border-radius:2px;}
+.info-grid{display:grid;grid-template-columns:110px 1fr;gap:11px 16px;font-size:14px;}
+.info-grid .k{color:var(--text-muted);}
+.info-grid .v{color:var(--text-primary);font-weight:500;}
+.report-box{background:var(--bg-muted);border-radius:var(--r-lg);padding:16px;font-size:14px;color:var(--text-secondary);line-height:1.9;}
+.att{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-muted);border-radius:var(--r-lg);margin-bottom:8px;font-size:13.5px;}
+.att .dl{margin-left:auto;color:var(--info);cursor:pointer;font-weight:600;font-size:12.5px;}
+.approve-box{background:var(--warning-bg);border:1px solid #F3D9A8;border-radius:var(--r-lg);padding:16px;}
+.approve-box textarea{width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-md);min-height:70px;resize:vertical;margin-bottom:12px;}
+.approve-box .acts{display:flex;justify-content:flex-end;gap:10px;}
+.btn-deny{background:#fff;color:var(--red);border:1px solid var(--red);padding:8px 18px;font-size:13px;}
+.btn-pass{background:var(--success);color:#fff;padding:8px 18px;font-size:13px;}
+.hide{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ========== 二级：提案列表 ========== -->
+  <div id="listView">
+    <div class="crumb"><a onclick="toast('首页工作台')">首页工作台</a><span class="sep">/</span>提案审批<span class="sep">/</span>提案列表</div>
+    <div class="page-head">
+      <h2><span class="bar"></span>提案列表</h2>
+      <button class="btn btn-primary" onclick="toast('创建提案')">＋ 创建提案</button>
+    </div>
+    <div class="filters">
+      <div class="field"><label>提案名称</label><input placeholder="输入关键词..."></div>
+      <div class="field"><label>选举方式</label><select><option>全部</option><option>全民直选</option><option>户代表</option><option>居民代表</option></select></div>
+      <div class="field"><label>状态</label><select><option>全部</option><option>待审批</option><option>已通过</option><option>已驳回</option></select></div>
+      <div class="field"><label>&nbsp;</label><button class="btn btn-primary">查询</button></div>
+      <div class="field"><label>&nbsp;</label><button class="btn btn-ghost">重置</button></div>
+    </div>
+    <div class="fh-row"><span class="lead">筛选字段 →</span>
+      <span class="fh">提案名称 <b>election_proposals.title</b></span>
+      <span class="fh">状态 <b>election_proposals.status</b></span>
+      <span class="fh">关键词查 <b>title / village_name / report_content</b></span>
+    </div>
+
+    <div class="table-card">
+      <div class="th-bar"><h3>历史提案列表（本期 + 历届）</h3><span style="font-size:12px;color:var(--text-muted);">共 4 条</span></div>
+      <table class="tb">
+        <thead><tr><th>提交时间</th><th>提案名称</th><th>选举方式</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>2026-07-09</td><td class="tt">涧口社区第七届换届</td><td>全民直选</td>
+            <td><span class="st wait">待审批</span></td>
+            <td><span class="op" onclick="showDetail()">查看详情</span><span class="op approve" onclick="toast('通过')">✓通过</span><span class="op deny" onclick="toast('驳回')">✗驳回</span></td>
+          </tr>
+          <tr>
+            <td>2026-07-05</td><td class="tt">张家村村委换届提案</td><td>全民直选</td>
+            <td><span class="st pass">已通过</span></td>
+            <td><span class="op" onclick="showDetail()">查看详情</span></td>
+          </tr>
+          <tr>
+            <td>2026-06-20</td><td class="tt">李家堡第六届换届</td><td>户代表</td>
+            <td><span class="st reject">已驳回</span></td>
+            <td><span class="op" onclick="showDetail()">查看详情</span></td>
+          </tr>
+          <tr>
+            <td>2025-12-15</td><td class="tt">某某社区第五届换届</td><td>居民代表</td>
+            <td><span class="st pass">已通过</span></td>
+            <td><span class="op" onclick="showDetail()">查看详情</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pager"><span>共 4 条</span><span class="pg">‹</span><span class="pg on">1</span><span class="pg">›</span></div>
+    </div>
+    <div class="fh-row"><span class="lead">列表字段 →</span>
+      <span class="fh">提交时间 <b>submitted_at</b></span>
+      <span class="fh">提案名称 <b>title</b></span>
+      <span class="fh">选举方式 <b>⚠️提案表无此列,取自关联elections或前端约定</b></span>
+      <span class="fh">状态 <b>status</b> 待审核/已通过/已驳回</span>
+      <span class="fh">数据源 <b>GET /election-proposal/list</b></span>
+    </div>
+    <div class="fh-row"><span class="lead">操作 →</span>
+      <span class="fh">查看详情 → 三级下钻</span>
+      <span class="fh">✓通过/✗驳回 <b>POST /election-proposal/review</b> action=approve/reject</span>
+      <span class="fh">⚠️仅"待审批"+审核人可见通过/驳回</span>
+    </div>
+  </div>
+
+  <!-- ========== 三级：提案详情 ========== -->
+  <div id="detailView" class="hide">
+    <div class="crumb"><a onclick="toast('首页工作台')">首页工作台</a><span class="sep">/</span><a onclick="showList()">提案列表</a><span class="sep">/</span>涧口社区第七届换届提案详情</div>
+    <div class="page-head">
+      <h2><span class="bar"></span>提案详情</h2>
+      <button class="btn btn-ghost" onclick="showList()">← 返回列表</button>
+    </div>
+
+    <div class="detail-card">
+      <h3><span class="bar"></span>提案基本信息</h3>
+      <div class="info-grid">
+        <div class="k">提案名称</div><div class="v">涧口社区第七届换届选举提案</div>
+        <div class="k">提&nbsp;案&nbsp;人</div><div class="v">王建国（村委书记）</div>
+        <div class="k">提交时间</div><div class="v">2026年7月9日</div>
+        <div class="k">选举方式</div><div class="v">全民直选 <span style="color:var(--text-muted);font-size:12px;">（居委会三选一时显示对应方式）</span></div>
+        <div class="k">适用岗位</div><div class="v">主任、副主任、委员 <span style="color:var(--gold-hover);font-size:12px;">（一期铁律：仅此三项）</span></div>
+      </div>
+      <div class="fh-row"><span class="lead">字段 →</span>
+        <span class="fh">提案名称 <b>title</b></span>
+        <span class="fh">提案人 <b>submitted_by → users.name</b></span>
+        <span class="fh">提交时间 <b>submitted_at</b></span>
+        <span class="fh">归属地 <b>village_id / village_name</b></span>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3><span class="bar"></span>提案详细说明</h3>
+      <div class="report-box">根据《村民委员会组织法》及城厢区换届选举工作部署，涧口社区拟于2026年7月启动第七届居委会换届选举。本次采用全民直选方式，选举主任1名、副主任1名、委员5名。换届依据、时间安排、片区划分详见附件筹备方案……</div>
+      <div class="fh-row"><span class="lead">字段 →</span><span class="fh">正文 <b>report_content</b> text富文本</span></div>
+    </div>
+
+    <div class="detail-card">
+      <h3><span class="bar"></span>附件材料</h3>
+      <div class="att">📎 换届选举筹备方案.pdf <span class="dl" onclick="toast('下载预览')">下载预览</span></div>
+      <div class="att">📎 选民登记摸底表.xlsx <span class="dl" onclick="toast('下载预览')">下载预览</span></div>
+      <div class="fh-row"><span class="lead">字段 →</span><span class="fh">附件 <b>attachments</b> JSON数组 [{name,url}]</span><span class="fh">存档路径 <b>public/uploads/archives/proposals/</b></span></div>
+    </div>
+
+    <div class="detail-card">
+      <h3><span class="bar"></span>审批操作区 <span style="font-size:12px;color:var(--text-muted);font-weight:400;">（仅待审批状态 + 审核人角色可见）</span></h3>
+      <div class="approve-box">
+        <textarea placeholder="请输入审批意见，如不通过原因..."></textarea>
+        <div class="acts">
+          <button class="btn btn-deny" onclick="toast('驳回提案')">✗ 驳回提案</button>
+          <button class="btn btn-pass" onclick="toast('通过提案')">✓ 通过提案</button>
+        </div>
+      </div>
+      <div class="fh-row"><span class="lead">字段 →</span>
+        <span class="fh">审批意见 <b>reason</b> → reject_reason</span>
+        <span class="fh">动作 <b>POST /election-proposal/review</b> action=approve/reject</span>
+        <span class="fh">审批人 <b>reviewed_by</b>(登录态)</span>
+        <span class="fh">审批时间 <b>reviewed_at=NOW()</b></span>
+        <span class="fh">⚠️驳回必填原因</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+function showDetail(){document.getElementById('listView').classList.add('hide');document.getElementById('detailView').classList.remove('hide');window.scrollTo(0,0);}
+function showList(){document.getElementById('detailView').classList.add('hide');document.getElementById('listView').classList.remove('hide');window.scrollTo(0,0);}
+var _t;
+function toast(msg){var b=document.getElementById('_t');if(!b){b=document.createElement('div');b.id='_t';b.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;padding:11px 22px;border-radius:8px;font-size:13px;z-index:99;opacity:0;transition:opacity .2s;';document.body.appendChild(b);}b.textContent=msg;b.style.opacity='1';clearTimeout(_t);_t=setTimeout(function(){b.style.opacity='0';},1600);}
+</script>
+</body>
+</html>
