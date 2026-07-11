@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>涧口社区 · 换届选举工作台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#B22222;--red-hover:#961C1C;--red-light:#D4453A;--red-bg:#FDE8E8;--red-bg-soft:#FFF5F5;
+  --gold:#C8A45C;--gold-hover:#B08E3A;--gold-light:#E8D5A0;--gold-bg:#FDF6E3;
+  --success:#2D8B55;--success-bg:#E8F5ED;--warning:#C27A1A;--warning-bg:#FEF5E7;
+  --info:#2874A6;--info-bg:#EBF5FB;
+  --text-primary:#1A1A1A;--text-secondary:#4A4A4A;--text-muted:#7A7A7A;--text-inverse:#FFF;
+  --border-light:#E8E5E0;--border:#D4D0CA;
+  --bg-page:#FAF8F5;--bg-container:#FFFFFF;--bg-muted:#F5F3F0;--bg-hover:#F0EDE8;--bg-dark:#1C1C1C;--bg-dark-sec:#2A2A2A;
+  --r-sm:4px;--r-md:6px;--r-lg:8px;--r-xl:12px;--r-2xl:16px;--r-full:9999px;
+  --shadow-sm:0 1px 4px rgba(0,0,0,.06);--shadow-md:0 4px 12px rgba(0,0,0,.08);--shadow-lg:0 8px 24px rgba(0,0,0,.1);
+  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-primary);line-height:1.7;-webkit-font-smoothing:antialiased;}
+/* 整体框架：左侧栏 + 右主区 */
+.app{display:flex;min-height:100vh;}
+.sidebar{width:210px;flex-shrink:0;background:linear-gradient(180deg,var(--bg-dark),var(--bg-dark-sec));color:#F0EDE8;padding:24px 0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar .brand{padding:0 22px 20px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px;}
+.sidebar .brand .kick{font-size:10px;letter-spacing:2px;color:var(--gold);font-weight:600;margin-bottom:6px;}
+.sidebar .brand h1{font-family:var(--font-serif);font-size:15px;font-weight:700;color:#F5F2EC;line-height:1.5;}
+.nav-group{padding:0 12px;margin-bottom:8px;}
+.nav-group .g-label{font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.3);padding:12px 12px 6px;font-weight:600;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;color:rgba(255,255,255,.55);border-radius:7px;cursor:pointer;font-size:13px;transition:all .18s;margin-bottom:1px;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.9);}
+.nav-item.active{background:rgba(178,34,34,.28);color:#fff;font-weight:500;}
+.nav-item.active .ic{color:var(--gold);}
+.nav-item .ic{width:18px;text-align:center;font-size:14px;}
+.nav-item .arrow{margin-left:auto;font-size:10px;color:rgba(255,255,255,.3);transition:transform .2s;}
+.nav-item.open .arrow{transform:rotate(90deg);color:var(--gold);}
+.nav-item.has-sub{cursor:pointer;}
+/* 二级子菜单（漏斗） */
+.sub-menu{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+.sub-menu.open{max-height:240px;}
+.sub-item{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 39px;color:rgba(255,255,255,.4);font-size:12.5px;cursor:pointer;border-radius:6px;transition:all .15s;margin-bottom:1px;}
+.sub-item:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.85);}
+.sub-item::before{content:'·';margin-right:-3px;color:var(--gold);}
+.sub-item .s-note{margin-left:auto;font-size:10px;color:rgba(255,255,255,.25);}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+/* 顶部信息条 */
+.topbar{display:flex;align-items:center;justify-content:flex-end;gap:28px;background:var(--bg-container);border-bottom:2px solid var(--red);padding:16px 32px;position:sticky;top:0;z-index:20;box-shadow:var(--shadow-sm);}
+.topbar .tb-item{font-size:14px;color:var(--text-secondary);}
+.topbar .tb-item b{color:var(--text-primary);font-weight:600;margin-left:4px;}
+.topbar .tb-item .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--success);margin-right:5px;vertical-align:middle;}
+
+.content{padding:26px 32px 60px;max-width:1360px;width:100%;}
+/* 卡片通用 */
+.card{background:var(--bg-container);border:1px solid var(--border-light);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-light);}
+.card-head h3{font-family:var(--font-serif);font-size:16px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:8px;}
+.card-head h3 .bar{width:4px;height:16px;background:var(--red);border-radius:2px;}
+.card-head .more{font-size:12px;color:var(--text-muted);cursor:pointer;}
+.card-head .more:hover{color:var(--red);}
+.card-body{padding:18px 20px;}
+
+/* 网格 */
+.grid{display:grid;gap:18px;margin-bottom:18px;}
+.grid-row1{grid-template-columns:1.6fr 1fr;}
+.grid-row2{grid-template-columns:1fr 1fr 1fr;}
+.grid-row3{grid-template-columns:1fr 1.4fr;}
+
+/* 日历（本周进程提醒） */
+.cal-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;}
+.cal-head .today{font-size:13px;color:var(--text-muted);}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.week .wd{text-align:center;font-size:12px;color:var(--text-muted);padding-bottom:8px;font-weight:600;}
+.day{text-align:center;border-radius:var(--r-lg);padding:10px 4px;background:var(--bg-muted);min-height:78px;display:flex;flex-direction:column;gap:5px;justify-content:flex-start;}
+.day .dnum{font-size:17px;font-weight:700;color:var(--text-secondary);font-family:var(--font-serif);}
+.day.today-mark{background:var(--red-bg-soft);border:1.5px solid var(--red);}
+.day.today-mark .dnum{color:var(--red);}
+.day .act{font-size:11px;color:var(--info);cursor:pointer;}
+.day .act:hover{text-decoration:underline;}
+.day .act.hot{color:var(--red);font-weight:600;}
+.day.empty{background:transparent;}
+
+/* 管理员配置卡（绿意，柔和） */
+.admin-cfg{display:flex;flex-direction:column;gap:12px;}
+.admin-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--success-bg);border-radius:var(--r-lg);border:1px solid #CDE9D8;}
+.admin-row .av{width:38px;height:38px;border-radius:50%;background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;}
+.admin-row .info{flex:1;min-width:0;}
+.admin-row .info .nm{font-size:14px;font-weight:600;color:var(--text-primary);}
+.admin-row .info .rl{font-size:12px;color:var(--text-muted);}
+.admin-row .mng{font-size:12px;color:var(--success);cursor:pointer;font-weight:600;}
+
+/* 提案审批列表 */
+.appr-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px dashed var(--border-light);}
+.appr-item:last-child{border-bottom:none;}
+.tag{font-size:11px;padding:2px 9px;border-radius:var(--r-full);font-weight:600;white-space:nowrap;}
+.tag.pass{background:var(--success-bg);color:var(--success);}
+.tag.wait{background:var(--warning-bg);color:var(--warning);}
+.tag.reject{background:var(--red-bg);color:var(--red);}
+.appr-item .txt{flex:1;font-size:13px;color:var(--text-secondary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.appr-item .ops{display:flex;gap:8px;flex-shrink:0;}
+.link-op{font-size:12px;color:var(--info);cursor:pointer;}
+.link-op:hover{color:var(--red);}
+.btn{border:none;cursor:pointer;font-family:inherit;font-weight:600;border-radius:var(--r-md);transition:all .15s;}
+.btn-primary{background:var(--red);color:#fff;padding:6px 14px;font-size:12px;}
+.btn-primary:hover{background:var(--red-hover);}
+.btn-ghost{background:var(--gold-bg);color:var(--gold-hover);padding:6px 14px;font-size:12px;border:1px solid var(--gold-light);}
+
+/* 选举活动列表 */
+.act-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:var(--r-lg);background:var(--bg-muted);margin-bottom:9px;cursor:pointer;transition:all .15s;}
+.act-item:hover{background:var(--red-bg-soft);}
+.act-item:last-child{margin-bottom:0;}
+.act-item .an{font-size:13px;color:var(--text-primary);font-weight:500;}
+.act-item .as{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.act-item .enter{font-size:12px;color:var(--red);font-weight:600;white-space:nowrap;}
+
+/* 本期选举岗位 */
+.post-item{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px dashed var(--border-light);}
+.post-item:last-child{border-bottom:none;}
+.post-item .pn{font-size:14px;font-weight:600;color:var(--text-primary);}
+.post-item .pq{font-size:12px;color:var(--text-muted);margin-left:8px;}
+.post-item .plinks{display:flex;gap:10px;}
+
+/* 状态徽标（岗位状态） */
+.st{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:var(--r-full);font-weight:600;}
+.st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+.st.s-onpost{background:var(--success-bg);color:var(--success);}
+.st.s-signup{background:var(--info-bg);color:var(--info);}
+.st.s-public{background:#F3EAF7;color:#8E44AD;}
+.st.s-review{background:var(--warning-bg);color:var(--warning);}
+.st.s-result{background:var(--red-bg);color:var(--red);}
+
+/* 花名册表 */
+.roster-table{width:100%;border-collapse:collapse;font-size:13px;}
+.roster-table th{text-align:left;padding:9px 10px;background:var(--gold-bg);color:var(--gold-hover);font-weight:700;font-size:12px;border-bottom:1px solid var(--gold-light);}
+.roster-table td{padding:10px;border-bottom:1px solid var(--border-light);color:var(--text-secondary);}
+.roster-table tr:hover td{background:var(--bg-hover);}
+
+@media(max-width:1100px){.grid-row1,.grid-row2,.grid-row3{grid-template-columns:1fr;}.sidebar{display:none;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边栏（阿姨叔叔基本不翻，仪表盘才是主入口） -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="kick">城厢区换届选举</div>
+      <h1>涧口社区 · 工作台</h1>
+    </div>
+    <div class="nav-group">
+      <div class="nav-item active"><span class="ic">🏠</span>首页工作台</div>
+
+      <div class="nav-item has-sub"><span class="ic">📝</span>选举提案审批<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item">提案审批列表</div>
+        <div class="sub-item">提案详情<span class="s-note">下钻</span></div>
+      </div>
+
+      <div class="nav-item has-sub"><span class="ic">🗳️</span>选举活动管理<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item">活动总列表</div>
+        <div class="sub-item">母活动小看板<span class="s-note">点节点进</span></div>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="g-label">办理中</div>
+
+      <div class="nav-item has-sub"><span class="ic">💼</span>岗位管理<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item">本期选举岗位</div>
+        <div class="sub-item">历届活动岗位需求</div>
+      </div>
+
+      <div class="nav-item has-sub"><span class="ic">📄</span>材料提交管理<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item">本期待审材料</div>
+        <div class="sub-item">历届材料记录</div>
+      </div>
+
+      <div class="nav-item has-sub"><span class="ic">👤</span>候选人管理<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item">本期候选人</div>
+        <div class="sub-item">历届当选名录</div>
+      </div>
+
+      <div class="nav-item has-sub"><span class="ic">📢</span>公告通知<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item">本期阶段公告</div>
+        <div class="sub-item">历届公告记录</div>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="g-label">收尾归档</div>
+      <div class="nav-item has-sub"><span class="ic">🗂️</span>历史归档<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item">本届归档件</div>
+        <div class="sub-item">历届归档库</div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <!-- 顶部信息条 -->
+    <div class="topbar">
+      <span class="tb-item"><span class="dot"></span>归属地<b>涧口社区</b></span>
+      <span class="tb-item">角色<b>子管理（村长）</b></span>
+      <span class="tb-item">账号<b>150****0000</b></span>
+    </div>
+
+    <div class="content" id="content">
+
+      <!-- 第一排：本周进程提醒（大） + 本村管理员配置 -->
+      <div class="grid grid-row1">
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar"></span>本周进程提醒</h3>
+            <span class="today">今天：2026年7月10日 · 星期五</span>
+          </div>
+          <div class="card-body">
+            <div class="week">
+              <div class="wd">周一</div><div class="wd">周二</div><div class="wd">周三</div><div class="wd">周四</div><div class="wd">周五</div><div class="wd">周六</div><div class="wd">周日</div>
+              <div class="day"><div class="dnum">7</div><div class="act">设置提醒</div></div>
+              <div class="day"><div class="dnum">8</div><div class="act">设置提醒</div></div>
+              <div class="day"><div class="dnum">9</div><div class="act">设置提醒</div></div>
+              <div class="day today-mark"><div class="dnum">10</div><div class="act hot" onclick="toast('打开今日事项详情')">查看详情</div></div>
+              <div class="day"><div class="dnum">11</div><div class="act">设置提醒</div></div>
+              <div class="day"><div class="dnum">12</div><div class="act">设置提醒</div></div>
+              <div class="day"><div class="dnum">13</div><div class="act">设置提醒</div></div>
+            </div>
+            <div style="margin-top:14px;padding:12px 14px;background:var(--red-bg-soft);border-radius:var(--r-lg);font-size:13px;color:var(--red-hover);border-left:3px solid var(--red);">
+              📌 今日事项：<b>候选人提名阶段</b> · 需在 7月15日前完成资格审查 ·
+              <span class="link-op" style="color:var(--red);" onclick="toast('跳转到材料审核')">去处理 →</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar" style="background:var(--success);"></span>本村管理员配置</h3>
+            <span class="more" onclick="toast('打开人员配置')">管理 →</span>
+          </div>
+          <div class="card-body">
+            <div class="admin-cfg">
+              <div class="admin-row">
+                <div class="av">王</div>
+                <div class="info"><div class="nm">王建国</div><div class="rl">经办 · 涧口社区</div></div>
+                <span class="mng" onclick="toast('编辑')">编辑</span>
+              </div>
+              <div class="admin-row">
+                <div class="av" style="background:var(--info);">李</div>
+                <div class="info"><div class="nm">李秀兰</div><div class="rl">审核 · 涧口社区</div></div>
+                <span class="mng" style="color:var(--info);" onclick="toast('编辑')">编辑</span>
+              </div>
+              <div class="admin-row" style="background:var(--bg-muted);border-color:var(--border-light);justify-content:center;cursor:pointer;" onclick="toast('新增管理员')">
+                <span style="color:var(--text-muted);font-size:13px;">＋ 新增本村管理员</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 第二排：提案审批 + 选举活动列表 + 本期选举岗位 -->
+      <div class="grid grid-row2">
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar"></span>选举前 · 提案审批</h3>
+            <button class="btn btn-primary" onclick="toast('新建选举提案')">＋ 新建</button>
+          </div>
+          <div class="card-body">
+            <div class="appr-item">
+              <span class="tag pass">通过</span>
+              <span class="txt">第15届涧口社区居委会换届方案</span>
+              <div class="ops"><span class="link-op" onclick="toast('查看')">查看</span></div>
+            </div>
+            <div class="appr-item">
+              <span class="tag wait">待审批</span>
+              <span class="txt">第15届选举委员会成立方案</span>
+              <div class="ops"><span class="link-op" onclick="toast('编辑')">编辑</span><span class="link-op" onclick="toast('删除')">删除</span></div>
+            </div>
+            <div class="appr-item">
+              <span class="tag reject">驳回</span>
+              <span class="txt">选民登记实施细则（草案）</span>
+              <div class="ops"><span class="link-op" onclick="toast('编辑')">编辑</span><span class="link-op" onclick="toast('删除')">删除</span></div>
+            </div>
+            <div style="text-align:center;margin-top:10px;"><span class="more" onclick="toast('查看全部提案')">查看更多 →</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar"></span>选举活动列表</h3>
+          </div>
+          <div class="card-body">
+            <div class="act-item" onclick="toast('进入母版详情')">
+              <div><div class="an">第15届涧口社区居委会换届选举</div><div class="as">居民直接选举 · 候选人提名阶段</div></div>
+              <span class="enter">进入管理 →</span>
+            </div>
+            <div class="act-item" onclick="toast('进入母版详情')">
+              <div><div class="an">第14届涧口社区居委会换届选举</div><div class="as">已归档 · 2021年</div></div>
+              <span class="enter" style="color:var(--text-muted);">查看 →</span>
+            </div>
+            <div class="act-item" onclick="toast('进入母版详情')">
+              <div><div class="an">第13届涧口社区居委会换届选举</div><div class="as">已归档 · 2018年</div></div>
+              <span class="enter" style="color:var(--text-muted);">查看 →</span>
+            </div>
+            <div style="text-align:center;margin-top:10px;"><span class="more" onclick="toast('进入选举活动管理 · 本村历史活动列表')">查看更多 →</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar"></span>本期选举岗位</h3>
+            <span class="more" onclick="toast('岗位说明 / 资料下载')">资料下载 ↓</span>
+          </div>
+          <div class="card-body">
+            <div class="post-item">
+              <div><span class="pn">居委会主任</span><span class="pq">需求 1 人</span></div>
+              <span class="st s-signup">竞选报名</span>
+            </div>
+            <div class="post-item">
+              <div><span class="pn">副主任</span><span class="pq">需求 1 人</span></div>
+              <span class="st s-signup">竞选报名</span>
+            </div>
+            <div class="post-item">
+              <div><span class="pn">委员</span><span class="pq">需求 5 人</span></div>
+              <span class="st s-onpost">在岗（未换届）</span>
+            </div>
+            <div style="margin-top:10px;padding:9px 12px;background:var(--gold-bg);border-radius:var(--r-md);font-size:12px;color:var(--gold-hover);">
+              💡 点岗位状态可进入对应操作：在岗→花名册，竞选报名→材料/公告
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 第三排：当期干部花名册 + 岗位状态面板（联动） -->
+      <div class="grid grid-row3">
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar" style="background:#8E44AD;"></span>当期干部花名册</h3>
+            <span class="more" onclick="toast('查看历史在任名录')">历史名录 →</span>
+          </div>
+          <div class="card-body">
+            <table class="roster-table">
+              <thead><tr><th>岗位</th><th>姓名</th><th>联系方式</th><th>本届任期</th></tr></thead>
+              <tbody>
+                <tr><td>主任</td><td>陈志强</td><td>138****1234</td><td>2021–2026</td></tr>
+                <tr><td>副主任</td><td>林美华</td><td>139****5678</td><td>2021–2026</td></tr>
+                <tr><td>委员</td><td>黄大鹏</td><td>137****9012</td><td>2021–2026</td></tr>
+                <tr><td>委员</td><td>吴丽娟</td><td>135****3456</td><td>2021–2026</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar" style="background:#8E44AD;"></span>岗位换届状态</h3>
+            <span class="more">主任 · 竞选报名中</span>
+          </div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div style="padding:14px;background:var(--info-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="toast('去材料提交管理')">
+                <div style="font-size:13px;color:var(--info);font-weight:600;margin-bottom:4px;">📄 竞选材料</div>
+                <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">3 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">份待审</span></div>
+              </div>
+              <div style="padding:14px;background:var(--red-bg-soft);border-radius:var(--r-lg);cursor:pointer;" onclick="toast('去候选人管理')">
+                <div style="font-size:13px;color:var(--red);font-weight:600;margin-bottom:4px;">👤 候选人</div>
+                <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">2 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">已入围</span></div>
+              </div>
+              <div style="padding:14px;background:var(--warning-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="toast('去公告管理')">
+                <div style="font-size:13px;color:var(--warning);font-weight:600;margin-bottom:4px;">📢 阶段公告</div>
+                <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">4 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">条已发</span></div>
+              </div>
+              <div style="padding:14px;background:var(--success-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="toast('去归档')">
+                <div style="font-size:13px;color:var(--success);font-weight:600;margin-bottom:4px;">🗂️ 归档件</div>
+                <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">6 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">份</span></div>
+              </div>
+            </div>
+            <div style="margin-top:12px;padding:10px 14px;background:var(--bg-muted);border-radius:var(--r-md);font-size:12px;color:var(--text-secondary);">
+              🔔 通知：李秀兰刚提交1份材料待您审核 · <span class="link-op" onclick="toast('查看通知')">查看</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+// 侧边栏：有二级的展开漏斗，无二级的直接高亮
+document.querySelectorAll('.nav-item').forEach(function(el){
+  el.addEventListener('click',function(){
+    if(this.classList.contains('has-sub')){
+      // 展开/收起自己的二级，同时收起其他已展开的
+      var sub=this.nextElementSibling;
+      var isOpen=this.classList.contains('open');
+      document.querySelectorAll('.nav-item.has-sub').forEach(function(n){
+        n.classList.remove('open');
+        if(n.nextElementSibling) n.nextElementSibling.classList.remove('open');
+      });
+      if(!isOpen){this.classList.add('open');if(sub)sub.classList.add('open');}
+      return;
+    }
+    // 无二级（首页工作台）
+    document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+    this.classList.add('active');
+  });
+});
+// 二级子项点击 → 进入具体页面
+document.querySelectorAll('.sub-item').forEach(function(el){
+  el.addEventListener('click',function(e){
+    e.stopPropagation();
+    toast('进入：'+this.childNodes[0].textContent.trim());
+  });
+});
+// 轻提示
+var _t;
+function toast(msg){
+  var box=document.getElementById('_toast');
+  if(!box){
+    box=document.createElement('div');box.id='_toast';
+    box.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;padding:11px 22px;border-radius:8px;font-size:13px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transition:opacity .2s;pointer-events:none;';
+    document.body.appendChild(box);
+  }
+  box.textContent=msg;box.style.opacity='1';
+  clearTimeout(_t);_t=setTimeout(function(){box.style.opacity='0';},1600);
+}
+</script>
+</body>
+</html>

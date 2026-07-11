@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城厢区换届选举系统 - 核心业务流程代码地图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header .meta {
+            margin-top: 20px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .trace-section {
+            margin-bottom: 50px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .trace-section:hover {
+            border-color: #667eea;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .trace-header {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .trace-header h2 {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .trace-header h2 .trace-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .trace-header .description {
+            color: #666;
+            font-size: 1em;
+            margin-top: 8px;
+        }
+
+        .trace-diagram {
+            background: #f8f9fa;
+            padding: 25px;
+            border-bottom: 2px solid #e0e0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            white-space: pre;
+            color: #333;
+            line-height: 1.8;
+        }
+
+        .locations {
+            padding: 25px;
+        }
+
+        .location-item {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .location-item:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .location-item .location-id {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .location-item h3 {
+            color: #333;
+            font-size: 1.2em;
+            margin-bottom: 8px;
+        }
+
+        .location-item .description {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+        }
+
+        .location-item .path {
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #555;
+            word-break: break-all;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #666;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .footer .note {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .footer .warning {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .trace-header h2 {
+                font-size: 1.4em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>城厢区换届选举系统 - 核心业务流程代码地图</h1>
+            <p class="subtitle">本地图追踪换届选举系统的5条核心业务流程：从创建换届活动到岗位自动生成、18公告模板填空、用户材料审核晋升候选人、微信端身份绑定，以及数据库表结构初始化。关键入口包括岗位生成逻辑[1d]、公告模板渲染[2c]、材料审核晋升[3d]、归属地绑定[4c]和数据库初始化[5b]。</p>
+            <p class="meta">Codemap ID: __________-____________20260705_060537 | 生成时间: 2026-07-05</p>
+        </div>
+
+        <div class="content">
+            <!-- Trace 1 -->
+            <div class="trace-section">
+                <div class="trace-header">
+                    <h2><span class="trace-number">1</span>创建换届活动并自动生成岗位（后端API）</h2>
+                    <p class="description">当管理员创建换届选举活动后，系统根据村委会/居委会类型和班子人数自动生成主任/副主任/委员三个岗位坑位</p>
+                </div>
+                <div class="trace-diagram">创建换届活动并自动生成岗位流程
+├── 后端API: 创建换届活动
+│   └── election-v2.js::add() &lt;-- election-v2.js:91
+│       └── pool.execute(INSERT elections) &lt;-- 1a
+│
+└── 后端API: 自动生成岗位
+    └── position-v2.js::generate() &lt;-- 1b
+        ├── 调用岗位生成逻辑 &lt;-- 1c
+        │   └── buildGeneratedPositions() &lt;-- 1d
+        │       ├── 校验村居类型和班子人数 &lt;-- position-v2.js:21
+        │       ├── 计算副主任数量 &lt;-- position-v2.js:27
+        │       ├── 计算委员名额 &lt;-- 1e
+        │       └── 返回岗位配置数组 &lt;-- position-v2.js:41
+        │
+        ├── 检查是否已存在岗位 &lt;-- position-v2.js:118
+        │   └── SELECT positions WHERE name IN (...)
+        │
+        └── 批量插入岗位记录 &lt;-- 1f
+            └── pool.query(INSERT positions VALUES ?)</div>
+                <div class="locations">
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 1a</span>
+                        <h3>创建换届活动记录</h3>
+                        <p class="description">插入elections表，初始状态为draft和待审批</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\election-v2.js:102</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 1b</span>
+                        <h3>岗位自动生成接口入口</h3>
+                        <p class="description">POST /position-v2/generate 接收electionId、orgType、committeeSize、deputyCount参数</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\position-v2.js:112</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 1c</span>
+                        <h3>调用岗位生成逻辑</h3>
+                        <p class="description">根据村居类型和班子人数计算主任/副主任/委员的名额配置</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\position-v2.js:117</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 1d</span>
+                        <h3>岗位生成核心算法</h3>
+                        <p class="description">村委会3/5/7人，居委会5/7/9人；委员名额=总人数-1-副主任数</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\position-v2.js:20</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 1e</span>
+                        <h3>计算委员名额</h3>
+                        <p class="description">班子总人数减去主任1名和副主任数，得到委员应选名额</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\position-v2.js:30</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 1f</span>
+                        <h3>批量插入岗位记录</h3>
+                        <p class="description">将主任/副主任/委员三条记录批量插入positions表</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\position-v2.js:135</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trace 2 -->
+            <div class="trace-section">
+                <div class="trace-header">
+                    <h2><span class="trace-number">2</span>18公告模板填空生成（后端API）</h2>
+                    <p class="description">经办人员选择公告模板并填写变量后，系统自动渲染法定公告内容，支持村委会/居委会自适应替换</p>
+                </div>
+                <div class="trace-diagram">18公告模板填空生成流程
+├── 模板配置层
+│   └── noticeTemplates.js 模板定义 &lt;-- 2a
+│       ├── COMMON_FIELDS 公共变量 &lt;-- noticeTemplates.js:5
+│       └── TEMPLATES[18] 公告数组 &lt;-- noticeTemplates.js:12
+│
+├── API接口层 (notice-v2.js)
+│   ├── GET /notice-v2/templates &lt;-- 2b
+│   │   └── 返回模板列表和公共字段 &lt;-- notice-v2.js:93
+│   │
+│   └── POST /notice-v2/generate &lt;-- 2f
+│       └── buildNoticeFromTemplate() &lt;-- 2e
+│           ├── orgWords(orgType) &lt;-- 2d
+│           │   └── 返回村居自适应词汇映射 &lt;-- notice-v2.js:12
+│           │       ├── orgResident: 村民/居民 &lt;-- notice-v2.js:13
+│           │       ├── orgUnit: 村/社区 &lt;-- notice-v2.js:14
+│           │       └── orgCommittee: 村委会/居委会 &lt;-- notice-v2.js:15
+│           │
+│           └── renderTemplate(body, data) &lt;-- 2c
+│               └── 替换{{变量}}为实际值 &lt;-- notice-v2.js:21
+│
+└── 数据持久化
+    └── INSERT INTO notices 保存草稿 &lt;-- notice-v2.js:110</div>
+                <div class="locations">
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 2a</span>
+                        <h3>18条公告模板配置文件</h3>
+                        <p class="description">定义COMMON_FIELDS公共变量和TEMPLATES数组，包含seq、docNo、name、body等字段</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\config\noticeTemplates.js:1</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 2b</span>
+                        <h3>获取公告模板列表</h3>
+                        <p class="description">GET /notice-v2/templates 返回18条模板的元数据和公共字段定义</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\notice-v2.js:84</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 2c</span>
+                        <h3>模板渲染核心函数</h3>
+                        <p class="description">将body中的{{变量}}替换为data中的值，未填写的显示为____</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\notice-v2.js:20</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 2d</span>
+                        <h3>村居自适应词汇映射</h3>
+                        <p class="description">根据orgType返回orgResident(村民/居民)、orgUnit(村/社区)、orgCommittee等自适应占位符</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\notice-v2.js:10</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 2e</span>
+                        <h3>构建公告内容</h3>
+                        <p class="description">合并村居自适应词汇和用户填写的fields，调用renderTemplate生成最终公告</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\notice-v2.js:27</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 2f</span>
+                        <h3>公告生成接口</h3>
+                        <p class="description">POST /notice-v2/generate 支持预览或保存草稿到notices表</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\notice-v2.js:96</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trace 3 -->
+            <div class="trace-section">
+                <div class="trace-header">
+                    <h2><span class="trace-number">3</span>用户材料审核与晋升候选人流程（后端API）</h2>
+                    <p class="description">村民/居民提交竞选材料后，后台审核通过则自动晋升为候选人，驳回则发送私信通知补材料</p>
+                </div>
+                <div class="trace-diagram">用户材料审核与晋升候选人流程
+├── 材料管理API模块 &lt;-- 3a
+│   └── POST /material-v2/approve &lt;-- material-v2.js:180
+│       └── approve(ctx) 审核接口入口 &lt;-- 3b
+│           ├── 验证参数 (materialId, action) &lt;-- material-v2.js:103
+│           ├── 查询材料记录 &lt;-- material-v2.js:108
+│           ├── UPDATE materials 更新审核状态 &lt;-- 3c
+│           │   └── 记录审核人和审核时间
+│           ├── if (action === 'approve') &lt;-- material-v2.js:125
+│           │   ├── INSERT INTO candidates &lt;-- 3d
+│           │   │   └── 晋升为候选人 (source='material')
+│           │   └── UPDATE materials.candidate_id &lt;-- 3e
+│           │       └── 回填候选人ID建立血缘关系
+│           └── if (action === 'reject') &lt;-- material-v2.js:150
+│               └── 调用通知模块
+│                   └── POST /notification-v2/add &lt;-- 3f
+│                       └── 发送驳回原因私信通知</div>
+                <div class="locations">
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 3a</span>
+                        <h3>材料管理API模块</h3>
+                        <p class="description">处理材料提交、审核、驳回和晋升候选人的完整流程</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\material-v2.js:1</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 3b</span>
+                        <h3>材料审核接口入口</h3>
+                        <p class="description">POST /material-v2/approve 接收materialId和action(approve/reject)参数</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\material-v2.js:100</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 3c</span>
+                        <h3>更新材料审核状态</h3>
+                        <p class="description">将材料状态改为通过或驳回，记录审核人和审核时间</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\material-v2.js:120</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 3d</span>
+                        <h3>晋升为候选人</h3>
+                        <p class="description">审核通过后，将材料信息插入candidates表，source标记为material自荐</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\material-v2.js:130</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 3e</span>
+                        <h3>回填候选人ID</h3>
+                        <p class="description">将新生成的candidate_id回填到materials表，建立血缘关系</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\material-v2.js:145</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 3f</span>
+                        <h3>发送私信通知</h3>
+                        <p class="description">材料审核结果通过notifications表发送给用户，支持即时/定时发送</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\notification-v2.js:80</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trace 4 -->
+            <div class="trace-section">
+                <div class="trace-header">
+                    <h2><span class="trace-number">4</span>微信端首次登记与归属地绑定（后端API）</h2>
+                    <p class="description">新用户首次进入小程序时，通过手机号认领用户身份，选择并绑定归属地（镇街→村/社区），影响后续可见的公告和活动</p>
+                </div>
+                <div class="trace-diagram">微信端首次登记与归属地绑定流程
+├── POST /mini/login 接口 &lt;-- 4a
+│   ├── 查询用户是否存在 (按手机号) &lt;-- mini.js:15
+│   ├── 创建或更新用户记录 &lt;-- 4b
+│   │   ├── INSERT users (phone, wx_openid, role) &lt;-- mini.js:20
+│   │   └── UPDATE users SET wx_openid WHERE phone &lt;-- mini.js:30
+│   └── 返回 userId 和 token &lt;-- mini.js:40
+│
+├── POST /mini/bind-location 接口 &lt;-- 4c
+│   ├── 验证 villageId 是否存在 &lt;-- mini.js:50
+│   ├── 更新用户归属地 &lt;-- 4d
+│   │   └── UPDATE users SET village_id WHERE id
+│   └── 返回绑定成功消息 &lt;-- mini.js:65
+│
+└── GET /mini/me 查询身份 &lt;-- 4e
+    ├── SELECT users JOIN villages &lt;-- mini.js:80
+    └── 返回用户信息 + 归属地详情 &lt;-- mini.js:90
+        ├── user: { id, phone, name, role }
+        └── village: { id, name, type, town }</div>
+                <div class="locations">
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 4a</span>
+                        <h3>微信端登录接口</h3>
+                        <p class="description">POST /mini/login 接收phone和wxOpenid，认领或创建villager角色用户</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\mini.js:10</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 4b</span>
+                        <h3>创建或更新用户记录</h3>
+                        <p class="description">根据手机号查询用户，不存在则创建新用户，存在则更新wx_openid</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\mini.js:25</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 4c</span>
+                        <h3>绑定归属地接口</h3>
+                        <p class="description">POST /mini/bind-location 接收userId和villageId，完成归属地绑定</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\mini.js:45</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 4d</span>
+                        <h3>更新用户归属地</h3>
+                        <p class="description">将用户的village_id字段更新为选择的村居ID</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\mini.js:60</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 4e</span>
+                        <h3>查询当前用户身份</h3>
+                        <p class="description">GET /mini/me 返回用户信息和归属地详情，用于前端展示</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\api\mini.js:75</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trace 5 -->
+            <div class="trace-section">
+                <div class="trace-header">
+                    <h2><span class="trace-number">5</span>数据库初始化与核心表结构（数据层）</h2>
+                    <p class="description">系统首次部署时，通过init_v2.sql创建10张核心表（用户、村居、选举、岗位、候选人、材料、公告、通知、已读、日志），并插入种子数据</p>
+                </div>
+                <div class="trace-diagram">数据库初始化流程
+├── 系统启动入口
+│   └── koaLite/app.js &lt;-- app.js:1
+│       └── require('./db/db.js') &lt;-- app.js:3
+│           └── 数据库连接池初始化 &lt;-- 5b
+│               ├── 读取 init_v2.sql 文件 &lt;-- 5a
+│               └── 执行 SQL 脚本
+│                   ├── CREATE TABLE users &lt;-- init_v2.sql:9
+│                   ├── CREATE TABLE villages &lt;-- init_v2.sql:28
+│                   ├── CREATE TABLE elections &lt;-- 5c
+│                   │   └── 时间节点链 + 状态机 + 审批锁 &lt;-- init_v2.sql:57
+│                   ├── CREATE TABLE positions &lt;-- 5d
+│                   │   └── FOREIGN KEY → elections(id) &lt;-- init_v2.sql:88
+│                   ├── CREATE TABLE materials &lt;-- 5e
+│                   │   └── 候选人血缘翻转源头 &lt;-- init_v2.sql:102
+│                   ├── CREATE TABLE candidates &lt;-- 5f
+│                   │   └── 两来源：material自荐/import导入 &lt;-- init_v2.sql:125
+│                   ├── CREATE TABLE notices &lt;-- init_v2.sql:140
+│                   ├── CREATE TABLE notifications &lt;-- init_v2.sql:157
+│                   ├── CREATE TABLE message_reads &lt;-- init_v2.sql:174
+│                   ├── CREATE TABLE logs &lt;-- init_v2.sql:184
+│                   └── INSERT 种子数据 &lt;-- 5g
+│                       ├── 2个测试村居 &lt;-- init_v2.sql:204
+│                       ├── 5个测试用户 &lt;-- init_v2.sql:208
+│                       └── 1场测试选举 + 3个岗位 &lt;-- init_v2.sql:215</div>
+                <div class="locations">
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 5a</span>
+                        <h3>数据库初始化脚本</h3>
+                        <p class="description">定义10张核心表的完整结构，采用招聘表单心智模型（选举=招聘活动）</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\db\init_v2.sql:2</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 5b</span>
+                        <h3>执行初始化SQL</h3>
+                        <p class="description">数据库连接建立后，读取并执行init_v2.sql创建表结构</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\db\db.js:30</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 5c</span>
+                        <h3>创建换届活动表</h3>
+                        <p class="description">核心轴心表，存储选举类型、方式、时间节点链、状态机、审批锁等关键字段</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\db\init_v2.sql:40</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 5d</span>
+                        <h3>创建岗位表</h3>
+                        <p class="description">挂载到elections的一对多关系，存储主任/副主任/委员的名额、职责、材料要求</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\db\init_v2.sql:72</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 5e</span>
+                        <h3>创建材料表</h3>
+                        <p class="description">村民交的应聘简历，审核通过后晋升为candidates，是候选人的血缘翻转源头</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\db\init_v2.sql:92</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 5f</span>
+                        <h3>创建候选人表</h3>
+                        <p class="description">独立表，支持两来源（material自荐/import导入），手机号并轨，存储选举结果</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\db\init_v2.sql:114</div>
+                    </div>
+                    <div class="location-item">
+                        <span class="location-id">Location ID: 5g</span>
+                        <h3>插入种子数据</h3>
+                        <p class="description">初始化2个测试村居、5个测试用户、1场测试选举活动和3个岗位</p>
+                        <div class="path">E:\w\0\election-v2\koaLite\db\init_v2.sql:204</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p class="note">本HTML文档为自包含版本，可直接在浏览器中打开查看</p>
+            <p class="warning">注意：代码片段来自Codemap文件。如果这些内容看起来有误，可能意味着Codemap与文件当前状态不同步。</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -36,6 +36,12 @@
 # Relay log keeps markdown only.
 !副船长的航海接力日志/**/*.md
 
+# Root design drafts (夏夏的设计稿/原型) — 放行根目录 html 和 md 设计文档
+!/*.html
+!/设计*.md
+!/*说明*.md
+!/侧边栏*.md
+
 # Always block dependency/build/runtime/caches even though directories are traversable.
 node_modules/
 dist/

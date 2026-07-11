@@ -43,6 +43,34 @@ body{
   line-height:1.6;
   -webkit-font-smoothing:antialiased;
 }
+body:not(.dev-mode) .anchor-note,
+body:not(.dev-mode) .field-map,
+body:not(.dev-mode) .anchor-mini{
+  display:none !important;
+}
+body:not(.dev-mode) .system-blueprint{
+  display:none;
+}
+body:not(.dev-mode) .mother-detail-board{
+  display:none;
+}
+body:not(.dev-mode) .delivery-board code,
+body:not(.dev-mode) .delivery-note,
+body:not(.dev-mode) .delivery-table th:nth-child(3),
+body:not(.dev-mode) .delivery-table td:nth-child(3){
+  display:none;
+}
+.dev-toggle{
+  border:1px solid #d7e7de;
+  border-radius:9px;
+  background:#fff;
+  color:var(--green-d);
+  font-size:.75rem;
+  font-weight:800;
+  padding:7px 10px;
+  cursor:pointer;
+}
+.dev-toggle:hover{background:#f3fbf6;}
 
 /* ============ 顶部权威区 ============ */
 .authority-bar{
@@ -837,6 +865,53 @@ body{
 .field-row{border-left-color:#8b6fc7;}
 .blueprint-rule{margin-top:10px;padding:8px 9px;border-radius:8px;background:#f7fffa;color:#365845;font-size:.72rem;line-height:1.5;border:1px dashed #b8d8c6;}
 @media(max-width:980px){.blueprint-grid{grid-template-columns:1fr;}.blueprint-head{flex-direction:column;}}
+.delivery-board{
+  margin:14px 0 18px;
+  border:1px solid #dbe7df;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:var(--shadow-md);
+  overflow:hidden;
+}
+.delivery-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  padding:18px 20px;
+  background:linear-gradient(135deg,#f6fbf8,#edf7f1);
+  border-bottom:1px solid #dfebe4;
+}
+.delivery-kicker{font-size:.72rem;color:var(--green-d);font-weight:900;letter-spacing:3px;margin-bottom:4px;}
+.delivery-head h2{margin:0;color:var(--ink);font-size:1.25rem;line-height:1.25;font-weight:950;letter-spacing:0;}
+.delivery-head p{margin:6px 0 0;color:var(--ink-2);font-size:.82rem;line-height:1.55;max-width:820px;}
+.delivery-status{flex:0 0 auto;display:grid;gap:6px;min-width:210px;}
+.delivery-status span{display:block;border:1px solid #cfe2d6;border-radius:8px;background:#fff;padding:6px 9px;color:#315f42;font-size:.72rem;font-weight:800;}
+.delivery-body{padding:16px 18px 18px;display:grid;gap:14px;}
+.delivery-flow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;}
+.delivery-flow-step{position:relative;border:1px solid #e3ece7;border-radius:10px;background:#fbfdfc;padding:10px 9px;min-height:92px;}
+.delivery-flow-step::after{content:"";position:absolute;right:-8px;top:50%;width:8px;height:1px;background:#c9d9cf;}
+.delivery-flow-step:last-child::after{display:none;}
+.delivery-flow-step strong{display:block;color:var(--ink);font-size:.78rem;margin-bottom:5px;font-weight:950;}
+.delivery-flow-step span{display:block;color:var(--muted);font-size:.68rem;line-height:1.45;}
+.delivery-flow-step code{font-size:.64rem;color:#205b3b;}
+.delivery-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:12px;}
+.delivery-card{border:1px solid #edf1f4;border-radius:12px;background:#fbfcfd;padding:12px;min-width:0;}
+.delivery-card h3{margin:0 0 8px;color:var(--ink);font-size:.9rem;font-weight:950;}
+.delivery-list{display:grid;gap:7px;}
+.delivery-item{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;border-left:3px solid var(--green);background:#fff;border-radius:8px;padding:8px;font-size:.72rem;line-height:1.45;}
+.delivery-item b{color:var(--ink);font-weight:950;}
+.delivery-item span{color:var(--ink-2);}
+.delivery-item code{font-size:.66rem;color:#205b3b;}
+.delivery-table{width:100%;border-collapse:separate;border-spacing:0;font-size:.72rem;overflow:hidden;border:1px solid #e2e9e5;border-radius:10px;background:#fff;}
+.delivery-table th{background:#f1f7f3;color:#214b35;text-align:left;padding:8px;font-weight:950;border-bottom:1px solid #dfe9e3;}
+.delivery-table td{padding:8px;border-bottom:1px solid #edf2ef;color:var(--ink-2);vertical-align:top;}
+.delivery-table tr:last-child td{border-bottom:none;}
+.delivery-table code{font-size:.66rem;color:#205b3b;}
+.delivery-note{border:1px dashed #b7d7c6;border-radius:10px;background:#f8fffb;padding:10px 12px;color:#365845;font-size:.74rem;line-height:1.6;}
+.delivery-note code{font-size:.68rem;color:#205b3b;}
+@media(max-width:1180px){.delivery-flow{grid-template-columns:repeat(3,minmax(0,1fr));}.delivery-flow-step::after{display:none;}.delivery-grid{grid-template-columns:1fr;}}
+@media(max-width:700px){.delivery-head{display:block;}.delivery-status{margin-top:12px;}.delivery-flow{grid-template-columns:1fr;}.delivery-item{grid-template-columns:1fr;}}
 .login-location-grid > div{min-width:0;}
 .login-location-grid .login-input{width:100%;}
 </style>
@@ -851,14 +926,13 @@ body{
     <p class="login-hint">登录时绑定角色和归属地，子管理直接进入本村/社区</p>
     <div class="login-form">
       <select id="loginRole" class="login-input" onchange="onLoginRoleChange()">
+        <option value="经办">经办（子管理视角）</option>
         <option value="超级管理">超级管理（全区汇总视角）</option>
-        <option value="村/社区管理员">村/社区管理员</option>
-        <option value="经办/书记">经办/书记</option>
-        <option value="运营/小编">运营/小编</option>
+        <option value="运营">运营</option>
         <option value="审核">审核</option>
       </select>
       <div class="field-map">字段：<code>users.role</code>；登录参数：<code>role</code></div>
-      <input type="text" id="loginUser" class="login-input" placeholder="账号" value="123456">
+      <input type="text" id="loginUser" class="login-input" placeholder="手机号" value="15000000000">
       <div class="field-map">字段：<code>users.phone</code>；登录参数：<code>phone</code>；当前 demo 用账号占位</div>
       <input type="password" id="loginPass" class="login-input" placeholder="密码" value="123456">
       <div class="field-map">字段：<code>users.password</code>；登录参数：<code>password</code>；页面不显示真实密文</div>
@@ -883,12 +957,12 @@ body{
       <div id="loginScopeHint" class="login-scope-hint">超级管理不绑定单个村/社区，登录后先看全区汇总列表。</div>
       <div class="anchor-note">
         🔐 登录/归属锚点 · ID: <code>login-scope-auth-001</code><br>
-        API: <code>POST /auth-v2/login</code>；参数: <code>phone,password,role,villageId</code><br>
-        表: <code>users.role/users.village_id</code> + <code>villages.id/name/type</code>；子管理锁定归属，超管只加外围列表。
+        API: <code>POST /auth-v2/login</code>；参数: <code>phone,password,role</code><br>
+        表: <code>users.role/users.village_id</code> + <code>villages.id/name/type</code>；子管理真实角色值为 <code>经办</code>，页面展示名不能另造后端不认的角色。
       </div>
       <button class="login-btn" onclick="doLogin()">进 入 系 统 →</button>
     </div>
-    <p class="login-default">默认账号密码均为 123456</p>
+    <p class="login-default">子管理演示账号：15000000000 / 123456</p>
     <p id="loginError" class="login-error"></p>
   </div>
 </div>
@@ -925,12 +999,80 @@ body{
     <span class="topbar-loc" id="currentLocationDisplay">—</span>
     <span class="anchor-mini">💾 ID: shell-scope-display-001 · user.role + user.village_id · 子管理内容源，上级视角只做外围列表下钻</span>
     <div class="topbar-actions">
+      <button class="dev-toggle" onclick="toggleDevMode()">开发锚点</button>
       <button class="topbar-bell" title="通知设置" onclick="openNotifySettings()">🔔</button>
       <button class="topbar-back" onclick="goBack()">← 返回登录</button>
     </div>
   </div>
 
 <div class="container">
+
+  <section class="delivery-board" id="deliveryBoard">
+    <div class="delivery-head">
+      <div>
+        <div class="delivery-kicker">子管理后台首页</div>
+        <h2>涧口社区第十五届换届选举工作台</h2>
+        <p>当前账号进入后只处理本社区换届工作。页面从本届选举活动出发，统一管理日程、岗位、材料、候选人、阶段公告、通知和历史归档；上级管理从村/社区列表下钻后看到同一套内容。</p>
+      </div>
+      <div class="delivery-status">
+        <span>当前角色：经办</span>
+        <span>当前归属地：涧口社区</span>
+        <span>一期岗位：主任 / 副主任 / 委员</span>
+      </div>
+    </div>
+    <div class="delivery-body">
+      <div class="delivery-flow">
+        <div class="delivery-flow-step"><strong>1 登录绑定</strong><span><code>users.role + users.village_id</code><br>子管理登录后锁定一个村/社区；后台账号以手机号为登录名。</span></div>
+        <div class="delivery-flow-step"><strong>2 归属地</strong><span><code>villages.id/type/name</code><br>决定村委会还是居委会，决定合法选举方式。</span></div>
+        <div class="delivery-flow-step"><strong>3 母活动</strong><span><code>elections.id</code><br>一届换届就是一个母版，也是一个存档单位。</span></div>
+        <div class="delivery-flow-step"><strong>4 阶段表</strong><span><code>content.timeline.stages[]</code><br>日历、阶段公告、阶段归档全部对齐它。</span></div>
+        <div class="delivery-flow-step"><strong>5 岗位</strong><span><code>positions.election_id</code><br>每届岗位需求不同，必须带当前母活动筛选。</span></div>
+        <div class="delivery-flow-step"><strong>6 材料候选人</strong><span><code>materials -> candidates</code><br>候选报名材料审核通过后才进入候选人管理。</span></div>
+      </div>
+
+      <div class="delivery-grid">
+        <div class="delivery-card">
+          <h3>首屏信息</h3>
+          <div class="delivery-list">
+            <div class="delivery-item"><b>账号</b><span>当前角色、登录手机号、归属地名称和今天日期固定在顶部，用户不用重复选择。</span></div>
+            <div class="delivery-item"><b>日程</b><span>日历只展示本届选举阶段。阶段名称、日期和提醒都跟随母版活动，不单独手写一套。</span></div>
+            <div class="delivery-item"><b>入口</b><span>选举方式、参选形式、最近 5 场选举活动并列成小块展示，不做无意义通栏。</span></div>
+            <div class="delivery-item"><b>详情</b><span>点击某场活动进入母版详情，继续处理阶段材料、阶段公告和归档。</span></div>
+          </div>
+        </div>
+
+        <div class="delivery-card">
+          <h3>母版详情表</h3>
+          <table class="delivery-table">
+            <thead><tr><th>列</th><th>含义</th><th>锚点</th></tr></thead>
+            <tbody>
+              <tr><td>阶段</td><td>前期准备、选民登记、候选人提名、选举日、结果公示等，跟随当前选举模板。</td><td><code>stageKey/stageName</code></td></tr>
+              <tr><td>日期</td><td>由工作人员按实际进度填写，日历自动引用，不重复录入。</td><td><code>startDate/endDate/days</code></td></tr>
+              <tr><td>材料</td><td>阶段归档材料在这里上传；候选报名材料进入材料提交管理。</td><td><code>materials.scope</code></td></tr>
+              <tr><td>公告</td><td>每个阶段可以维护多条公告，支持查看列表和新增公告。</td><td><code>notices.stage_key</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="delivery-card">
+          <h3>业务下钻</h3>
+          <div class="delivery-list">
+            <div class="delivery-item"><b>岗位详情</b><span>主任、副主任、委员分别进入详情，查看岗位需求、下载资源、当前在任和岗位状态。</span></div>
+            <div class="delivery-item"><b>花名册</b><span>岗位状态为“在岗”时，详情里展示本届在任干部；历史任期保留在名录中。</span></div>
+            <div class="delivery-item"><b>材料审核</b><span>自荐材料按岗位汇总，材料齐全后进入候选人管理。</span></div>
+            <div class="delivery-item"><b>选民登记</b><span>“我是选民”只表达某人参加某届选举的登记关系，不等于线上投票。</span></div>
+            <div class="delivery-item"><b>归档</b><span>一场选举形成一个归档单位，按活动、阶段、材料类型归档。</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="delivery-note">
+        <strong>施工边界：</strong>本 HTML 第一目标是把“后台页面结构和业务链路”讲清楚，而不是展示全部弹层细节。弹层细节在后续模块内展开，但任何弹层都必须继承当前 <code>villageId + electionId</code>，岗位相关再继承 <code>positionId</code>，阶段相关再继承 <code>stageKey</code>。
+        <br><strong>可搜索总锚点：</strong><code>delivery-subadmin-loop-001</code>、<code>election-mother-main-table-001</code>、<code>sidebar-to-mother-table-flow-001</code>、<code>dashboard-calendar-stage-link-001</code>。
+        <br><strong>选民登记锚点：</strong><code>election-voter-register-001</code>，表 <code>election_voters</code>，API TODO；不得塞进 <code>users</code>、<code>materials</code> 或候选人链。
+      </div>
+    </div>
+  </section>
 
   <section class="system-blueprint" id="systemBlueprint">
     <div class="blueprint-head">
@@ -1080,7 +1222,7 @@ body{
     <div class="anchor-note">
       🔌 阶段子公告集合 · ID: <code>election-stage-notice-list-001</code><br>
       规则: 一个阶段可以有多条子公告；主体表“公告编辑”列不是直接编辑单条公告，而是打开该阶段公告列表弹窗，弹窗内支持 <code>+新增</code>。<br>
-      读取: 现有前端可先 <code>GET /notice-v2/list?electionId</code> 拉本活动公告，再按 <code>notices.stage_key === stages[].stageKey</code> 过滤；后续建议后端补 <code>stageKey</code> 查询参数，避免前端全量筛。<br>
+      读取: <code>GET /notice-v2/list?electionId&stageKey</code> 可直接读取本活动某阶段公告。<br>
       新增: <code>POST /notice-v2/generate</code> 或 <code>POST /notice-v2/add</code> 必须继承当前 <code>electionId + stageKey</code>，公告编号 <code>notice_no</code> 与模板 <code>template_key</code> 在弹窗里选择或生成。
     </div>
     <div class="anchor-note">
@@ -1122,7 +1264,7 @@ body{
         </div>
         <div class="anchor-note">
           🧩 日历组件施工禁令 · ID: <code>dashboard-calendar-component-001</code><br>
-          当前 <code>calendar-grid</code> 是 demo 问题稿；正式 Vue 页面必须用框架日历组件，不手搓日历。谁手搓谁王八蛋0。<br>
+          当前 <code>calendar-grid</code> 是 demo 问题稿；正式 Vue 页面必须用框架日历组件，不手搓日历。<br>
           候选: <code>@fullcalendar/vue3</code> 或现有框架 <code>Element Plus Calendar</code>；数据源仍是 <code>elections.content.timeline</code>。
         </div>
         <div class="anchor-note">
@@ -1544,7 +1686,7 @@ body{
       <div class="sub" id="jobModalSub"></div>
       <div class="anchor-note">
         📌 岗位详情真相边界 · ID: <code>position-detail-truth-001</code><br>
-        表: <code>positions.id/election_id/name/quota/duty/material_requirements/elected_candidates</code>；接口: <code>GET /position-v2/detail?id</code><br>
+        表: <code>positions.id/election_id/name/quota/duty/material_requirements</code>；接口: <code>GET /position-v2/detail?id</code><br>
         禁止: 弹窗不要成为材料/候选人/公告的第二真相，只做跳转与状态投影。
       </div>
       <div class="anchor-note">
@@ -1737,7 +1879,8 @@ body{
       <div class="stage-block" data-show="结果公示">
         <div class="anchor-note">
           ⚡ 结果回填锚点 · ID: <code>candidate-result-fill-001</code><br>
-          表: <code>candidates.elected/votes/status</code> + <code>positions.elected_candidates</code><br>
+          表: <code>candidates.elected/votes/status</code><br>
+          TODO: 如需岗位页直接展示当选汇总，再补后端同步或聚合查询；当前不能承诺 <code>positions.elected_candidates</code> 已同步。<br>
           接口: <code>POST /candidate-v2/result</code>；权限: 超级管理/运营；线下结果确认后再回填。
         </div>
         <div class="form-row">
@@ -1765,11 +1908,11 @@ body{
 // ========== 页面流程：登录绑定归属地 → 主页面 ==========
 let currentType=null;
 let currentLocation=null;
-let currentRole='超级管理';
-let currentPhone='123456';
+let currentRole='经办';
+let currentPhone='15000000000';
 let currentActivityName='第十五届换届选举';
 const VILLAGE_LOCATIONS=['龙桥街道 · 泗华村','华亭镇 · 东太村','常太镇 · 常太村','灵川镇 · 径里村'];
-const COMMUNITY_LOCATIONS=['龙桥街道 · 兴安社区','凤凰山街道 · 南门社区','霞林街道 · 沟头社区','华亭镇 · 华亭社区'];
+const COMMUNITY_LOCATIONS=['涧口社区','龙桥街道 · 兴安社区','凤凰山街道 · 南门社区','霞林街道 · 沟头社区','华亭镇 · 华亭社区'];
 const calendarEvents=[
   {key:'S1',date:'',title:'前期准备',note:'母版步骤：两委联席、代表会议、推选选委会、发1/2/3号公告。时间由客户在母活动填写。',target:'vStep5'},
   {key:'S2',date:'',title:'选民登记',note:'母版步骤：宣传发动、登记造册。时间由母活动登记阶段自动带入。',target:'vStep4'},
@@ -1803,7 +1946,7 @@ function doLogin(){
   const u=document.getElementById('loginUser').value.trim();
   const p=document.getElementById('loginPass').value.trim();
   const err=document.getElementById('loginError');
-  if(u==='123456'&&p==='123456'){
+  if((u==='15000000000'||u==='13800000001'||u==='123456')&&p==='123456'){
     currentRole=document.getElementById('loginRole').value;
     currentPhone=u;
     currentType=document.getElementById('loginType').value || null;
@@ -1862,6 +2005,10 @@ function goBack(){
   document.getElementById('locationSelectArea').style.display='none';
   currentType=null;
   currentLocation=null;
+}
+function toggleDevMode(){
+  document.body.classList.toggle('dev-mode');
+  showToast(document.body.classList.contains('dev-mode')?'已显示开发锚点':'已切回甲方模式');
 }
 function renderDashboardContext(){
   const title=document.getElementById('dashboardContextTitle');
@@ -2548,9 +2695,6 @@ function closeDesc(){
   document.getElementById('descOverlay').classList.remove('show');
   curPosId=null;
 }
-document.getElementById('descOverlay').addEventListener('click',function(e){
-  if(e.target===this)closeDesc();
-});
 
 // ---- 表格下载（地址编辑 + 快捷跳转 + 保存） ----
 function renderDlPreview(){
@@ -2583,8 +2727,29 @@ function closeDl(){
   document.getElementById('dlOverlay').classList.remove('show');
   curPosId=null;
 }
-document.getElementById('dlOverlay').addEventListener('click',function(e){
-  if(e.target===this)closeDl();
+document.addEventListener('DOMContentLoaded',function(){
+  const role=document.getElementById('loginRole');
+  const type=document.getElementById('loginType');
+  const loc=document.getElementById('loginLocation');
+  if(role)role.value='经办';
+  onLoginRoleChange();
+  if(type){
+    type.value='community';
+    onLoginTypeChange();
+  }
+  if(loc)loc.value='涧口社区';
+  const descOverlayEl=document.getElementById('descOverlay');
+  if(descOverlayEl){
+    descOverlayEl.addEventListener('click',function(e){
+      if(e.target===this)closeDesc();
+    });
+  }
+  const dlOverlayEl=document.getElementById('dlOverlay');
+  if(dlOverlayEl){
+    dlOverlayEl.addEventListener('click',function(e){
+      if(e.target===this)closeDl();
+    });
+  }
 });
 </script>
 

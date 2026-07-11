@@ -12,7 +12,7 @@
       <el-menu-item-group title="选举活动">
         <el-menu-item index="/election-methods" v-if="canSee('election-methods')">
           <el-icon><CircleCheck /></el-icon>
-          <span>{{ isSuperAdmin ? '选举提案审批' : '我的选举申请' }}</span>
+          <span>{{ isSuperAdmin ? '选举提案审批' : '提案审批' }}</span>
         </el-menu-item>
         <el-menu-item index="/election" v-if="canSee('election')"><el-icon><Tickets /></el-icon><span>选举活动管理</span></el-menu-item>
         <el-menu-item index="/positions" v-if="canSee('positions')"><el-icon><Postcard /></el-icon><span>岗位管理</span></el-menu-item>

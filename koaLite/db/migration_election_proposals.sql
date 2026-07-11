@@ -2,7 +2,7 @@
 -- 流程：村级填报告+上传材料 → 提交审批 → 超管审核通过/驳回
 
 CREATE TABLE IF NOT EXISTS `election_proposals` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '提案ID',
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '选举活动ID',
   `village_id` int(11) NOT NULL COMMENT '申请村居ID',
   `village_name` varchar(100) DEFAULT '' COMMENT '村居名称（冗余，方便列表展示）',
   `title` varchar(200) NOT NULL COMMENT '提案标题（如：XX村2024年村委会换届选举申请）',
