@@ -1,11 +1,67 @@
 <!DOCTYPE html>
+<!--
+  ===== 组件小纸条（真前端照此套 isdream-vue-admin / Element Plus 组件）=====
+  这块地 = 岗位管理(本期+历届)。静态HTML靶子，真前端照样式+此纸条套组件：
+
+  ⚠️ 岗位铁律：一期岗位名称严格白名单 = 主任 / 副主任 / 委员，三项仅此三项。
+     新增岗位弹窗的岗位名称字段用 el-select 枚举，不开放自由输入，后端同步校验。
+
+  [面包屑]              → el-breadcrumb + el-breadcrumb-item，separator="/"
+
+  [顶部筛选条]          → el-form :inline="true"；
+                           届次/年份 → el-select + el-option（v-for session列表）；
+                           所属活动/状态 → el-select；
+                           查询/重置 → el-button type="primary" / default；
+                           导出历届岗位表 → el-button type="warning"（金色）
+
+  [当前在岗花名册表]    → el-table :data="roster" stripe；
+                           岗位/姓名/联系方式/届次/任期 → el-table-column；
+                           操作列 → el-button size="small" @click="openRosterEdit(row)"
+
+  [花名册编辑弹窗]      → el-dialog width="480px"；
+                           岗位 → el-select 白名单三项；
+                           姓名/联系电话/届次/任期 → el-input；
+                           保存 → el-button type="success"（绿色）；
+                           落 roster-v2/add|update
+
+  [历届岗位选举表]      → el-table :data="electionList"；
+                           届次年份/关联活动/岗位数/状态列 → el-table-column；
+                           状态 → el-tag：进行中 type="danger"，已完成 type="info"，已归档 type="info"；
+                           操作列 → el-button：进行中 type="primary"「进入管理」/ 历届 plain「查看明细」；
+                           导出 → el-button size="small" plain
+
+  [岗位明细详情视图]    → 路由子页 or el-drawer；
+                           顶部信息条（届次/关联活动/选举方式/母版当前阶段）→ el-descriptions :column="4" size="small"；
+                           编辑工具栏（本期可见/历届隐藏）→ el-button type="primary"「新增竞选岗位」+ el-button type="warning"「导出」
+
+  [岗位明细列表]        → el-table :data="positions"；
+                           岗位名称/计划当选数/竞选状态/岗位说明/操作 → el-table-column；
+                           竞选状态 → el-tag：竞选报名 type="primary"，提名公示 type="warning"，已完成 type="success"；
+                           ⚠️ 状态不手填，由母版 elections.content.timeline + 今天日期计算，只读展示；
+                           操作（本期）→ el-button size="small"：编辑 / 删除（有关联材料/候选人时后端拒删）/ 查看详情；
+                           操作（历届）→ 只保留「查看详情」
+
+  [新增/编辑竞选岗位弹窗] → el-dialog width="520px"；
+                           岗位名称 → el-select 枚举白名单（主任/副主任/委员），不开放输入；
+                           计划当选数 → el-input-number :min="1"；
+                           岗位说明 → el-input type="textarea"；
+                           落 position-v2/add|update
+
+  [附件下载]            → 附件地址从材料管理模块（materials）捞，不在岗位表重复存储；
+                           展示时用 el-link type="primary" :href="material.file_url" target="_blank"，
+                           上传入口在材料管理页，岗位页只做只读引用
+
+  皮：美化版红金(Noto Serif SC + Noto Sans SC · #B22222/#C8A45C · 宣纸底#FAF8F5 · r-xl/三档阴影)。
+  ==========================================================================
+-->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>岗位管理 · 历届岗位选举表</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
 <style>
-:root{--red:#B22222;--red2:#961C1C;--gold:#C8A45C;--gold-bg:#FDF6E3;--green:#2D8B55;--green-bg:#E8F5ED;--blue:#2874A6;--blue-bg:#EBF5FB;--warn:#C27A1A;--warn-bg:#FEF5E7;--text:#1A1A1A;--sub:#4A4A4A;--muted:#7A7A7A;--line:#E8E5E0;--border:#D4D0CA;--page:#FAF8F5;--panel:#FFF;--soft:#F5F3F0;--shadow:0 1px 4px rgba(0,0,0,.06)}
-*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--text);font-family:"Microsoft YaHei","Segoe UI",sans-serif;line-height:1.6}.wrap{max-width:1160px;margin:auto;padding:24px 28px 60px}.crumb{font-size:13px;color:var(--muted);margin-bottom:18px}.crumb a{color:var(--blue);cursor:pointer;text-decoration:none}.sep{margin:0 7px;color:var(--border)}.head,.toolbar,.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.head{margin-bottom:18px}.head h1{font-family:SimSun,serif;font-size:22px;margin:0;display:flex;align-items:center;gap:9px}.bar{width:5px;height:22px;border-radius:2px;background:var(--red)}.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}.filters{padding:16px 20px;display:flex;align-items:end;gap:14px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:12px;color:var(--muted);font-weight:600}.field select,.field input,.modal select,.modal input,.modal textarea{font:inherit;font-size:13px;padding:8px 11px;border:1px solid var(--border);border-radius:6px;background:#fff;min-width:145px}.btn{font:inherit;font-size:13px;font-weight:600;border-radius:6px;padding:8px 16px;border:1px solid var(--border);cursor:pointer;background:#fff;color:var(--sub)}.btn.red{background:var(--red);color:#fff;border-color:var(--red)}.btn.red:hover{background:var(--red2)}.btn.gold{background:var(--gold-bg);color:#8B6C28;border-color:#E8D5A0}.btn.green{background:var(--green);color:#fff;border-color:var(--green)}.section-head{padding:14px 20px;border-bottom:1px solid var(--line)}.section-head h2{font-family:SimSun,serif;font-size:16px;margin:0}.table{width:100%;border-collapse:collapse;font-size:13.5px}.table th{background:var(--gold-bg);color:#8B6C28;text-align:left;padding:11px 14px;font-size:12.5px}.table td{padding:12px 14px;border-bottom:1px solid var(--line);color:var(--sub)}.table tr:last-child td{border-bottom:0}.table tbody tr:hover td{background:#F8F7F5}.strong{font-weight:700;color:var(--text)}.small{font-size:11px;color:var(--muted)}.tag{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600}.tag:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.run{background:#FDE8E8;color:var(--red)}.done{background:var(--soft);color:var(--muted)}.signup{background:var(--blue-bg);color:var(--blue)}.public{background:var(--warn-bg);color:var(--warn)}.active{background:var(--green-bg);color:var(--green)}.op{color:var(--blue);font-size:12.5px;font-weight:600;cursor:pointer;margin-right:10px}.op.danger{color:var(--red)}.route{padding:8px 14px;background:var(--red);color:#fff;border:0;border-radius:6px;font-weight:700;cursor:pointer}.route.old{background:#fff;color:var(--sub);border:1px solid var(--border)}.info-strip{display:flex;gap:24px;flex-wrap:wrap;padding:14px 18px;background:var(--gold-bg);border:1px solid #E8D5A0;border-radius:8px;margin-bottom:16px;font-size:13px}.info-strip b{margin-left:5px}.note{margin:12px 16px;padding:10px 12px;border-left:3px solid var(--gold);background:var(--gold-bg);font-size:12px;color:#765B20}.fh-row{display:flex;gap:4px;flex-wrap:wrap;padding:8px 12px;margin:8px 0 16px;background:#F8F7F5;border-radius:6px}.fh{font-size:10px;color:#888;background:#fff;border:1px dashed #CCC;border-radius:4px;padding:1px 6px}.fh b{color:#8B6C28}.pager{padding:13px 18px;text-align:right;font-size:12px;color:var(--muted)}.hide{display:none!important}.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}.modal{background:#fff;width:min(560px,100%);border-radius:8px;box-shadow:0 18px 50px rgba(0,0,0,.2);overflow:hidden}.modal-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}.modal-body{padding:18px 20px;display:grid;gap:13px}.modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}.modal label{font-size:12px;color:var(--muted);font-weight:600;display:grid;gap:5px}.modal textarea{min-height:76px;resize:vertical}.x{border:0;background:none;font-size:20px;cursor:pointer}.roster-edit{background:var(--green-bg);color:var(--green);border:1px solid #CDE9D8}
+*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--text);font-family:var(--font-sans);line-height:1.6}.wrap{max-width:1160px;margin:auto;padding:24px 28px 60px}.crumb{font-size:13px;color:var(--muted);margin-bottom:18px}.crumb a{color:var(--blue);cursor:pointer;text-decoration:none}.sep{margin:0 7px;color:var(--border)}.head,.toolbar,.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.head{margin-bottom:18px}.head h1{font-family:var(--font-serif);font-size:22px;margin:0;display:flex;align-items:center;gap:9px}.bar{width:5px;height:22px;border-radius:2px;background:var(--red)}.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}.filters{padding:16px 20px;display:flex;align-items:end;gap:14px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:12px;color:var(--muted);font-weight:600}.field select,.field input,.modal select,.modal input,.modal textarea{font:inherit;font-size:13px;padding:8px 11px;border:1px solid var(--border);border-radius:6px;background:#fff;min-width:145px}.btn{font:inherit;font-size:13px;font-weight:600;border-radius:6px;padding:8px 16px;border:1px solid var(--border);cursor:pointer;background:#fff;color:var(--sub)}.btn.red{background:var(--red);color:#fff;border-color:var(--red)}.btn.red:hover{background:var(--red2)}.btn.gold{background:var(--gold-bg);color:#8B6C28;border-color:#E8D5A0}.btn.green{background:var(--green);color:#fff;border-color:var(--green)}.section-head{padding:14px 20px;border-bottom:1px solid var(--line)}.section-head h2{font-family:var(--font-serif);font-size:16px;margin:0}.table{width:100%;border-collapse:collapse;font-size:13.5px}.table th{background:var(--gold-bg);color:#8B6C28;text-align:left;padding:11px 14px;font-size:12.5px}.table td{padding:12px 14px;border-bottom:1px solid var(--line);color:var(--sub)}.table tr:last-child td{border-bottom:0}.table tbody tr:hover td{background:#F8F7F5}.strong{font-weight:700;color:var(--text)}.small{font-size:11px;color:var(--muted)}.tag{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600}.tag:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.run{background:#FDE8E8;color:var(--red)}.done{background:var(--soft);color:var(--muted)}.signup{background:var(--blue-bg);color:var(--blue)}.public{background:var(--warn-bg);color:var(--warn)}.active{background:var(--green-bg);color:var(--green)}.op{color:var(--blue);font-size:12.5px;font-weight:600;cursor:pointer;margin-right:10px}.op.danger{color:var(--red)}.route{padding:8px 14px;background:var(--red);color:#fff;border:0;border-radius:6px;font-weight:700;cursor:pointer}.route.old{background:#fff;color:var(--sub);border:1px solid var(--border)}.info-strip{display:flex;gap:24px;flex-wrap:wrap;padding:14px 18px;background:var(--gold-bg);border:1px solid #E8D5A0;border-radius:8px;margin-bottom:16px;font-size:13px}.info-strip b{margin-left:5px}.note{margin:12px 16px;padding:10px 12px;border-left:3px solid var(--gold);background:var(--gold-bg);font-size:12px;color:#765B20}.fh-row{display:flex;gap:4px;flex-wrap:wrap;padding:8px 12px;margin:8px 0 16px;background:#F8F7F5;border-radius:6px}.fh{font-size:10px;color:#888;background:#fff;border:1px dashed #CCC;border-radius:4px;padding:1px 6px}.fh b{color:#8B6C28}.pager{padding:13px 18px;text-align:right;font-size:12px;color:var(--muted)}.hide{display:none!important}.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}.modal{background:#fff;width:min(560px,100%);border-radius:8px;box-shadow:0 18px 50px rgba(0,0,0,.2);overflow:hidden}.modal-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}.modal-body{padding:18px 20px;display:grid;gap:13px}.modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}.modal label{font-size:12px;color:var(--muted);font-weight:600;display:grid;gap:5px}.modal textarea{min-height:76px;resize:vertical}.x{border:0;background:none;font-size:20px;cursor:pointer}.roster-edit{background:var(--green-bg);color:var(--green);border:1px solid #CDE9D8}
 @media(max-width:760px){.wrap{padding:16px}.table-wrap{overflow:auto}.head{align-items:flex-start}.info-strip{gap:8px;flex-direction:column}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 </style>
@@ -52,16 +108,41 @@
   <div id="editToolbar" class="toolbar" style="margin-bottom:14px"><div><button class="btn red" onclick="openModal('positionModal')">＋ 新增竞选岗位</button> <button class="btn gold" onclick="toast('导出本届岗位表')">↓ 导出本届岗位表</button></div><span class="small">本期可增删改；历届自动只读</span></div>
   <div id="readOnlyTip" class="note hide">该届已归档，只能查看明细，新增、编辑、删除均已隐藏。</div>
   <div class="panel"><div class="section-head"><h2>岗位明细列表</h2><span class="small">一期仅主任 / 副主任 / 委员</span></div>
-    <div class="table-wrap"><table class="table"><thead><tr><th>#</th><th>岗位名称</th><th>计划当选数</th><th>竞选状态</th><th>岗位说明</th><th>操作</th></tr></thead><tbody>
-      <tr><td>1</td><td class="strong">主任</td><td>1名</td><td><span class="tag signup">竞选报名</span></td><td><span class="op">查看岗位说明</span></td><td class="editOps"><span class="op" onclick="openModal('positionModal')">编辑</span><span class="op danger" onclick="toast('有关联材料或候选人时禁止删除')">删除</span><span class="op">查看详情</span></td></tr>
-      <tr><td>2</td><td class="strong">副主任</td><td>2名</td><td><span class="tag public">提名公示</span></td><td><span class="op">查看岗位说明</span></td><td class="editOps"><span class="op" onclick="openModal('positionModal')">编辑</span><span class="op danger">删除</span><span class="op">查看详情</span></td></tr>
-      <tr><td>3</td><td class="strong">委员</td><td>4名</td><td><span class="tag signup">竞选报名</span></td><td><span class="op">查看岗位说明</span></td><td class="editOps"><span class="op" onclick="openModal('positionModal')">编辑</span><span class="op danger">删除</span><span class="op">查看详情</span></td></tr>
+    <div class="table-wrap"><table class="table"><thead><tr><th>#</th><th>岗位名称</th><th>计划当选数</th><th>竞选状态</th><th>岗位说明</th><th>表格模板资料</th><th>操作</th></tr></thead><tbody>
+      <tr>
+        <td>1</td><td class="strong">主任</td><td>1名</td><td><span class="tag signup">竞选报名</span></td>
+        <td><span class="op" onclick="openDetailModal('主任','负责主持委员会全面工作，对外代表本村（社区），依法行使职权。任期内须在本辖区居住。')">查看说明</span></td>
+        <td><a class="op" onclick="toast('演示：实际系统从材料管理模块捞取，此处只读引用')">📄 竞选报名表.xlsx</a></td>
+        <td class="editOps"><span class="op" onclick="openModal('positionModal')">编辑</span><span class="op danger" onclick="toast('有关联候选人或材料时后端拒删')">删除</span><span class="op" onclick="openDetailModal('主任','负责主持委员会全面工作，对外代表本村（社区），依法行使职权。任期内须在本辖区居住。')">查看详情</span></td>
+      </tr>
+      <tr>
+        <td>2</td><td class="strong">副主任</td><td>2名</td><td><span class="tag public">提名公示</span></td>
+        <td><span class="op" onclick="openDetailModal('副主任','协助主任开展工作，分管具体事务；主任缺席时行使代理职权。')">查看说明</span></td>
+        <td><a class="op" onclick="toast('演示：实际系统从材料管理模块捞取，此处只读引用')">📄 竞选报名表.xlsx</a></td>
+        <td class="editOps"><span class="op" onclick="openModal('positionModal')">编辑</span><span class="op danger" onclick="toast('有关联候选人或材料时后端拒删')">删除</span><span class="op" onclick="openDetailModal('副主任','协助主任开展工作，分管具体事务；主任缺席时行使代理职权。')">查看详情</span></td>
+      </tr>
+      <tr>
+        <td>3</td><td class="strong">委员</td><td>4名</td><td><span class="tag signup">竞选报名</span></td>
+        <td><span class="op" onclick="openDetailModal('委员','承担专项事务（妇女工作、调解、计划生育等），参与集体决策。')">查看说明</span></td>
+        <td><a class="op" onclick="toast('演示：实际系统从材料管理模块捞取，此处只读引用')">📄 竞选报名表.xlsx</a></td>
+        <td class="editOps"><span class="op" onclick="openModal('positionModal')">编辑</span><span class="op danger" onclick="toast('有关联候选人或材料时后端拒删')">删除</span><span class="op" onclick="openDetailModal('委员','承担专项事务（妇女工作、调解、计划生育等），参与集体决策。')">查看详情</span></td>
+      </tr>
     </tbody></table></div>
-    <div class="note">竞选状态不手填，由当前母活动时间表映射；一期岗位名称严格限制为主任、副主任、委员。</div>
+    <div class="note">竞选状态不手填，由母活动时间表映射；岗位名称限主任/副主任/委员；表格模板资料从材料管理捞取，此处只读引用，不重复存储。</div>
   </div>
-  <div class="fh-row"><span class="fh">名称 <b>positions.name</b> 必填/三项白名单</span><span class="fh">名额 <b>positions.quota</b> 默认1</span><span class="fh">说明 <b>positions.duty</b></span><span class="fh">状态 <b>由 elections.content.timeline 计算</b></span><span class="fh">删除 <b>POST position-v2/delete</b> 有关联记录拒删</span></div>
+  <div class="fh-row"><span class="fh">名称 <b>positions.name</b> 三项白名单</span><span class="fh">名额 <b>positions.quota</b></span><span class="fh">说明 <b>positions.duty</b></span><span class="fh">状态 <b>elections.content.timeline 计算</b></span><span class="fh">资料 <b>materials.file_url WHERE position_id=id</b> 只读</span><span class="fh">删除 <b>POST position-v2/delete</b> 有关联记录拒删</span></div>
 </section>
 </main>
+
+<div id="detailModal" class="modal-bg hide"><div class="modal"><div class="modal-head"><b id="detailModalTitle">岗位详情</b><button class="x" onclick="closeModal('detailModal')">×</button></div><div class="modal-body">
+<div style="font-size:13px;color:#4A4A4A;line-height:1.8" id="detailModalDuty">—</div>
+<div style="margin-top:12px;border-top:1px solid #eee;padding-top:12px">
+  <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:6px">📎 关联模板资料（从材料管理捞取，只读）</div>
+  <a class="op" style="display:block;margin-bottom:4px" onclick="toast('演示：实际系统中打开材料文件')">📄 竞选报名表.xlsx</a>
+  <a class="op" style="display:block" onclick="toast('演示：实际系统中打开材料文件')">📄 资格审查说明模板.docx</a>
+  <div class="fh-row" style="margin:8px 0 0"><span class="fh">接口 <b>GET materials/list?position_id=X</b></span></div>
+</div>
+</div><div class="modal-foot"><button class="btn" onclick="closeModal('detailModal')">关闭</button></div></div></div>
 
 <div id="positionModal" class="modal-bg hide"><div class="modal"><div class="modal-head"><b>新增 / 编辑竞选岗位</b><button class="x" onclick="closeModal('positionModal')">×</button></div><div class="modal-body">
 <label>岗位名称（必填，仅三项）<select><option>主任</option><option>副主任</option><option>委员</option></select></label>
@@ -75,8 +156,17 @@
 <div class="fh-row" style="margin:0"><span class="fh">roster: <b>post/name/phone/session_no/year_start/year_end</b></span></div>
 </div><div class="modal-foot"><button class="btn" onclick="closeModal('rosterModal')">取消</button><button class="btn green" onclick="saveModal('rosterModal','花名册已保存')">保存</button></div></div></div>
 <script>
+function openDetailModal(name, duty){
+  document.getElementById('detailModalTitle').textContent = name + ' · 岗位详情';
+  document.getElementById('detailModalDuty').textContent = duty;
+  openModal('detailModal');
+}
 function showDetail(old){document.getElementById('listView').classList.add('hide');document.getElementById('detailView').classList.remove('hide');document.getElementById('editToolbar').classList.toggle('hide',old);document.getElementById('readOnlyTip').classList.toggle('hide',!old);document.querySelectorAll('.editOps').forEach(function(x){x.innerHTML=old?'<span class="op">查看详情</span>':x.dataset.edit||x.innerHTML;if(!old)x.dataset.edit=x.innerHTML});var s=old?'第六届（2023）':'第七届（2026）';document.getElementById('sessionText').textContent=s;document.getElementById('detailTitle').textContent=(old?'第六届':'第七届')+'岗位明细';document.getElementById('detailCrumb').textContent=document.getElementById('detailTitle').textContent;document.getElementById('stageText').textContent=old?'已归档':'提名候选人';window.scrollTo(0,0)}
 function showList(){document.getElementById('detailView').classList.add('hide');document.getElementById('listView').classList.remove('hide');window.scrollTo(0,0)}
 function openModal(id){document.getElementById(id).classList.remove('hide')}function closeModal(id){document.getElementById(id).classList.add('hide')}function saveModal(id,msg){closeModal(id);toast(msg)}
 var timer;function toast(msg){var b=document.getElementById('toast');if(!b){b=document.createElement('div');b.id='toast';b.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;padding:10px 20px;border-radius:6px;font-size:13px;z-index:80';document.body.appendChild(b)}b.textContent=msg;b.hidden=false;clearTimeout(timer);timer=setTimeout(function(){b.hidden=true},1500)}
-</script></body></html>
+</script>
+<script src="shared-shell.js" data-active="岗位管理"></script>
+<style>html.embedded .ss-side{display:none!important}html.embedded body{margin-left:0!important}</style>
+<script>if(window.self!==window.top){document.documentElement.classList.add("embedded");}<\/script>
+</body></html>

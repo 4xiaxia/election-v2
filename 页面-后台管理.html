@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<!--
+  ===== 组件小纸条 =====
+  这块地 = 后台管理（系统级配置，仅超管可见）
+  人员管理、权限管理 → 已干掉，不做
+  后台管理仪表盘     → 已干掉
+  短信配置           → 留接口填写占位（SDK接入标准化，预留即可）
+  皮：美化版红金
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>后台管理 · 城厢区村居换届选举</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--text);font-family:var(--font-sans);font-size:14px;line-height:1.6}
+.wrap{max-width:900px;margin:0 auto;padding:28px 32px 64px}
+.crumb{font-size:13px;color:var(--muted);margin-bottom:20px}
+.page-head{margin-bottom:28px}
+.page-head h1{font-family:var(--font-serif);font-size:22px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+.bar{width:5px;height:22px;border-radius:2px;background:var(--red);flex-shrink:0}
+.page-head p{margin:0;color:var(--muted);font-size:13px}
+.section{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);margin-bottom:24px;overflow:hidden}
+.section-head{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.section-head h2{margin:0;font-size:16px;font-family:var(--font-serif);display:flex;align-items:center;gap:8px}
+.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--gold-bg);color:#8B6C28;border:1px solid var(--gold-light)}
+.badge.off{background:#F5F3F0;color:var(--muted);border-color:var(--line)}
+.section-body{padding:22px}
+.form-row{display:grid;grid-template-columns:160px 1fr;align-items:start;gap:12px 20px;margin-bottom:18px}
+.form-row:last-child{margin-bottom:0}
+.form-label{padding-top:9px;font-size:13px;color:var(--sub);font-weight:600}
+.form-label small{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}
+.form-input{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:13px;background:#fff;color:var(--text)}
+.form-input:focus{outline:none;border-color:var(--red)}
+textarea.form-input{resize:vertical;min-height:72px}
+.form-tip{font-size:12px;color:var(--muted);margin-top:5px}
+.form-tip a{color:#2874A6;cursor:pointer}
+.btn{font:inherit;font-size:13px;font-weight:600;border-radius:7px;padding:9px 20px;border:1px solid var(--line);cursor:pointer;background:#fff;color:var(--sub)}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.red:hover{background:#961C1C}
+.btn-row{display:flex;gap:10px;margin-top:6px}
+.disabled-block{padding:20px 22px;background:#F5F3F0;border-radius:8px;display:flex;align-items:center;gap:14px;color:var(--muted);font-size:13px}
+.disabled-block .ic{font-size:28px;opacity:.5}
+.disabled-block strong{display:block;color:var(--sub);margin-bottom:2px}
+.test-result{margin-top:12px;padding:10px 14px;border-radius:7px;font-size:13px;display:none}
+.test-result.ok{background:#E8F5ED;color:#2D8B55;border:1px solid #B2DFC2}
+.test-result.fail{background:#FDE8E8;color:var(--red);border:1px solid #F0C4C0}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+<div class="crumb">首页工作台 / 后台管理</div>
+
+<div class="page-head">
+  <h1><span class="bar"></span>后台管理</h1>
+  <p>系统级配置，仅超级管理员可见。人员管理、权限管理由平台内部运营处理，不开放此界面。</p>
+</div>
+
+<!-- 短信服务配置 -->
+<div class="section">
+  <div class="section-head">
+    <h2>📱 短信服务配置 <span class="badge">预留接口</span></h2>
+  </div>
+  <div class="section-body">
+    <p style="font-size:13px;color:var(--muted);margin:0 0 20px">短信通知由第三方 SDK 标准接入（阿里云短信 / 腾讯云短信），填入 AccessKey 和签名后即可启用。选举日通知、公告发布提醒均通过此接口推送。</p>
+    <div class="form-row">
+      <div class="form-label">服务商<small>SMS Provider</small></div>
+      <div>
+        <select class="form-input" style="max-width:240px">
+          <option>阿里云短信 SMS</option>
+          <option>腾讯云短信 SMS</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">AccessKey ID<small>access_key_id</small></div>
+      <div>
+        <input class="form-input" type="text" placeholder="填入服务商提供的 AccessKey ID" id="akId">
+        <div class="form-tip">在服务商控制台"访问控制"中获取</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">AccessKey Secret<small>access_key_secret</small></div>
+      <div>
+        <input class="form-input" type="password" placeholder="填入 AccessKey Secret" id="akSecret">
+        <div class="form-tip">此字段加密存储，保存后不可明文查看</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">短信签名<small>sign_name</small></div>
+      <div>
+        <input class="form-input" type="text" placeholder="例：城厢区换届选举" id="smsSign" style="max-width:320px">
+        <div class="form-tip">须与服务商审核通过的签名一致</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">模板代码<small>template_code</small></div>
+      <div>
+        <input class="form-input" type="text" placeholder="例：SMS_123456789" id="smsTpl" style="max-width:320px">
+        <div class="form-tip">服务商短信模板 ID，模板内容建议：【${sign}】您好，${village}换届选举${stage}阶段将于${date}开始，请知悉。</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="testSms()">📤 发送测试短信</button>
+      <button class="btn red" onclick="saveSms()">保存配置</button>
+    </div>
+    <div id="testResult" class="test-result"></div>
+  </div>
+</div>
+
+<!-- 通知推送配置 -->
+<div class="section">
+  <div class="section-head">
+    <h2>🔔 通知推送配置 <span class="badge">站内信</span></h2>
+  </div>
+  <div class="section-body">
+    <div class="form-row">
+      <div class="form-label">阶段推进提醒<small>stage_notify</small></div>
+      <div>
+        <select class="form-input" style="max-width:240px" onchange="toast('已更新提醒设置')">
+          <option>提前 3 天推送</option>
+          <option>提前 7 天推送</option>
+          <option>当天推送</option>
+          <option>不推送</option>
+        </select>
+        <div class="form-tip">母版阶段到期前自动向村长账号发送站内信提醒</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">公告发布通知<small>notice_notify</small></div>
+      <div>
+        <select class="form-input" style="max-width:240px" onchange="toast('已更新通知设置')">
+          <option>发布后立即推送</option>
+          <option>每日汇总推送</option>
+          <option>不推送</option>
+        </select>
+        <div class="form-tip">公告发布后向相关人员推送站内信</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn red" onclick="toast('通知设置已保存')">保存设置</button>
+    </div>
+  </div>
+</div>
+
+<!-- 资料库管理 -->
+<div class="section">
+  <div class="section-head">
+    <h2>📁 资料库管理 <span class="badge">模板文件上传</span></h2>
+  </div>
+  <div class="section-body">
+    <p style="font-size:13px;color:var(--muted);margin:0 0 18px">在此上传各阶段可供前端/村长下载的模板文件（表格模板、公告模板、工作方案等）。上传后前端母版时间轴的"下载"按钮即可获取最新版本。</p>
+    <div class="form-row">
+      <div class="form-label">所属阶段<small>对应母版阶段</small></div>
+      <select class="form-input" id="resStage" style="max-width:320px">
+        <option value="">全部/通用</option>
+        <option value="S1">前期准备·成立选委会</option>
+        <option value="S2">选民资格确认·登记</option>
+        <option value="S3">选民名单公示</option>
+        <option value="S4">推选村民/居民代表</option>
+        <option value="S5">候选人提名</option>
+        <option value="S6">竞选演讲·差额预选</option>
+        <option value="S7">候选人资格审查</option>
+        <option value="S8">投票筹备</option>
+        <option value="S9">选举日</option>
+        <option value="S10">建章立制·工作移交</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-label">上传文件<small>支持 .docx .xlsx .pdf</small></div>
+      <div>
+        <input type="file" id="resFile" accept=".docx,.xlsx,.pdf,.doc,.xls" multiple
+          style="padding:7px 0;font-size:13px">
+        <div class="form-tip">可批量上传；同名文件自动覆盖旧版本</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn red" onclick="uploadResources()">↑ 上传到资料库</button>
+    </div>
+    <div id="resList" style="margin-top:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">已上传模板文件</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="background:var(--gold-bg)">
+          <th style="padding:8px 12px;text-align:left;color:#8B6C28;font-weight:600">文件名</th>
+          <th style="padding:8px 12px;text-align:left;color:#8B6C28;font-weight:600">所属阶段</th>
+          <th style="padding:8px 12px;text-align:left;color:#8B6C28;font-weight:600">上传时间</th>
+          <th style="padding:8px 12px;text-align:left;color:#8B6C28;font-weight:600">操作</th>
+        </tr></thead>
+        <tbody id="resTableBody">
+          <tr><td style="padding:8px 12px" colspan="4"><span style="color:var(--muted);font-size:12px">暂无文件，请上传</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 人员管理（挂板） -->
+<div class="section">
+  <div class="section-head">
+    <h2>👤 人员管理 <span class="badge off">平台运营处理</span></h2>
+  </div>
+  <div class="section-body">
+    <div class="disabled-block">
+      <span class="ic">🔧</span>
+      <div>
+        <strong>此功能由平台运营团队内部处理</strong>
+        超管账号开通、村长账号绑定、子管理员分配，均通过平台后台操作，不对村级用户开放此界面。如需变更，联系平台运营。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 系统信息 -->
+<div class="section">
+  <div class="section-head">
+    <h2>ℹ️ 系统信息</h2>
+  </div>
+  <div class="section-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+    <div><span style="color:var(--muted)">系统版本</span><strong style="margin-left:10px">v1.0.0-demo</strong></div>
+    <div><span style="color:var(--muted)">管辖区域</span><strong style="margin-left:10px">莆田市城厢区</strong></div>
+    <div><span style="color:var(--muted)">村居总数</span><strong style="margin-left:10px">122 个（村委会 93 · 居委会 29）</strong></div>
+    <div><span style="color:var(--muted)">技术支持</span><strong style="margin-left:10px">城厢区换届选举系统项目组</strong></div>
+  </div>
+</div>
+
+</main>
+
+<script>
+function uploadResources() {
+  const input = document.getElementById('resFile');
+  const stage = document.getElementById('resStage');
+  if (!input.files.length) { toast('请先选择要上传的文件'); return; }
+  const stageLabel = stage.options[stage.selectedIndex].text;
+  const rows = Array.from(input.files).map(f => `<tr>
+    <td style="padding:8px 12px">${f.name}</td>
+    <td style="padding:8px 12px;color:#888;font-size:12px">${stageLabel}</td>
+    <td style="padding:8px 12px;color:#888;font-size:12px">${new Date().toLocaleDateString('zh-CN')}</td>
+    <td style="padding:8px 12px">
+      <button class="btn" style="font-size:12px;padding:4px 10px" onclick="toast('下载演示')">↓ 下载</button>
+      <button class="btn" style="font-size:12px;padding:4px 10px;color:#c0392b;border-color:#f0c4c0;margin-left:4px" onclick="this.closest('tr').remove();toast('已删除')">删除</button>
+    </td></tr>`).join('');
+  const tbody = document.getElementById('resTableBody');
+  if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
+  tbody.innerHTML += rows;
+  input.value = '';
+  toast(`已上传 ${input.files.length} 个文件`);
+}
+function testSms(){
+  var r=document.getElementById('testResult');
+  var akId=document.getElementById('akId').value.trim();
+  if(!akId){r.textContent='请先填写 AccessKey ID 再发送测试';r.className='test-result fail';r.style.display='block';return;}
+  r.textContent='演示模式：实际系统中将向当前账号绑定手机发送测试短信，收到即表示配置正确。';
+  r.className='test-result ok';r.style.display='block';
+}
+function saveSms(){toast('短信配置已保存（演示模式）');}
+var _t;
+function toast(msg){
+  var b=document.getElementById('_toast');
+  if(!b){b=document.createElement('div');b.id='_toast';b.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;padding:10px 20px;border-radius:6px;font-size:13px;z-index:99;pointer-events:none';document.body.appendChild(b);}
+  b.textContent=msg;b.style.opacity='1';clearTimeout(_t);_t=setTimeout(function(){b.style.opacity='0';},1500);
+}
+</script>
+<script src="shared-shell.js" data-active="后台管理"></script>
+<style id="embed-style">
+html.embedded body{padding:0}
+html.embedded .wrap{padding:20px 24px 48px}
+</style>
+<script>if(window.self!==window.top){document.documentElement.classList.add('embedded');}</script>
+</body>
+</html>

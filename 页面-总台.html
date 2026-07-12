@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>城厢区换届选举系统 · 总台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#B22222;--red-hover:#961C1C;--red-light:#D4453A;--red-bg:#FDE8E8;--red-bg-soft:#FFF5F5;--red-dark:#741712;
+  --gold:#C8A45C;--gold-hover:#B08E3A;--gold-light:#E8D5A0;--gold-bg:#FDF6E3;
+  --success:#2D8B55;--success-bg:#E8F5ED;--warning:#C27A1A;--warning-bg:#FEF5E7;
+  --info:#2874A6;--info-bg:#EBF5FB;
+  --paper:#FAF8F5;--ink:#1A1A1A;--muted:#7A7A7A;--line:#E8E5E0;--white:#fff;
+  --bg-container:#FFFFFF;--bg-muted:#F5F3F0;--bg-hover:#F0EDE8;--bg-dark:#1C1C1C;--bg-dark-sec:#2A2A2A;
+  --r-sm:4px;--r-md:6px;--r-lg:8px;--r-xl:12px;--r-2xl:16px;--r-full:9999px;
+  --shadow-sm:0 1px 4px rgba(0,0,0,.06);--shadow-lg:0 8px 24px rgba(0,0,0,.1);
+  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.7 var(--font-sans),"Microsoft YaHei",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.app{height:100vh;display:grid;grid-template-columns:210px minmax(0,1fr)}
+/* 侧边栏 */
+.sidebar{height:100vh;overflow:auto;background:linear-gradient(180deg,var(--bg-dark),var(--bg-dark-sec));color:#F0EDE8;padding:24px 12px}
+.brand{padding:0 12px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand small{font-size:10px;letter-spacing:2px;color:var(--gold);font-weight:600}
+.brand h1{font-family:var(--font-serif);font-size:15px;font-weight:700;color:#F5F2EC;line-height:1.5;margin:6px 0 0}
+.nav{margin-top:12px}
+.nav a{display:flex;justify-content:space-between;align-items:center;color:rgba(255,255,255,.55);text-decoration:none;padding:10px 12px;margin:2px 0;border-radius:7px;font-size:13px;cursor:pointer;transition:all .18s}
+.nav a:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.9)}
+.nav a.active{background:rgba(178,34,34,.32);color:#fff;font-weight:500}
+.nav b{font-size:10px;color:rgba(255,255,255,.3);font-weight:400}
+.nav a.active b{color:var(--gold)}
+.nav .grp{font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.28);padding:14px 12px 4px}
+/* 主区 */
+.main{min-width:0;height:100vh;display:flex;flex-direction:column}
+.topbar{height:56px;flex:0 0 auto;background:var(--bg-container);border-bottom:2px solid var(--red);display:flex;align-items:center;justify-content:space-between;padding:0 24px;box-shadow:var(--shadow-sm)}
+.topbar .crumb{font-family:var(--font-serif);font-size:16px;font-weight:700;color:var(--ink)}
+.topbar .crumb small{font-weight:400;color:var(--muted);font-size:12px;margin-left:8px}
+.topbar .ctx{color:var(--muted);font-size:13px}
+.topbar .ctx strong{color:var(--red);margin-left:4px}
+.frame-wrap{flex:1 1 auto;min-height:0;position:relative}
+iframe{width:100%;height:100%;border:0;display:block;background:var(--paper)}
+/* 占位（模块页缺失时） */
+.placeholder{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);gap:12px;padding:40px}
+.placeholder.show{display:flex}
+.placeholder .ic{width:64px;height:64px;border-radius:16px;background:var(--gold-bg);border:1px solid var(--gold-light);display:flex;align-items:center;justify-content:center;font-size:30px}
+.placeholder h2{font-family:var(--font-serif);color:var(--ink);margin:6px 0 0;font-size:20px}
+.placeholder p{max-width:420px;margin:0}
+.placeholder code{background:var(--bg-muted);border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--red)}
+/* 移动端 */
+.hamburger{display:none}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:0;top:0;width:210px;z-index:30;transform:translateX(-100%);transition:transform .22s}
+  .sidebar.open{transform:none}
+  .mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:20}
+  .mask.show{display:block}
+  .hamburger{display:inline-flex;border:0;background:none;font-size:22px;color:var(--red);cursor:pointer;margin-right:12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><small>城厢区换届选举</small><h1>选举系统 · 总台</h1></div>
+    <nav class="nav" id="nav">
+      <a data-key="dashboard" data-src="村长仪表盘-美化版.html">🏠 首页工作台</a>
+      <a data-key="proposal"  data-src="页面-提案审批.html">📄 提案审批</a>
+      <a data-key="election"  data-src="页面-活动总列表.html">📋 选举活动管理 <b>母版</b></a>
+      <a data-key="positions" data-src="页面-岗位管理.html">👥 岗位管理</a>
+      <a data-key="materials" data-src="页面-业务模块.html?module=materials">📝 材料提交管理</a>
+      <a data-key="candidates" data-src="页面-业务模块.html?module=candidates">🙋 候选人管理</a>
+      <a data-key="notices"   data-src="页面-公告通知.html">📢 公告通知 <b>镜像</b></a>
+      <a data-key="archive"   data-src="页面-业务模块.html?module=archives">🗄️ 历史归档 <b>目录树</b></a>
+      <div class="grp">系统</div>
+      <a data-key="admin"     data-src="页面-后台管理.html">⚙️ 后台管理</a>
+    </nav>
+  </aside>
+  <div class="mask" id="mask"></div>
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center">
+        <button class="hamburger" id="ham">☰</button>
+        <div class="crumb" id="crumb">首页工作台<small>仪表盘快捷入口</small></div>
+      </div>
+      <div class="ctx">涧口社区 · 第七届换届 <strong>进行中</strong></div>
+    </div>
+    <div class="frame-wrap">
+      <iframe id="frame" title="模块内容"></iframe>
+      <div class="placeholder" id="ph">
+        <div class="ic">🚧</div>
+        <h2 id="phTitle">该模块页面待接入</h2>
+        <p>此模块的页面文件还没建。按小圆圆分工做好对应模块页后，把文件名填进侧边栏对应项的 <code>data-src</code> 即可自动接入，无需改外壳。</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// 唯一外壳：固定 9 项侧边栏 + hash 路由 + iframe 加载各模块页。
+// 各模块页仍是独立文件，本壳不复制其内容（No second truth）。
+var META={
+  dashboard:{t:'首页工作台',s:'仪表盘快捷入口'},
+  proposal:{t:'提案审批',s:'提案列表 / 详情'},
+  election:{t:'选举活动管理',s:'活动总列表 → 母版看板'},
+  positions:{t:'岗位管理',s:'历届岗位表 → 岗位明细'},
+  materials:{t:'材料提交管理',s:'历届材料 → 审核明细'},
+  candidates:{t:'候选人管理',s:'历届名录 → 审批管理'},
+  notices:{t:'公告通知',s:'只读镜像'},
+  archive:{t:'历史归档',s:'目录树'},
+  admin:{t:'后台管理',s:'人员 / 短信 / 通知'}
+};
+var links=document.querySelectorAll('#nav a[data-key]');
+var frame=document.getElementById('frame');
+var ph=document.getElementById('ph');
+var phTitle=document.getElementById('phTitle');
+var crumb=document.getElementById('crumb');
+
+function findLink(key){
+  for(var i=0;i<links.length;i++){if(links[i].getAttribute('data-key')===key)return links[i];}
+  return null;
+}
+// 未建成的模块页清单（file:// 下 fetch 探测不可靠，改用静态清单）。
+// 小圆圆做好对应页面后，把 key 从这里删掉即可自动接入。
+var NOT_BUILT={};
+function go(key){
+  key=key||'dashboard';
+  var link=findLink(key);
+  if(!link){key='dashboard';link=findLink(key);}
+  for(var i=0;i<links.length;i++)links[i].classList.remove('active');
+  link.classList.add('active');
+  var m=META[key]||{t:key,s:''};
+  crumb.innerHTML=m.t+(m.s?'<small>'+m.s+'</small>':'');
+  var src=link.getAttribute('data-src');
+  var base=src.split('?')[0];
+  if(NOT_BUILT[key]){
+    frame.removeAttribute('src');
+    phTitle.textContent=m.t+' · 页面待接入（'+base+'）';
+    ph.classList.add('show');
+  }else{
+    ph.classList.remove('show');
+    if(frame.getAttribute('src')!==src)frame.setAttribute('src',src);
+  }
+  // 移动端点完收起
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mask').classList.remove('show');
+}
+links.forEach(function(a){
+  a.addEventListener('click',function(){
+    location.hash=a.getAttribute('data-key');
+  });
+});
+window.addEventListener('hashchange',function(){go(location.hash.replace('#',''));});
+// 汉堡菜单
+document.getElementById('ham').addEventListener('click',function(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('mask').classList.toggle('show');
+});
+document.getElementById('mask').addEventListener('click',function(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mask').classList.remove('show');
+});
+// 初始
+go(location.hash.replace('#','')||'dashboard');
+</script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<!--
+  ===== 组件小纸条（真前端照此套 isdream-vue-admin / Element Plus 组件）=====
+  这块地 = 公告通知（母版各阶段公告的只读镜像，内容在母版时间轴里编辑，此处只展示+下载）。
+
+  ⚠️ 只读铁律：公告内容来自母版 elections.content.timeline 投影，不在此页编辑/新增；
+     母版填好阶段日期 → 系统自动生成对应公告条目，草稿态等待发布，已发布即只读。
+
+  [面包屑]
+      → el-breadcrumb + el-breadcrumb-item separator="/"
+
+  [顶部筛选条]
+      → el-form :inline="true"；
+        届次/活动 → el-select + el-option（v-for electionList）；
+        公告类型  → el-select：全部 / 选民登记 / 候选人提名 / 候选人公示 / 投票 / 结果公告；
+        状态      → el-select：全部 / 已发布 / 草稿 / 已撤回；
+        查询/重置 → el-button type="primary" / default；
+        导出公告列表 → el-button type="warning"（金色）
+
+  [只读说明条（el-alert type="info"）]
+      → 公告是母版 elections.content.timeline 的投影；
+        阶段名称/时间从母版只读引用，不在此处手动填写；
+        需修改公告内容 → 进入"选举活动管理"编辑对应母版阶段
+
+  [公告列表]
+      → el-table :data="notices" stripe highlight-current-row；
+        # → el-table-column type="index"；
+        公告编号 → el-table-column prop="notice_no"（第 N 号公告）；
+        关联阶段 → el-table-column prop="stage_name"，只读引用母版 timeline；
+        公告标题 → el-table-column prop="title"；
+        发布时间 → el-table-column prop="published_at"，空值显示"待发布"；
+        状态     → el-table-column，内嵌 el-tag：
+                    草稿 type="warning"，已发布 type="success"，已撤回 type="danger"；
+        操作     → el-button size="small"：查看（弹窗只读）/ 下载PDF（el-link :href="pdf_url"）
+
+  [公告详情弹窗（只读）]
+      → el-dialog width="720px"；
+        公告编号/标题/关联阶段/发布时间 → el-descriptions :column="2" border；
+        公告正文 → el-scrollbar height="340px" + 富文本只读渲染（v-html）；
+        底部     → el-button plain 关闭 / el-button type="primary"「下载PDF」
+                   下载走 el-link :href="notice.pdf_url" target="_blank"
+
+  [分页]
+      → el-pagination layout="total, prev, pager, next" :total="total"
+
+  皮：美化版红金(Noto Serif SC + Noto Sans SC · #B22222/#C8A45C · 宣纸底#FAF8F5)。
+  ==========================================================================
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>公告通知 · 城厢区村居换届选举</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--text);font-family:var(--font-sans);line-height:1.6}.wrap{max-width:1160px;margin:auto;padding:24px 28px 60px}.crumb{font-size:13px;color:var(--muted);margin-bottom:18px}.crumb a{color:var(--blue);cursor:pointer;text-decoration:none}.sep{margin:0 7px;color:var(--border)}.head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.head h1{font-family:var(--font-serif);font-size:22px;margin:0;display:flex;align-items:center;gap:9px}.bar{width:5px;height:22px;border-radius:2px;background:var(--red)}.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}.filters{padding:16px 20px;display:flex;align-items:end;gap:14px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:12px;color:var(--muted);font-weight:600}.field select,.field input{font:inherit;font-size:13px;padding:8px 11px;border:1px solid var(--border);border-radius:6px;background:#fff;min-width:145px}.btn{font:inherit;font-size:13px;font-weight:600;border-radius:6px;padding:8px 16px;border:1px solid var(--border);cursor:pointer;background:#fff;color:var(--sub)}.btn.red{background:var(--red);color:#fff;border-color:var(--red)}.btn.red:hover{background:var(--red2)}.btn.gold{background:var(--gold-bg);color:#8B6C28;border-color:#E8D5A0}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}.section-head h2{font-family:var(--font-serif);font-size:16px;margin:0}.table-wrap{overflow-x:auto}.table{width:100%;border-collapse:collapse;font-size:13.5px}.table th{background:var(--gold-bg);color:#8B6C28;text-align:left;padding:11px 14px;font-size:12.5px}.table td{padding:12px 14px;border-bottom:1px solid var(--line);color:var(--sub)}.table tr:last-child td{border-bottom:0}.table tbody tr:hover td{background:#F8F7F5}.strong{font-weight:700;color:var(--text)}.small{font-size:11px;color:var(--muted)}.tag{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600}.tag:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.pub{background:var(--green-bg);color:var(--green)}.draft{background:var(--warn-bg);color:var(--warn)}.revoked{background:var(--soft);color:var(--muted)}.op{color:var(--blue);font-size:12.5px;font-weight:600;cursor:pointer;margin-right:10px}.op.dl{color:#8B6C28}.note{margin:12px 16px;padding:10px 12px;border-left:3px solid var(--gold);background:var(--gold-bg);font-size:12px;color:#765B20}.alert{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;background:var(--blue-bg);border:1px solid #C5DCF0;border-radius:8px;font-size:12.5px;color:#1E5E8A;margin-bottom:16px}.fh-row{display:flex;gap:4px;flex-wrap:wrap;padding:8px 12px;margin:8px 0 16px;background:#F8F7F5;border-radius:6px}.fh{font-size:10px;color:#888;background:#fff;border:1px dashed #CCC;border-radius:4px;padding:1px 6px}.fh b{color:#8B6C28}.pager{padding:13px 18px;text-align:right;font-size:12px;color:var(--muted)}.hide{display:none!important}.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}.modal{background:#fff;width:min(720px,100%);border-radius:8px;box-shadow:0 18px 50px rgba(0,0,0,.2);overflow:hidden}.modal-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.modal-head b{font-family:var(--font-serif);font-size:16px}.modal-body{padding:18px 20px;display:grid;gap:13px}.modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}.x{border:0;background:none;font-size:20px;cursor:pointer}.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.meta-item{background:var(--soft);border-radius:6px;padding:10px 14px}.meta-item .mk{font-size:11px;color:var(--muted);margin-bottom:3px}.meta-item .mv{font-size:13.5px;font-weight:600;color:var(--text)}.notice-body{background:#FAFAF8;border:1px solid var(--line);border-radius:6px;padding:16px 18px;font-size:13.5px;line-height:1.9;color:var(--sub);min-height:180px;max-height:360px;overflow-y:auto}
+@media(max-width:760px){.wrap{padding:16px}.head{align-items:flex-start}.meta-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body><main class="wrap">
+
+<div class="crumb">
+  <a href="村长仪表盘-美化版.html">首页工作台</a><span class="sep">/</span>公告通知<span class="sep">/</span>公告列表
+</div>
+<div class="head">
+  <h1><span class="bar"></span>公告通知</h1>
+  <button class="btn gold" onclick="toast('导出公告列表')">↓ 导出公告列表</button>
+</div>
+
+<div class="alert">
+  <span>ℹ️</span>
+  <span>公告是母版选举阶段时间轴的只读镜像，阶段名称与内容在"选举活动管理"的母版里编辑。此页仅用于查看与下载，不支持新增或修改。</span>
+</div>
+
+<div class="panel filters">
+  <div class="field"><label>届次 / 活动</label>
+    <select>
+      <option>全部</option>
+      <option>第七届（2026）涧口社区</option>
+      <option>第六届（2023）涧口社区</option>
+    </select>
+  </div>
+  <div class="field"><label>公告类型</label>
+    <select>
+      <option>全部</option>
+      <option>选民登记公告</option>
+      <option>候选人提名公告</option>
+      <option>候选人公示公告</option>
+      <option>投票公告</option>
+      <option>结果公告</option>
+    </select>
+  </div>
+  <div class="field"><label>状态</label>
+    <select>
+      <option>全部</option>
+      <option>已发布</option>
+      <option>草稿</option>
+      <option>已撤回</option>
+    </select>
+  </div>
+  <button class="btn red">查询</button>
+  <button class="btn">重置</button>
+</div>
+<div class="fh-row">
+  <span class="fh">届次 <b>elections.session_no</b></span>
+  <span class="fh">公告类型 <b>notice_type</b></span>
+  <span class="fh">状态 <b>status</b></span>
+  <span class="fh">接口 <b>GET /election-notice/list?electionId=</b></span>
+</div>
+
+<div class="panel">
+  <div class="section-head"><h2>公告列表</h2><span class="small">共 5 条</span></div>
+  <div class="table-wrap"><table class="table">
+    <thead><tr>
+      <th>#</th>
+      <th>公告编号</th>
+      <th>关联阶段</th>
+      <th>公告标题</th>
+      <th>发布时间</th>
+      <th>状态</th>
+      <th>操作</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td class="strong">第 1 号公告</td>
+        <td>选民登记</td>
+        <td>涧口社区第七届换届选举选民登记公告</td>
+        <td>2026-04-08 09:00</td>
+        <td><span class="tag pub">已发布</span></td>
+        <td>
+          <span class="op" onclick="openNotice(1)">查看</span>
+          <span class="op dl" onclick="toast('下载 PDF：第1号公告')">↓ PDF</span>
+        </td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td class="strong">第 2 号公告</td>
+        <td>候选人提名</td>
+        <td>涧口社区第七届换届选举候选人提名公告</td>
+        <td>2026-05-06 09:00</td>
+        <td><span class="tag pub">已发布</span></td>
+        <td>
+          <span class="op" onclick="openNotice(2)">查看</span>
+          <span class="op dl" onclick="toast('下载 PDF：第2号公告')">↓ PDF</span>
+        </td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td class="strong">第 3 号公告</td>
+        <td>候选人公示</td>
+        <td>涧口社区第七届换届选举候选人公示公告</td>
+        <td>2026-06-02 10:00</td>
+        <td><span class="tag pub">已发布</span></td>
+        <td>
+          <span class="op" onclick="openNotice(3)">查看</span>
+          <span class="op dl" onclick="toast('下载 PDF：第3号公告')">↓ PDF</span>
+        </td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td class="strong">第 4 号公告</td>
+        <td>投票</td>
+        <td>涧口社区第七届换届选举投票日程公告</td>
+        <td class="small" style="color:var(--muted)">待发布</td>
+        <td><span class="tag draft">草稿</span></td>
+        <td>
+          <span class="op" onclick="openNotice(4)">查看</span>
+          <span class="op dl" style="opacity:.4;cursor:not-allowed">↓ PDF</span>
+        </td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td class="strong">第 5 号公告</td>
+        <td>选举结果</td>
+        <td>涧口社区第七届换届选举结果公告</td>
+        <td class="small" style="color:var(--muted)">待发布</td>
+        <td><span class="tag draft">草稿</span></td>
+        <td>
+          <span class="op" onclick="openNotice(5)">查看</span>
+          <span class="op dl" style="opacity:.4;cursor:not-allowed">↓ PDF</span>
+        </td>
+      </tr>
+    </tbody>
+  </table></div>
+  <div class="note">公告内容由母版 elections.content.timeline 自动生成，阶段日期填好后系统产生草稿，负责人审核后发布；已发布公告不可在此页修改，如需更正请回母版修改后重新发布。</div>
+  <div class="pager">共 5 条　‹ 1 ›</div>
+</div>
+<div class="fh-row">
+  <span class="fh">公告编号 <b>notice_no</b></span>
+  <span class="fh">关联阶段 <b>stage_name ← elections.content.timeline[n].name</b> 只读</span>
+  <span class="fh">标题 <b>title</b></span>
+  <span class="fh">发布时间 <b>published_at</b></span>
+  <span class="fh">状态 <b>status: draft/published/revoked</b></span>
+  <span class="fh">PDF <b>pdf_url</b></span>
+  <span class="fh">接口 <b>GET /election-notice/list?electionId=</b></span>
+</div>
+
+</main>
+
+<!-- 公告详情弹窗（只读） -->
+<div id="noticeModal" class="modal-bg hide">
+  <div class="modal">
+    <div class="modal-head">
+      <b id="noticeModalTitle">第 1 号公告详情</b>
+      <button class="x" onclick="closeModal('noticeModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="meta-grid">
+        <div class="meta-item"><div class="mk">公告编号</div><div class="mv" id="nm-no">第 1 号公告</div></div>
+        <div class="meta-item"><div class="mk">关联阶段</div><div class="mv" id="nm-stage">选民登记</div></div>
+        <div class="meta-item"><div class="mk">发布时间</div><div class="mv" id="nm-time">2026-04-08 09:00</div></div>
+        <div class="meta-item"><div class="mk">状态</div><div class="mv" id="nm-status">已发布</div></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">公告正文</div>
+        <div class="notice-body" id="nm-body">——</div>
+      </div>
+      <div class="fh-row" style="margin:0">
+        <span class="fh">接口 <b>GET /election-notice/detail?id=</b></span>
+        <span class="fh">正文 <b>content（只读渲染）</b></span>
+        <span class="fh">PDF <b>pdf_url</b></span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('noticeModal')">关闭</button>
+      <button class="btn gold" id="nm-dl-btn" onclick="toast('下载公告 PDF')">↓ 下载 PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var NOTICES = {
+  1: { no:'第 1 号公告', stage:'选民登记', time:'2026-04-08 09:00', status:'已发布',
+       body:'根据《中华人民共和国村民委员会组织法》及相关规定，涧口社区第七届换届选举工作正式启动。现将选民登记工作相关事项公告如下：\n\n一、登记时间：2026年4月8日至4月22日\n二、登记地点：涧口社区居委会服务大厅\n三、登记对象：年满18周岁、户籍在本社区或实际居住满一年以上的居民\n四、所需材料：本人有效身份证件\n\n请符合条件的居民按时前往登记，逾期不予补登。\n\n特此公告。\n\n涧口社区换届选举工作领导小组\n2026年4月8日' },
+  2: { no:'第 2 号公告', stage:'候选人提名', time:'2026-05-06 09:00', status:'已发布',
+       body:'根据选民登记结果及换届选举工作安排，现将候选人提名阶段相关事项公告如下：\n\n一、提名时间：2026年5月6日至5月20日\n二、提名方式：选民联名推荐（不少于10名选民联署）或党支部提名\n三、提名岗位：居委会主任1名、副主任2名、委员4名\n四、资格条件：具有完全民事行为能力、无犯罪记录、热心公益服务\n\n请各候选人在规定时间内提交资格审查材料至社区服务大厅。\n\n特此公告。\n\n涧口社区换届选举工作领导小组\n2026年5月6日' },
+  3: { no:'第 3 号公告', stage:'候选人公示', time:'2026-06-02 10:00', status:'已发布',
+       body:'经资格审查小组审核，现将通过资格审查的正式候选人名单予以公示：\n\n居委会主任候选人：陈志远\n居委会副主任候选人：林美华、王国栋\n居委会委员候选人：黄大鹏、吴素云、张明辉、刘秀英\n\n公示时间：2026年6月2日至6月8日\n\n如对上述候选人资格有异议，请在公示期内向选举工作领导小组书面反映。\n\n特此公告。\n\n涧口社区换届选举工作领导小组\n2026年6月2日' },
+  4: { no:'第 4 号公告', stage:'投票',    time:'待发布', status:'草稿',
+       body:'（草稿）投票日程公告内容待母版确认投票阶段日期后自动生成。\n\n此公告处于草稿状态，内容尚未发布，仅供内部预览。' },
+  5: { no:'第 5 号公告', stage:'选举结果', time:'待发布', status:'草稿',
+       body:'（草稿）选举结果公告内容待投票完成、结果统计后自动生成。\n\n此公告处于草稿状态，内容尚未发布，仅供内部预览。' }
+};
+
+function openNotice(id) {
+  var n = NOTICES[id];
+  if (!n) return;
+  document.getElementById('noticeModalTitle').textContent = n.no + ' 详情';
+  document.getElementById('nm-no').textContent = n.no;
+  document.getElementById('nm-stage').textContent = n.stage;
+  document.getElementById('nm-time').textContent = n.time;
+  document.getElementById('nm-status').textContent = n.status;
+  document.getElementById('nm-body').style.whiteSpace = 'pre-wrap';
+  document.getElementById('nm-body').textContent = n.body;
+  document.getElementById('nm-dl-btn').style.opacity = n.status === '已发布' ? '1' : '0.4';
+  document.getElementById('nm-dl-btn').style.cursor = n.status === '已发布' ? 'pointer' : 'not-allowed';
+  document.getElementById('noticeModal').classList.remove('hide');
+}
+function closeModal(id) { document.getElementById(id).classList.add('hide'); }
+
+var timer;
+function toast(msg) {
+  var b = document.getElementById('toast');
+  if (!b) {
+    b = document.createElement('div'); b.id = 'toast';
+    b.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;padding:10px 20px;border-radius:6px;font-size:13px;z-index:80';
+    document.body.appendChild(b);
+  }
+  b.textContent = msg; b.hidden = false;
+  clearTimeout(timer); timer = setTimeout(function () { b.hidden = true; }, 1500);
+}
+</script>
+<script src="shared-shell.js" data-active="公告通知"></script>
+<style>html.embedded .ss-side{display:none!important}html.embedded body{margin-left:0!important}</style>
+<script>if(window.self!==window.top){document.documentElement.classList.add('embedded');}</script>
+</body>
+</html>

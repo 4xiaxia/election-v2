@@ -1,23 +1,27 @@
 <!DOCTYPE html>
+<!--
+  ===== 组件小纸条（真前端照此套 isdream-vue-admin / Element Plus 组件）=====
+  这块地 = 提案审批。夏夏定调：不做重点，详情走弹窗不跳页（能弹窗就不造页面）。
+  当前是静态HTML靶子，真前端照样式+此纸条套组件：
+  - 角色视角切换条(经办/审核人) → ElRadioButton 组(button型) 或 ElSegmented；仅demo演示流转，真前端由登录态角色决定，不做手动切换
+  - 筛选条(提案名称/选举方式/状态) → isdream Form(inline) + ElInput + ElSelect + ElButton；查询/重置走查询逻辑
+  - 提案列表(提交时间/名称/方式/状态/操作) → ElTable 或 isdream Table；数据接 GET /election-proposal/list
+  - 状态标签(待审批/已通过/已驳回) → ElTag(type: warning/success/danger)，对应 .st.wait/.pass/.reject
+  - 操作列(查看详情 / ✓通过 / ✗驳回) → ElButton(link/text型)；通过·驳回走 POST /election-proposal/review action=approve|reject；仅"待审批"+审核人可见
+  - 提案详情 → ElDialog(弹窗，不跳页) 或 formDialog；内含基本信息(ElDescriptions)、详细说明(富文本只读)、附件材料
+  - 附件材料(下载预览) → isdream upload(只读) + v-viewer 预览；地址取 attachments JSON [{name,url}]，路径 public/uploads/archives/proposals/
+  - 审批操作区(意见+通过/驳回) → ElForm + ElInput(textarea) + ElButton；驳回必填 reason(→reject_reason)，审批人=登录态 reviewed_by
+  皮：美化版红金(Noto Serif SC + #B22222/#C8A45C)覆盖 ElementPlus 默认皮。
+  ==========================================================================
+-->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>提案审批 · 提案列表 / 详情</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
 <style>
-:root{
-  --red:#B22222;--red-hover:#961C1C;--red-bg:#FDE8E8;--red-bg-soft:#FFF5F5;
-  --gold:#C8A45C;--gold-hover:#B08E3A;--gold-light:#E8D5A0;--gold-bg:#FDF6E3;
-  --success:#2D8B55;--success-bg:#E8F5ED;--warning:#C27A1A;--warning-bg:#FEF5E7;
-  --info:#2874A6;--info-bg:#EBF5FB;
-  --text-primary:#1A1A1A;--text-secondary:#4A4A4A;--text-muted:#7A7A7A;
-  --border-light:#E8E5E0;--border:#D4D0CA;
-  --bg-page:#FAF8F5;--bg-container:#FFFFFF;--bg-muted:#F5F3F0;--bg-hover:#F0EDE8;
-  --r-md:6px;--r-lg:8px;--r-xl:12px;--r-full:9999px;
-  --shadow-sm:0 1px 4px rgba(0,0,0,.06);
-  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;
-}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-primary);line-height:1.7;}
 .wrap{max-width:1080px;margin:0 auto;padding:24px 28px 60px;}
@@ -77,6 +81,38 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-pri
 .btn-deny{background:#fff;color:var(--red);border:1px solid var(--red);padding:8px 18px;font-size:13px;}
 .btn-pass{background:var(--success);color:#fff;padding:8px 18px;font-size:13px;}
 .hide{display:none;}
+/* 角色视角切换条 */
+.role-bar{display:flex;align-items:center;gap:10px;background:var(--info-bg);border:1px solid #BcdcF0;border-radius:var(--r-lg);padding:10px 16px;margin-bottom:16px;font-size:13px;}
+.role-bar .rb-label{color:var(--info);font-weight:600;}
+.role-switch{display:inline-flex;border:1px solid var(--info);border-radius:var(--r-full);overflow:hidden;}
+.role-switch button{border:none;background:#fff;color:var(--info);padding:5px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+.role-switch button.on{background:var(--info);color:#fff;}
+.role-bar .rb-hint{color:var(--text-muted);margin-left:auto;font-size:12px;}
+/* 富文本编辑器 */
+.rt-tool{display:flex;gap:4px;flex-wrap:wrap;background:var(--bg-muted);border:1px solid var(--border);border-bottom:none;border-radius:var(--r-md) var(--r-md) 0 0;padding:7px 10px;}
+.rt-tool button{border:1px solid var(--border);background:#fff;border-radius:4px;padding:3px 9px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-secondary);}
+.rt-tool button:hover{border-color:var(--red);color:var(--red);}
+.rt-edit{min-height:120px;border:1px solid var(--border);border-radius:0 0 var(--r-md) var(--r-md);padding:12px 14px;font-size:13.5px;line-height:1.9;color:var(--text-primary);background:#fff;outline:none;}
+.rt-edit:empty::before{content:attr(data-ph);color:var(--text-muted);}
+/* 弹窗 */
+.modal-bg{position:fixed;inset:0;background:rgba(25,20,18,.5);display:flex;align-items:flex-start;justify-content:center;padding:40px 18px;z-index:60;overflow:auto;}
+.modal{background:#fff;width:min(720px,100%);border-radius:var(--r-xl);box-shadow:var(--shadow-lg);overflow:hidden;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border-light);}
+.modal-head h3{font-family:var(--font-serif);font-size:17px;font-weight:700;}
+.modal-head .x{border:none;background:none;font-size:22px;cursor:pointer;color:var(--text-muted);}
+.modal-body{padding:20px 22px;max-height:64vh;overflow:auto;}
+.modal-body .fld{margin-bottom:16px;}
+.modal-body .fld label{display:block;font-size:12.5px;color:var(--text-muted);font-weight:600;margin-bottom:6px;}
+.modal-body .fld input,.modal-body .fld select{width:100%;font-family:inherit;font-size:13.5px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r-md);}
+.up-zone{border:2px dashed var(--border);border-radius:var(--r-lg);padding:18px;text-align:center;color:var(--text-muted);font-size:13px;cursor:pointer;background:var(--bg-page);}
+.up-zone:hover{border-color:var(--gold);color:var(--gold-hover);}
+.up-note{font-size:11.5px;color:var(--gold-hover);background:var(--gold-bg);border-radius:var(--r-md);padding:7px 10px;margin-top:8px;}
+.up-list .att{margin-top:8px;}
+.up-list .att .del{margin-left:auto;color:var(--red);cursor:pointer;font-size:12px;}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--border-light);background:var(--bg-page);}
+.status-flow{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:14px;}
+.status-flow .sf{padding:3px 10px;border-radius:var(--r-full);background:var(--bg-muted);}
+.status-flow .sf.on{background:var(--red);color:#fff;font-weight:600;}
 </style>
 </head>
 <body>
@@ -84,10 +120,21 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-pri
 
   <!-- ========== 二级：提案列表 ========== -->
   <div id="listView">
-    <div class="crumb"><a onclick="toast('首页工作台')">首页工作台</a><span class="sep">/</span>提案审批<span class="sep">/</span>提案列表</div>
+    <div class="crumb"><a href="村长仪表盘-美化版.html">首页工作台</a><span class="sep">/</span>提案审批<span class="sep">/</span>提案列表</div>
+
+    <!-- 角色视角切换（demo演示：经办提交 → 审核人审批 整条流转） -->
+    <div class="role-bar">
+      <span class="rb-label">当前视角</span>
+      <span class="role-switch">
+        <button id="roleClerk" class="on" onclick="setRole('clerk')">经办（王建国）</button>
+        <button id="roleReviewer" onclick="setRole('reviewer')">审核人（李秀兰）</button>
+      </span>
+      <span class="rb-hint" id="roleHint">经办可创建提案、编辑草稿、提交审批</span>
+    </div>
+
     <div class="page-head">
       <h2><span class="bar"></span>提案列表</h2>
-      <button class="btn btn-primary" onclick="toast('创建提案')">＋ 创建提案</button>
+      <button class="btn btn-primary" id="btnCreate" onclick="openCreate()">＋ 创建提案</button>
     </div>
     <div class="filters">
       <div class="field"><label>提案名称</label><input placeholder="输入关键词..."></div>
@@ -106,30 +153,9 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-pri
       <div class="th-bar"><h3>历史提案列表（本期 + 历届）</h3><span style="font-size:12px;color:var(--text-muted);">共 4 条</span></div>
       <table class="tb">
         <thead><tr><th>提交时间</th><th>提案名称</th><th>选举方式</th><th>状态</th><th>操作</th></tr></thead>
-        <tbody>
-          <tr>
-            <td>2026-07-09</td><td class="tt">涧口社区第七届换届</td><td>全民直选</td>
-            <td><span class="st wait">待审批</span></td>
-            <td><span class="op" onclick="showDetail()">查看详情</span><span class="op approve" onclick="toast('通过')">✓通过</span><span class="op deny" onclick="toast('驳回')">✗驳回</span></td>
-          </tr>
-          <tr>
-            <td>2026-07-05</td><td class="tt">张家村村委换届提案</td><td>全民直选</td>
-            <td><span class="st pass">已通过</span></td>
-            <td><span class="op" onclick="showDetail()">查看详情</span></td>
-          </tr>
-          <tr>
-            <td>2026-06-20</td><td class="tt">李家堡第六届换届</td><td>户代表</td>
-            <td><span class="st reject">已驳回</span></td>
-            <td><span class="op" onclick="showDetail()">查看详情</span></td>
-          </tr>
-          <tr>
-            <td>2025-12-15</td><td class="tt">某某社区第五届换届</td><td>居民代表</td>
-            <td><span class="st pass">已通过</span></td>
-            <td><span class="op" onclick="showDetail()">查看详情</span></td>
-          </tr>
-        </tbody>
+        <tbody id="propRows"></tbody>
       </table>
-      <div class="pager"><span>共 4 条</span><span class="pg">‹</span><span class="pg on">1</span><span class="pg">›</span></div>
+      <div class="pager"><span id="propCount">共 0 条</span><span class="pg">‹</span><span class="pg on">1</span><span class="pg">›</span></div>
     </div>
     <div class="fh-row"><span class="lead">列表字段 →</span>
       <span class="fh">提交时间 <b>submitted_at</b></span>
@@ -203,11 +229,181 @@ body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-pri
   </div>
 
 </div>
+
+<!-- ========== 创建提案弹窗 ========== -->
+<div id="createModal" class="modal-bg hide">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>＋ 创建提案</h3>
+      <button class="x" onclick="closeCreate()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="status-flow">
+        <span class="sf on" id="flowDraft">草稿</span>
+        <span>→</span>
+        <span class="sf" id="flowReview">待审批</span>
+        <span>→</span>
+        <span class="sf" id="flowDone">审批完成</span>
+      </div>
+      <div class="fld">
+        <label>提案名称 <span style="color:var(--red)">*</span></label>
+        <input id="newTitle" placeholder="例：涧口社区第七届换届选举提案">
+      </div>
+      <div class="fld">
+        <label>选举方式</label>
+        <select id="newMethod">
+          <option>全民直选</option>
+          <option>户代表选举</option>
+          <option>居民代表选举</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>提案详细说明</label>
+        <div class="rt-tool">
+          <button onclick="fmt('bold')"><b>B</b></button>
+          <button onclick="fmt('italic')"><i>I</i></button>
+          <button onclick="fmt('insertUnorderedList')">· 列表</button>
+        </div>
+        <div class="rt-edit" id="newContent" contenteditable="true"
+          data-ph="说明换届依据、时间安排、拟选举岗位及其他备注…"></div>
+      </div>
+      <div class="fld">
+        <label>上传附件</label>
+        <div class="up-zone" onclick="document.getElementById('newFileInput').click()">
+          📎 点击上传文件（PDF / Word / Excel）
+        </div>
+        <input type="file" id="newFileInput" style="display:none" multiple onchange="addFiles(this)">
+        <div class="up-note">📁 附件将存入 <b>public/uploads/archives/proposals/</b>，归档目录自动生成对应文件夹</div>
+        <div class="up-list" id="upList"></div>
+      </div>
+      <div class="fh-row" style="margin-top:4px">
+        <span class="fh">接口 <b>POST /election-proposal/create</b></span>
+        <span class="fh">附件 <b>attachments JSON [{name,url}]</b></span>
+        <span class="fh">存档路径 <b>public/uploads/archives/proposals/</b></span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeCreate()">取消</button>
+      <button class="btn btn-ghost" onclick="previewProposal()">👁 预览</button>
+      <button class="btn btn-primary" onclick="submitProposal()">✓ 确认提交审批</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// ===== 示例数据 =====
+var proposals = [
+  {id:1, time:'2026-07-09 10:30', title:'涧口社区第七届换届选举提案', method:'全民直选', status:'wait', statusLabel:'待审批'},
+  {id:2, time:'2026-05-14 09:15', title:'霞皋村第六届换届选举提案',   method:'全民直选', status:'pass', statusLabel:'已通过'},
+  {id:3, time:'2026-03-02 14:40', title:'后亭村第五届换届选举提案',   method:'全民直选', status:'reject', statusLabel:'已驳回'},
+  {id:4, time:'2025-11-20 11:00', title:'洞口社区第五届换届选举提案', method:'户代表选举',status:'pass', statusLabel:'已通过'},
+];
+var currentRole = 'clerk'; // clerk | reviewer
+
+// ===== 视图切换 =====
 function showDetail(){document.getElementById('listView').classList.add('hide');document.getElementById('detailView').classList.remove('hide');window.scrollTo(0,0);}
 function showList(){document.getElementById('detailView').classList.add('hide');document.getElementById('listView').classList.remove('hide');window.scrollTo(0,0);}
+
+// ===== 角色切换 =====
+function setRole(role){
+  currentRole = role;
+  document.getElementById('roleClerk').classList.toggle('on', role==='clerk');
+  document.getElementById('roleReviewer').classList.toggle('on', role==='reviewer');
+  document.getElementById('roleHint').textContent = role==='clerk'
+    ? '经办可创建提案、编辑草稿、提交审批'
+    : '审核人可查看待审批提案，进行通过或驳回操作';
+  // 创建按钮仅经办可见
+  document.getElementById('btnCreate').style.display = role==='clerk' ? '' : 'none';
+  renderList();
+}
+
+// ===== 渲染提案列表 =====
+function renderList(){
+  var html = proposals.map(function(p){
+    var canAct = p.status==='wait' && currentRole==='reviewer';
+    return '<tr>' +
+      '<td>' + p.time + '</td>' +
+      '<td class="tt">' + p.title + '</td>' +
+      '<td>' + p.method + '</td>' +
+      '<td><span class="st ' + p.status + '">' + p.statusLabel + '</span></td>' +
+      '<td>' +
+        '<span class="op" onclick="showDetail()">查看详情</span>' +
+        (canAct ? '<span class="op approve" onclick="quickApprove(' + p.id + ',true)">✓ 通过</span><span class="op deny" onclick="quickApprove(' + p.id + ',false)">✗ 驳回</span>' : '') +
+      '</td>' +
+    '</tr>';
+  }).join('');
+  document.getElementById('propRows').innerHTML = html;
+  document.getElementById('propCount').textContent = '共 ' + proposals.length + ' 条';
+}
+
+// 列表内快捷审批
+function quickApprove(id, pass){
+  var p = proposals.find(function(x){return x.id===id;});
+  if(!p) return;
+  p.status = pass ? 'pass' : 'reject';
+  p.statusLabel = pass ? '已通过' : '已驳回';
+  renderList();
+  toast(pass ? '✓ 已通过' : '✗ 已驳回');
+}
+
+// ===== 创建提案弹窗 =====
+var _newFiles = [];
+function openCreate(){
+  document.getElementById('createModal').classList.remove('hide');
+}
+function closeCreate(){
+  document.getElementById('createModal').classList.add('hide');
+  document.getElementById('newTitle').value='';
+  document.getElementById('newContent').innerHTML='';
+  _newFiles=[];
+  document.getElementById('upList').innerHTML='';
+  // 重置状态流
+  document.getElementById('flowDraft').classList.add('on');
+  document.getElementById('flowReview').classList.remove('on');
+}
+function fmt(cmd){ document.execCommand(cmd,false,null); }
+function addFiles(input){
+  for(var i=0;i<input.files.length;i++){
+    _newFiles.push(input.files[i].name);
+    document.getElementById('upList').innerHTML +=
+      '<div class="att">📎 ' + input.files[i].name +
+      ' <span class="del" onclick="this.parentElement.remove()">× 移除</span></div>';
+  }
+  input.value='';
+}
+function previewProposal(){
+  var t = document.getElementById('newTitle').value.trim();
+  if(!t){toast('请先填写提案名称');return;}
+  toast('预览：「' + t + '」（演示模式，实际系统弹出PDF预览）');
+}
+function submitProposal(){
+  var t = document.getElementById('newTitle').value.trim();
+  if(!t){toast('提案名称不能为空');return;}
+  // 推进状态流显示
+  document.getElementById('flowDraft').classList.remove('on');
+  document.getElementById('flowReview').classList.add('on');
+  // 加入列表
+  proposals.unshift({
+    id: proposals.length+1,
+    time: new Date().toISOString().slice(0,16).replace('T',' '),
+    title: t,
+    method: document.getElementById('newMethod').value,
+    status:'wait', statusLabel:'待审批'
+  });
+  closeCreate();
+  renderList();
+  toast('✓ 提案已提交，等待审核人审批');
+}
+
+// ===== Toast =====
 var _t;
 function toast(msg){var b=document.getElementById('_t');if(!b){b=document.createElement('div');b.id='_t';b.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;padding:11px 22px;border-radius:8px;font-size:13px;z-index:99;opacity:0;transition:opacity .2s;';document.body.appendChild(b);}b.textContent=msg;b.style.opacity='1';clearTimeout(_t);_t=setTimeout(function(){b.style.opacity='0';},1600);}
+
+// ===== 初始化 =====
+renderList();
 </script>
+<script src="shared-shell.js" data-active="提案审批"></script>
+<style>html.embedded .ss-side{display:none!important}html.embedded body{margin-left:0!important}</style>
+<script>if(window.self!==window.top){document.documentElement.classList.add("embedded");}<\/script>
 </body>
 </html>

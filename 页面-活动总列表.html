@@ -1,23 +1,38 @@
 <!DOCTYPE html>
+<!--
+  ===== 组件小纸条（真前端照此套 isdream-vue-admin / Element Plus 组件）=====
+  这块地 = 选举活动总列表。静态HTML靶子，真前端照样式+此纸条套组件：
+
+  [面包屑]          → el-breadcrumb + el-breadcrumb-item，separator="/"
+  [页头标题+新建按钮] → el-page-header 或自定义 flex 行；
+                       新建按钮 → el-button type="primary"，触发新建选举活动弹窗/路由
+  [筛选条]          → el-form :inline="true" + el-form-item；
+                       届次/年份/状态下拉 → el-select + el-option（v-for 枚举或接口返回）；
+                       查询/重置 → el-button type="primary" / default
+  [活动列表表格]     → el-table :data="list" stripe highlight-current-row；
+                       届次列 → el-table-column prop="session_no"，自定义 formatter 转汉字序数；
+                       活动名称 → el-table-column prop="name"；
+                       选举方式 → el-table-column prop="election_method"；
+                       状态列  → el-table-column，内嵌 el-tag：进行中 type="danger"，已归档 type="info"；
+                       操作列  → el-table-column fixed="right" width="120"，内嵌 el-button：
+                                  进行中 → el-button type="primary" size="small" @click="openMother(row, false)"；
+                                  已归档 → el-button type="default" size="small" @click="openMother(row, true)"
+  [分页]            → el-pagination layout="total, prev, pager, next"，:total="total"，@current-change="onPage"
+  [下钻目标]        → 跳转 选举系统_填空模板(1).html（母版小看板），携参 electionId / electionName / villageName / readonly；
+                       真前端改为 router.push('/election/template/:id') 或 window.open，保留 readonly 标志位
+  [字段批注行 fh-row] → 纯开发标注，真前端可删；如需保留，改用 el-tooltip 悬浮展示字段来源
+
+  皮：美化版红金（Noto Serif SC 标题 + Noto Sans SC 正文，主色 #B22222，金 #C8A45C，宣纸底 #FAF8F5）。
+  ==========================================================================
+-->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>选举活动管理 · 活动总列表</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
 <style>
-:root{
-  --red:#B22222;--red-hover:#961C1C;--red-bg:#FDE8E8;--red-bg-soft:#FFF5F5;
-  --gold:#C8A45C;--gold-hover:#B08E3A;--gold-light:#E8D5A0;--gold-bg:#FDF6E3;
-  --success:#2D8B55;--success-bg:#E8F5ED;--warning:#C27A1A;--warning-bg:#FEF5E7;
-  --info:#2874A6;--info-bg:#EBF5FB;
-  --text-primary:#1A1A1A;--text-secondary:#4A4A4A;--text-muted:#7A7A7A;
-  --border-light:#E8E5E0;--border:#D4D0CA;
-  --bg-page:#FAF8F5;--bg-container:#FFFFFF;--bg-muted:#F5F3F0;--bg-hover:#F0EDE8;
-  --r-md:6px;--r-lg:8px;--r-xl:12px;--r-full:9999px;
-  --shadow-sm:0 1px 4px rgba(0,0,0,.06);
-  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;
-}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-primary);line-height:1.7;padding:0;}
 .wrap{max-width:1180px;margin:0 auto;padding:24px 28px 60px;}
@@ -153,5 +168,8 @@ function toast(msg){
   b.textContent='跳转：'+msg;b.style.opacity='1';clearTimeout(_t);_t=setTimeout(function(){b.style.opacity='0';},1600);
 }
 </script>
+<script src="shared-shell.js" data-active="选举活动管理"></script>
+<style>html.embedded .ss-side{display:none!important}html.embedded body{margin-left:0!important}</style>
+<script>if(window.self!==window.top){document.documentElement.classList.add("embedded");}<\/script>
 </body>
 </html>
