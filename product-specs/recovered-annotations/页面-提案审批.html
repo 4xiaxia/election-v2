@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<!--
+  ===== 组件小纸条（真前端照此套 isdream-vue-admin / Element Plus 组件）=====
+  这块地 = 提案审批。夏夏定调：不做重点，详情走弹窗不跳页（能弹窗就不造页面）。
+  当前是静态HTML靶子，真前端照样式+此纸条套组件：
+  - 角色视角切换条(经办/审核人) → ElRadioButton 组(button型) 或 ElSegmented；仅demo演示流转，真前端由登录态角色决定，不做手动切换
+  - 筛选条(提案名称/选举方式/状态) → isdream Form(inline) + ElInput + ElSelect + ElButton；查询/重置走查询逻辑
+  - 提案列表(提交时间/名称/方式/状态/操作) → ElTable 或 isdream Table；数据接 GET /election-proposal/list
+  - 状态标签(待审批/已通过/已驳回) → ElTag(type: warning/success/danger)，对应 .st.wait/.pass/.reject
+  - 操作列(查看详情 / ✓通过 / ✗驳回) → ElButton(link/text型)；通过·驳回走 POST /election-proposal/review action=approve|reject；仅"待审批"+审核人可见
+  - 提案详情 → ElDialog(弹窗，不跳页) 或 formDialog；内含基本信息(ElDescriptions)、详细说明(富文本只读)、附件材料
+  - 附件材料(下载预览) → isdream upload(只读) + v-viewer 预览；地址取 attachments JSON [{name,url}]，路径 public/uploads/archives/proposals/
+  - 审批操作区(意见+通过/驳回) → ElForm + ElInput(textarea) + ElButton；驳回必填 reason(→reject_reason)，审批人=登录态 reviewed_by
+  皮：美化版红金(Noto Serif SC + #B22222/#C8A45C)覆盖 ElementPlus 默认皮。
+  ==========================================================================
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提案审批 · 提案列表 / 详情</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-primary);line-height:1.7;}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 28px 60px;}
+.crumb{font-size:13px;color:var(--text-muted);margin-bottom:18px;}
+.crumb a{color:var(--info);text-decoration:none;cursor:pointer;}
+.crumb a:hover{color:var(--red);}
+.crumb .sep{margin:0 7px;color:var(--border);}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.page-head h2{font-family:var(--font-serif);font-size:22px;font-weight:700;display:flex;align-items:center;gap:9px;}
+.page-head h2 .bar{width:5px;height:22px;background:var(--red);border-radius:2px;}
+.filters{background:var(--bg-container);border:1px solid var(--border-light);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);padding:16px 20px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:12px;color:var(--text-muted);font-weight:600;}
+.field select,.field input{font-family:inherit;font-size:13px;padding:7px 11px;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;color:var(--text-primary);min-width:140px;}
+.btn{border:none;cursor:pointer;font-family:inherit;font-weight:600;border-radius:var(--r-md);transition:all .15s;}
+.btn-primary{background:var(--red);color:#fff;padding:8px 18px;font-size:13px;}
+.btn-primary:hover{background:var(--red-hover);}
+.btn-ghost{background:var(--bg-muted);color:var(--text-secondary);padding:8px 16px;font-size:13px;border:1px solid var(--border);}
+.table-card{background:var(--bg-container);border:1px solid var(--border-light);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+.table-card .th-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border-light);}
+.table-card .th-bar h3{font-family:var(--font-serif);font-size:15px;font-weight:700;}
+.tb{width:100%;border-collapse:collapse;font-size:13.5px;}
+.tb th{text-align:left;padding:12px 16px;background:var(--gold-bg);color:var(--gold-hover);font-weight:700;font-size:12.5px;border-bottom:1px solid var(--gold-light);white-space:nowrap;}
+.tb td{padding:13px 16px;border-bottom:1px solid var(--border-light);color:var(--text-secondary);}
+.tb tr:hover td{background:var(--bg-hover);}
+.tb tr:last-child td{border-bottom:none;}
+.tb .tt{color:var(--text-primary);font-weight:500;}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 11px;border-radius:var(--r-full);font-weight:600;}
+.st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+.st.wait{background:var(--warning-bg);color:var(--warning);}
+.st.pass{background:var(--success-bg);color:var(--success);}
+.st.reject{background:var(--red-bg);color:var(--red);}
+.op{font-size:12.5px;color:var(--info);cursor:pointer;margin-right:10px;font-weight:600;}
+.op:hover{color:var(--red);}
+.op.approve{color:var(--success);}
+.op.deny{color:var(--red);}
+.pager{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:14px 20px;font-size:13px;color:var(--text-muted);}
+.pager .pg{padding:5px 10px;border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;background:#fff;}
+.pager .pg.on{background:var(--red);color:#fff;border-color:var(--red);}
+.fh{display:inline-block;font-size:10px;line-height:1.5;color:#9A9A9A;background:#F5F3F0;border:1px dashed #D4D0CA;border-radius:4px;padding:1px 6px;margin:2px 3px 0 0;font-weight:400;}
+.fh b{color:var(--gold-hover);font-weight:600;}
+.fh-row{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin:10px 0 2px;padding:8px 12px;background:#FBFAF8;border-radius:var(--r-md);}
+.fh-row .lead{font-size:11px;color:var(--text-muted);font-weight:600;margin-right:4px;}
+/* 详情页 */
+.detail-card{background:var(--bg-container);border:1px solid var(--border-light);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);padding:22px 24px;margin-bottom:16px;}
+.detail-card h3{font-family:var(--font-serif);font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.detail-card h3 .bar{width:4px;height:15px;background:var(--red);border-radius:2px;}
+.info-grid{display:grid;grid-template-columns:110px 1fr;gap:11px 16px;font-size:14px;}
+.info-grid .k{color:var(--text-muted);}
+.info-grid .v{color:var(--text-primary);font-weight:500;}
+.report-box{background:var(--bg-muted);border-radius:var(--r-lg);padding:16px;font-size:14px;color:var(--text-secondary);line-height:1.9;}
+.att{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-muted);border-radius:var(--r-lg);margin-bottom:8px;font-size:13.5px;}
+.att .dl{margin-left:auto;color:var(--info);cursor:pointer;font-weight:600;font-size:12.5px;}
+.approve-box{background:var(--warning-bg);border:1px solid #F3D9A8;border-radius:var(--r-lg);padding:16px;}
+.approve-box textarea{width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-md);min-height:70px;resize:vertical;margin-bottom:12px;}
+.approve-box .acts{display:flex;justify-content:flex-end;gap:10px;}
+.btn-deny{background:#fff;color:var(--red);border:1px solid var(--red);padding:8px 18px;font-size:13px;}
+.btn-pass{background:var(--success);color:#fff;padding:8px 18px;font-size:13px;}
+.hide{display:none;}
+/* 角色视角切换条 */
+.role-bar{display:flex;align-items:center;gap:10px;background:var(--info-bg);border:1px solid #BcdcF0;border-radius:var(--r-lg);padding:10px 16px;margin-bottom:16px;font-size:13px;}
+.role-bar .rb-label{color:var(--info);font-weight:600;}
+.role-switch{display:inline-flex;border:1px solid var(--info);border-radius:var(--r-full);overflow:hidden;}
+.role-switch button{border:none;background:#fff;color:var(--info);padding:5px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+.role-switch button.on{background:var(--info);color:#fff;}
+.role-bar .rb-hint{color:var(--text-muted);margin-left:auto;font-size:12px;}
+/* 富文本编辑器 */
+.rt-tool{display:flex;gap:4px;flex-wrap:wrap;background:var(--bg-muted);border:1px solid var(--border);border-bottom:none;border-radius:var(--r-md) var(--r-md) 0 0;padding:7px 10px;}
+.rt-tool button{border:1px solid var(--border);background:#fff;border-radius:4px;padding:3px 9px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-secondary);}
+.rt-tool button:hover{border-color:var(--red);color:var(--red);}
+.rt-edit{min-height:120px;border:1px solid var(--border);border-radius:0 0 var(--r-md) var(--r-md);padding:12px 14px;font-size:13.5px;line-height:1.9;color:var(--text-primary);background:#fff;outline:none;}
+.rt-edit:empty::before{content:attr(data-ph);color:var(--text-muted);}
+/* 弹窗 */
+.modal-bg{position:fixed;inset:0;background:rgba(25,20,18,.5);display:flex;align-items:flex-start;justify-content:center;padding:40px 18px;z-index:60;overflow:auto;}
+.modal{background:#fff;width:min(720px,100%);border-radius:var(--r-xl);box-shadow:var(--shadow-lg);overflow:hidden;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border-light);}
+.modal-head h3{font-family:var(--font-serif);font-size:17px;font-weight:700;}
+.modal-head .x{border:none;background:none;font-size:22px;cursor:pointer;color:var(--text-muted);}
+.modal-body{padding:20px 22px;max-height:64vh;overflow:auto;}
+.modal-body .fld{margin-bottom:16px;}
+.modal-body .fld label{display:block;font-size:12.5px;color:var(--text-muted);font-weight:600;margin-bottom:6px;}
+.modal-body .fld input,.modal-body .fld select{width:100%;font-family:inherit;font-size:13.5px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r-md);}
+.up-zone{border:2px dashed var(--border);border-radius:var(--r-lg);padding:18px;text-align:center;color:var(--text-muted);font-size:13px;cursor:pointer;background:var(--bg-page);}
+.up-zone:hover{border-color:var(--gold);color:var(--gold-hover);}
+.up-note{font-size:11.5px;color:var(--gold-hover);background:var(--gold-bg);border-radius:var(--r-md);padding:7px 10px;margin-top:8px;}
+.up-list .att{margin-top:8px;}
+.up-list .att .del{margin-left:auto;color:var(--red);cursor:pointer;font-size:12px;}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--border-light);background:var(--bg-page);}
+.status-flow{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:14px;}
+.status-flow .sf{padding:3px 10px;border-radius:var(--r-full);background:var(--bg-muted);}
+.status-flow .sf.on{background:var(--red);color:#fff;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ========== 二级：提案列表 ========== -->
+  <div id="listView">
+    <div class="crumb"><a href="村长仪表盘-美化版.html">首页工作台</a><span class="sep">/</span>提案审批<span class="sep">/</span>提案列表</div>
+
+    <!-- 角色视角切换（demo演示：经办提交 → 审核人审批 整条流转） -->
+    <div class="role-bar">
+      <span class="rb-label">当前视角</span>
+      <span class="role-switch">
+        <button id="roleClerk" class="on" onclick="setRole('clerk')">经办（王建国）</button>
+        <button id="roleReviewer" onclick="setRole('reviewer')">审核人（李秀兰）</button>
+      </span>
+      <span class="rb-hint" id="roleHint">经办可创建提案、编辑草稿、提交审批</span>
+    </div>
+
+    <div class="page-head">
+      <h2><span class="bar"></span>提案列表</h2>
+      <button class="btn btn-primary" id="btnCreate" onclick="openCreate()">＋ 创建提案</button>
+    </div>
+    <div class="filters">
+      <div class="field"><label>提案名称</label><input placeholder="输入关键词..."></div>
+      <div class="field"><label>选举方式</label><select><option>全部</option><option>全民直选</option><option>户代表</option><option>居民代表</option></select></div>
+      <div class="field"><label>状态</label><select><option>全部</option><option>待审批</option><option>已通过</option><option>已驳回</option></select></div>
+      <div class="field"><label>&nbsp;</label><button class="btn btn-primary">查询</button></div>
+      <div class="field"><label>&nbsp;</label><button class="btn btn-ghost">重置</button></div>
+    </div>
+    <div class="fh-row"><span class="lead">筛选字段 →</span>
+      <span class="fh">提案名称 <b>election_proposals.title</b></span>
+      <span class="fh">状态 <b>election_proposals.status</b></span>
+      <span class="fh">关键词查 <b>title / village_name / report_content</b></span>
+    </div>
+
+    <div class="table-card">
+      <div class="th-bar"><h3>历史提案列表（本期 + 历届）</h3><span style="font-size:12px;color:var(--text-muted);">共 4 条</span></div>
+      <table class="tb">
+        <thead><tr><th>提交时间</th><th>提案名称</th><th>选举方式</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody id="propRows"></tbody>
+      </table>
+      <div class="pager"><span id="propCount">共 0 条</span><span class="pg">‹</span><span class="pg on">1</span><span class="pg">›</span></div>
+    </div>
+    <div class="fh-row"><span class="lead">列表字段 →</span>
+      <span class="fh">提交时间 <b>submitted_at</b></span>
+      <span class="fh">提案名称 <b>title</b></span>
+      <span class="fh">选举方式 <b>⚠️提案表无此列,取自关联elections或前端约定</b></span>
+      <span class="fh">状态 <b>status</b> 待审核/已通过/已驳回</span>
+      <span class="fh">数据源 <b>GET /election-proposal/list</b></span>
+    </div>
+    <div class="fh-row"><span class="lead">操作 →</span>
+      <span class="fh">查看详情 → 三级下钻</span>
+      <span class="fh">✓通过/✗驳回 <b>POST /election-proposal/review</b> action=approve/reject</span>
+      <span class="fh">⚠️仅"待审批"+审核人可见通过/驳回</span>
+    </div>
+  </div>
+
+  <!-- 2026-07-14 产品交互确认（迁移到 Vue 时按此修正）：
+       提案的新建、查看、修改、提交、审核封装为同一个独立 ProposalModuleDialog，
+       不再保留三级详情跳页。状态规则：草稿可编辑；提交审核后内容锁定；
+       仅待审批+审核人显示审批意见/驳回/通过；驳回后经办才能重新编辑并再次提交；
+       已通过只读。附件属于提案并自动投影到提案档案，不进入自荐材料管理。
+       严谨实现时提交应冻结基本信息、富文本正文和附件集合的同一审核版本。
+  -->
+  <!-- ========== 三级：提案详情（静态旧展示，2.0 改为上述弹窗） ========== -->
+  <div id="detailView" class="hide">
+    <div class="crumb"><a onclick="toast('首页工作台')">首页工作台</a><span class="sep">/</span><a onclick="showList()">提案列表</a><span class="sep">/</span>涧口社区第七届换届提案详情</div>
+    <div class="page-head">
+      <h2><span class="bar"></span>提案详情</h2>
+      <button class="btn btn-ghost" onclick="showList()">← 返回列表</button>
+    </div>
+
+    <div class="detail-card">
+      <h3><span class="bar"></span>提案基本信息</h3>
+      <div class="info-grid">
+        <div class="k">提案名称</div><div class="v">涧口社区第七届换届选举提案</div>
+        <div class="k">提&nbsp;案&nbsp;人</div><div class="v">王建国（村委书记）</div>
+        <div class="k">提交时间</div><div class="v">2026年7月9日</div>
+        <div class="k">选举方式</div><div class="v">全民直选 <span style="color:var(--text-muted);font-size:12px;">（居委会三选一时显示对应方式）</span></div>
+        <div class="k">适用岗位</div><div class="v">主任、副主任、委员 <span style="color:var(--gold-hover);font-size:12px;">（一期铁律：仅此三项）</span></div>
+      </div>
+      <div class="fh-row"><span class="lead">字段 →</span>
+        <span class="fh">提案名称 <b>title</b></span>
+        <span class="fh">提案人 <b>submitted_by → users.name</b></span>
+        <span class="fh">提交时间 <b>submitted_at</b></span>
+        <span class="fh">归属地 <b>village_id / village_name</b></span>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3><span class="bar"></span>提案详细说明</h3>
+      <div class="report-box">根据《村民委员会组织法》及城厢区换届选举工作部署，涧口社区拟于2026年7月启动第七届居委会换届选举。本次采用全民直选方式，选举主任1名、副主任1名、委员5名。换届依据、时间安排、片区划分详见附件筹备方案……</div>
+      <div class="fh-row"><span class="lead">字段 →</span><span class="fh">正文 <b>report_content</b> text富文本</span></div>
+    </div>
+
+    <div class="detail-card">
+      <h3><span class="bar"></span>附件材料</h3>
+      <div class="att">📎 换届选举筹备方案.pdf <span class="dl" onclick="toast('下载预览')">下载预览</span></div>
+      <div class="att">📎 选民登记摸底表.xlsx <span class="dl" onclick="toast('下载预览')">下载预览</span></div>
+      <div class="fh-row"><span class="lead">字段 →</span><span class="fh">附件 <b>attachments</b> JSON数组 [{name,url}]</span><span class="fh">存档路径 <b>public/uploads/archives/proposals/</b></span></div>
+    </div>
+
+    <div class="detail-card">
+      <h3><span class="bar"></span>审批操作区 <span style="font-size:12px;color:var(--text-muted);font-weight:400;">（仅待审批状态 + 审核人角色可见）</span></h3>
+      <div class="approve-box">
+        <textarea placeholder="请输入审批意见，如不通过原因..."></textarea>
+        <div class="acts">
+          <button class="btn btn-deny" onclick="toast('驳回提案')">✗ 驳回提案</button>
+          <button class="btn btn-pass" onclick="toast('通过提案')">✓ 通过提案</button>
+        </div>
+      </div>
+      <div class="fh-row"><span class="lead">字段 →</span>
+        <span class="fh">审批意见 <b>reason</b> → reject_reason</span>
+        <span class="fh">动作 <b>POST /election-proposal/review</b> action=approve/reject</span>
+        <span class="fh">审批人 <b>reviewed_by</b>(登录态)</span>
+        <span class="fh">审批时间 <b>reviewed_at=NOW()</b></span>
+        <span class="fh">⚠️驳回必填原因</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========== 创建提案弹窗 ========== -->
+<div id="createModal" class="modal-bg hide">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>＋ 创建提案</h3>
+      <button class="x" onclick="closeCreate()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="status-flow">
+        <span class="sf on" id="flowDraft">草稿</span>
+        <span>→</span>
+        <span class="sf" id="flowReview">待审批</span>
+        <span>→</span>
+        <span class="sf" id="flowDone">审批完成</span>
+      </div>
+      <div class="fld">
+        <label>提案名称 <span style="color:var(--red)">*</span></label>
+        <input id="newTitle" placeholder="例：涧口社区第七届换届选举提案">
+      </div>
+      <div class="fld">
+        <label>选举方式</label>
+        <select id="newMethod">
+          <option>全民直选</option>
+          <option>户代表选举</option>
+          <option>居民代表选举</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>提案详细说明</label>
+        <div class="rt-tool">
+          <button onclick="fmt('bold')"><b>B</b></button>
+          <button onclick="fmt('italic')"><i>I</i></button>
+          <button onclick="fmt('insertUnorderedList')">· 列表</button>
+        </div>
+        <div class="rt-edit" id="newContent" contenteditable="true"
+          data-ph="说明换届依据、时间安排、拟选举岗位及其他备注…"></div>
+      </div>
+      <div class="fld">
+        <label>上传附件</label>
+        <div class="up-zone" onclick="document.getElementById('newFileInput').click()">
+          📎 点击上传文件（PDF / Word / Excel）
+        </div>
+        <input type="file" id="newFileInput" style="display:none" multiple onchange="addFiles(this)">
+        <div class="up-note">📁 附件将存入 <b>public/uploads/archives/proposals/</b>，归档目录自动生成对应文件夹</div>
+        <div class="up-list" id="upList"></div>
+      </div>
+      <div class="fh-row" style="margin-top:4px">
+        <span class="fh">接口 <b>POST /election-proposal/create</b></span>
+        <span class="fh">附件 <b>attachments JSON [{name,url}]</b></span>
+        <span class="fh">存档路径 <b>public/uploads/archives/proposals/</b></span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeCreate()">取消</button>
+      <button class="btn btn-ghost" onclick="previewProposal()">👁 预览</button>
+      <button class="btn btn-primary" onclick="submitProposal()">✓ 确认提交审批</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 示例数据 =====
+var proposals = [
+  {id:1, time:'2026-07-09 10:30', title:'涧口社区第七届换届选举提案', method:'全民直选', status:'wait', statusLabel:'待审批'},
+  {id:2, time:'2026-05-14 09:15', title:'霞皋村第六届换届选举提案',   method:'全民直选', status:'pass', statusLabel:'已通过'},
+  {id:3, time:'2026-03-02 14:40', title:'后亭村第五届换届选举提案',   method:'全民直选', status:'reject', statusLabel:'已驳回'},
+  {id:4, time:'2025-11-20 11:00', title:'洞口社区第五届换届选举提案', method:'户代表选举',status:'pass', statusLabel:'已通过'},
+];
+var currentRole = 'clerk'; // clerk | reviewer
+
+// ===== 视图切换 =====
+function showDetail(){document.getElementById('listView').classList.add('hide');document.getElementById('detailView').classList.remove('hide');window.scrollTo(0,0);}
+function showList(){document.getElementById('detailView').classList.add('hide');document.getElementById('listView').classList.remove('hide');window.scrollTo(0,0);}
+
+// ===== 角色切换 =====
+function setRole(role){
+  currentRole = role;
+  document.getElementById('roleClerk').classList.toggle('on', role==='clerk');
+  document.getElementById('roleReviewer').classList.toggle('on', role==='reviewer');
+  document.getElementById('roleHint').textContent = role==='clerk'
+    ? '经办可创建提案、编辑草稿、提交审批'
+    : '审核人可查看待审批提案，进行通过或驳回操作';
+  // 创建按钮仅经办可见
+  document.getElementById('btnCreate').style.display = role==='clerk' ? '' : 'none';
+  renderList();
+}
+
+// ===== 渲染提案列表 =====
+function renderList(){
+  var html = proposals.map(function(p){
+    var canAct = p.status==='wait' && currentRole==='reviewer';
+    return '<tr>' +
+      '<td>' + p.time + '</td>' +
+      '<td class="tt">' + p.title + '</td>' +
+      '<td>' + p.method + '</td>' +
+      '<td><span class="st ' + p.status + '">' + p.statusLabel + '</span></td>' +
+      '<td>' +
+        '<span class="op" onclick="showDetail()">查看详情</span>' +
+        (canAct ? '<span class="op approve" onclick="quickApprove(' + p.id + ',true)">✓ 通过</span><span class="op deny" onclick="quickApprove(' + p.id + ',false)">✗ 驳回</span>' : '') +
+      '</td>' +
+    '</tr>';
+  }).join('');
+  document.getElementById('propRows').innerHTML = html;
+  document.getElementById('propCount').textContent = '共 ' + proposals.length + ' 条';
+}
+
+// 列表内快捷审批
+function quickApprove(id, pass){
+  var p = proposals.find(function(x){return x.id===id;});
+  if(!p) return;
+  p.status = pass ? 'pass' : 'reject';
+  p.statusLabel = pass ? '已通过' : '已驳回';
+  renderList();
+  toast(pass ? '✓ 已通过' : '✗ 已驳回');
+}
+
+// ===== 创建提案弹窗 =====
+var _newFiles = [];
+function openCreate(){
+  document.getElementById('createModal').classList.remove('hide');
+}
+function closeCreate(){
+  document.getElementById('createModal').classList.add('hide');
+  document.getElementById('newTitle').value='';
+  document.getElementById('newContent').innerHTML='';
+  _newFiles=[];
+  document.getElementById('upList').innerHTML='';
+  // 重置状态流
+  document.getElementById('flowDraft').classList.add('on');
+  document.getElementById('flowReview').classList.remove('on');
+}
+function fmt(cmd){ document.execCommand(cmd,false,null); }
+function addFiles(input){
+  for(var i=0;i<input.files.length;i++){
+    _newFiles.push(input.files[i].name);
+    document.getElementById('upList').innerHTML +=
+      '<div class="att">📎 ' + input.files[i].name +
+      ' <span class="del" onclick="this.parentElement.remove()">× 移除</span></div>';
+  }
+  input.value='';
+}
+function previewProposal(){
+  var t = document.getElementById('newTitle').value.trim();
+  if(!t){toast('请先填写提案名称');return;}
+  toast('预览：「' + t + '」（演示模式，实际系统弹出PDF预览）');
+}
+function submitProposal(){
+  var t = document.getElementById('newTitle').value.trim();
+  if(!t){toast('提案名称不能为空');return;}
+  // 推进状态流显示
+  document.getElementById('flowDraft').classList.remove('on');
+  document.getElementById('flowReview').classList.add('on');
+  // 加入列表
+  proposals.unshift({
+    id: proposals.length+1,
+    time: new Date().toISOString().slice(0,16).replace('T',' '),
+    title: t,
+    method: document.getElementById('newMethod').value,
+    status:'wait', statusLabel:'待审批'
+  });
+  closeCreate();
+  renderList();
+  toast('✓ 提案已提交，等待审核人审批');
+}
+
+// ===== Toast =====
+var _t;
+function toast(msg){var b=document.getElementById('_t');if(!b){b=document.createElement('div');b.id='_t';b.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;padding:11px 22px;border-radius:8px;font-size:13px;z-index:99;opacity:0;transition:opacity .2s;';document.body.appendChild(b);}b.textContent=msg;b.style.opacity='1';clearTimeout(_t);_t=setTimeout(function(){b.style.opacity='0';},1600);}
+
+// ===== 初始化 =====
+renderList();
+</script>
+<script src="shared-shell.js" data-active="提案审批"></script>
+<style>html.embedded .ss-side{display:none!important}html.embedded body{margin-left:0!important}</style>
+<script>if(window.self!==window.top){document.documentElement.classList.add("embedded");}<\/script>
+</body>
+</html>

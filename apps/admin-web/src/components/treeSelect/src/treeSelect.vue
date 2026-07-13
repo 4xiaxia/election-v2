@@ -1,0 +1,50 @@
+<template>
+  <el-tree-select
+    v-bind="$attrs"
+    v-model="modelValue"
+    class="m-tree-select"
+    clearable
+    filterable
+    :data="_data"
+  />
+</template>
+
+<script setup lang="ts">
+import type { TreeNodeData } from 'element-plus/es/components/tree/src/tree.type'
+import { computed } from 'vue'
+import { treeSelectProps, treeSelectEmits } from './treeSelect'
+import { updateObjKeys } from '@/utils'
+
+defineOptions({
+  name: 'MTreeSelect'
+})
+
+const props = defineProps(treeSelectProps)
+const emit = defineEmits(treeSelectEmits)
+
+const modelValue = computed({
+  get: () => {
+    return props.modelValue
+  },
+  set: (val: any) => {
+    emit('update:modelValue', val)
+  }
+})
+
+const _data = computed(() => {
+  return updateObjKeys(
+    props.data,
+    {
+      value: props.fields.value ?? 'id',
+      label: props.fields.label ?? 'name',
+      children: props.fields.children ?? 'children'
+    },
+    props.fields?.children ?? 'children'
+  ) as TreeNodeData[]
+})
+</script>
+
+<style lang="scss" scoped>
+.m-tree-select {
+}
+</style>

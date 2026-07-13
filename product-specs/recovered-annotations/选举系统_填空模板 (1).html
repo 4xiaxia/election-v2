@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<!--
+  ===== 组件小纸条（真前端照此套 isdream-vue-admin / Element Plus 组件）=====
+  这块地 = 母版·选举活动填空引擎。当前是静态HTML靶子，真前端照样式+此纸条套组件：
+  - 归属地选择(乡镇→村社区两级联动) → ElSelect 级联 / isdream treeSelect；数据接 GET villages(122条)
+  - 阶段填空表(时间/主题/岗位/天数可编辑) → isdream Table(可编辑单元格) 或 ElForm 行内编辑；
+    核心阶段行锁定(提名/选民登记/资格审查/投票选举日/发公告=关联别的表)，细枝行可增删(建章立制/工作移交)
+  - 2026-07-14 产品纠偏：此处旧称“材料三流向”会混淆业务，迁移时不得照搬。
+    “材料管理”仅指用户前端自荐某岗位时提交的个人私密报名材料。
+    母版的下载文件、阶段附件、上传档案和照片均进入归档管理，并保留 electionId+stageKey 来源。
+    页面字段应按真实用途改称“关联下载文件 / 上传阶段档案”，不要统称“材料”。
+  - 发子公告 → el-dialog + el-form：
+      公告标题 → el-input placeholder；
+      正文富文本 → el-input type="textarea" autosize 或接入 wangEditor/TinyMCE；
+      定时发布 → el-radio-group(立即/定时) + el-date-picker type="datetime"；
+      发布后写 localStorage(calendarEvents) → 仪表盘日历 callback 渲染铃铛
+  - 各阶段存档上传 → el-upload action="/api/materials/upload" list-type="text" multiple；
+      已上传文件 → el-table 内嵌预览/下载/删除
+  - 归档文件夹坑 → 活动创建即按阶段生成，不手工建
+  皮：美化版红金(Noto Serif SC + #B22222/#C8A45C)覆盖 ElementPlus 默认皮。CSS变量全用仪表盘 :root，不另起炉灶。
+  ==========================================================================
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>选举系统 · 可编辑模板引擎</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+/* 面包屑(接官道用,不影响下面紫色系原有样式) */
+.mother-crumb{font-size:13px;color:#7A7A7A;margin:0 auto 14px;max-width:1300px;padding:0 16px;}
+.mother-crumb a{color:#2874A6;text-decoration:none;cursor:pointer;}
+.mother-crumb a:hover{color:#B22222;}
+.mother-crumb .sep{margin:0 7px;color:#D4D0CA;}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font-sans); background: var(--bg-page); color: var(--text-primary); line-height: 1.6; }
+.container { max-width: 1300px; margin: 0 auto; padding: 24px 16px; }
+
+.header { background: linear-gradient(135deg,var(--red),#8E1B1B); color:#fff; padding: 28px 36px; border-radius: 16px; margin-bottom: 24px; position:relative; box-shadow:0 8px 24px rgba(178,34,34,.18); }
+.header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:0 0 16px 16px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.header h1 { font-family: var(--font-serif); font-size: 24px; font-weight: 700; margin-bottom: 4px; letter-spacing:1px; }
+.header p { font-size: 13px; opacity: .85; }
+
+.card { background: #fff; border-radius: 14px; padding: 24px 28px; margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,.05); border:1px solid var(--border-light); }
+.card-title { font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 18px; padding-left: 12px; border-left: 4px solid var(--red); }
+
+.form-top { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 20px; }
+.form-group { flex: 1; min-width: 140px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
+.form-group select, .form-group input { width: 100%; padding: 10px 12px; border: 2px solid #e0e3e8; border-radius: 10px; font-size: 14px; color: #333; background: #fafbfc; font-family: inherit; }
+.form-group select:focus, .form-group input:focus { outline: none; border-color: #B22222; background: #fff; }
+
+.btn { display: inline-block; padding: 10px 24px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all .15s; font-family: inherit; }
+.btn-primary { background: linear-gradient(135deg,#B22222,#961C1C); color: #fff; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(178,34,34,.25); }
+.btn-outline { background: #fff; color: #B22222; border: 2px solid #B22222; }
+.btn-outline:hover { background: #B22222; color: #fff; }
+.btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 8px; }
+.btn-xs { padding: 3px 10px; font-size: 11px; border-radius: 6px; }
+.btn-block { width: 100%; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1200px; }
+table th { background: #FDF6E3; color: #B08E3A; font-weight: 700; padding: 10px 10px; text-align: left; white-space: nowrap; border-bottom: 2px solid #E8D5A0; font-size: 12px; }
+table td { padding: 10px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+table tr:hover td { background: #FBFAF8; }
+
+td input[type="text"], td input[type="date"], td input[type="number"] { width: 100%; padding: 7px 8px; border: 1.5px solid #e0e3e8; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; }
+td input:focus { outline: none; border-color: #B22222; }
+td input.date-pair { min-width: 105px; }
+td input.day-num { width: 48px; text-align: center; min-width: 48px; }
+
+.stage-name { color: #B22222; font-weight: 700; white-space: nowrap; }
+.stage-name input { color: #B22222; font-weight: 700; }
+
+.file-link { color: #2874A6; text-decoration: none; font-size: 12px; cursor: pointer; display: inline-block; margin: 1px 0; }
+.file-link:hover { text-decoration: underline; color: #B22222; }
+.file-row { display: flex; align-items: center; gap: 4px; margin: 2px 0; flex-wrap: wrap; }
+.file-delete { color: #c0392b; cursor: pointer; font-size: 14px; font-weight: 700; line-height: 1; }
+.file-delete:hover { color: #e74c3c; }
+
+.upload-btn { cursor: pointer; color: #B22222; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.upload-btn:hover { color: #961C1C; }
+/* 富文本工具栏按钮 */
+.rt-btn { border: 1px solid #e0e3e8; background: #fff; color: #4A4A4A; padding: 3px 9px; border-radius: 5px; cursor: pointer; font-size: 12px; font-family: inherit; }
+.rt-btn:hover { background: #FDF6E3; border-color: #C8A45C; color: #B22222; }
+
+/* 阶段锁定 / 拖拽排序 / 删除 */
+.idx-cell { font-weight: 700; white-space: nowrap; text-align: center; }
+.locked-idx { color: #B08E3A; background: #FDF6E3; border-radius: 6px; }
+.drag-idx { color: #999; cursor: grab; user-select: none; }
+.drag-idx:active { cursor: grabbing; }
+.stage-row-locked td { background: #FCFBF6; }
+.stage-row-locked:hover td { background: #FBF6E6; }
+.stage-name-locked { color: #B22222; font-weight: 700; display: inline-flex; align-items: center; }
+.stage-row-editable.drag-over td { border-top: 2px dashed #B22222; }
+.stage-row-editable[draggable="true"] { cursor: default; }
+.del-stage-btn { color: #c0392b; border: 1.5px solid #f0c4c0; background: #fff; white-space: nowrap; margin-left: 4px; }
+.del-stage-btn:hover { background: #fdeceb; border-color: #e74c3c; }
+.add-stage-bar { margin-top: 14px; text-align: center; }
+.btn-add-stage { border: 1.5px dashed #B08E3A; background: #FDF6E3; color: #B08E3A; font-weight: 600; padding: 8px 20px; border-radius: 10px; cursor: pointer; font-size: 13px; }
+.btn-add-stage:hover { background: #F7ECC8; }
+.lock-legend { font-size: 12px; color: #888; margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+.lock-legend span { display: inline-flex; align-items: center; gap: 4px; }
+
+/* 前置弹窗 */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.45); z-index: 100; justify-content: center; align-items: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 18px; padding: 32px 36px; max-width: 680px; width: 94%; max-height: 88vh; overflow-y: auto; box-shadow: 0 12px 48px rgba(0,0,0,.18); }
+.modal h3 { font-size: 20px; margin-bottom: 8px; color: #1A1A1A; }
+.modal .modal-sub { font-size: 13px; color: #888; margin-bottom: 24px; }
+.modal textarea { width: 100%; height: 200px; padding: 12px; border: 2px solid #e0e3e8; border-radius: 10px; font-size: 14px; font-family: inherit; resize: vertical; }
+.modal textarea:focus { outline: none; border-color: #B22222; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+/* 手动选择区 */
+.manual-select { display: flex; gap: 16px; flex-wrap: wrap; }
+.manual-select .form-group { flex: 1; min-width: 180px; }
+
+/* 结果标签 */
+.result-tag { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; margin-top: 12px; }
+.result-tag.village { background: #e8f5e9; color: #2e7d32; }
+.result-tag.community { background: #e3f2fd; color: #1565c0; }
+
+/* 分流提示 */
+.diverge-info { background: #fdf8f0; border-left: 4px solid #e67e22; padding: 14px 18px; border-radius: 0 10px 10px 0; margin-top: 16px; font-size: 13px; line-height: 1.8; }
+.diverge-info strong { color: #e67e22; }
+
+/* 类型详情卡片 */
+.type-detail-card { background: #f8f9fc; border-radius: 12px; padding: 18px 20px; margin-top: 16px; }
+.type-detail-card h4 { font-size: 14px; margin-bottom: 10px; color: #1A1A1A; }
+.type-detail-card .tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.type-detail-card .tag { display: inline-block; padding: 3px 10px; border-radius: 14px; font-size: 11px; font-weight: 600; }
+.tag-village { background: #e8f5e9; color: #2e7d32; }
+.tag-community { background: #e3f2fd; color: #1565c0; }
+.tag-gov { background: #fce4ec; color: #c62828; }
+.type-detail-card .info-line { font-size: 12px; color: #666; margin: 3px 0; }
+.type-detail-card .info-line .icon { margin-right: 4px; }
+
+.stat-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.stat-item { flex: 1; min-width: 100px; background: #f8f9fc; border-radius: 10px; padding: 14px 16px; text-align: center; }
+.stat-num { font-size: 24px; font-weight: 800; color: #B22222; }
+.stat-label { font-size: 11px; color: #888; margin-top: 2px; }
+
+#result-area { display: none; }
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 24px; border-radius: 10px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity .3s; }
+.toast.show { opacity: 1; }
+
+/* 选岗提示小卡片 */
+.job-hint { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.job-hint-item { background: #fff; border: 1.5px solid #e0e3e8; border-radius: 8px; padding: 6px 12px; font-size: 11px; }
+.job-hint-item .label { color: #888; margin-right: 4px; }
+.job-hint-item .value { font-weight: 700; color: #B22222; }
+
+@media (max-width: 768px) {
+  .header { padding: 20px; }
+  .card { padding: 16px 12px; }
+  .modal { padding: 24px 20px; max-width: 96%; }
+}
+</style>
+</head>
+<body>
+
+<div class="mother-crumb" id="motherCrumb">
+  <a href="村长仪表盘-美化版.html">首页工作台</a><span class="sep">/</span>
+  <a href="页面-活动总列表.html">选举活动管理</a><span class="sep">/</span>
+  <span id="motherCrumbCur">母活动小看板</span>
+</div>
+
+<div class="container">
+
+<div class="header">
+  <h1 id="header-title">📋 选举系统 · 可编辑模板引擎</h1>
+  <p id="header-sub">请先选择归属地，系统将自动分流到村委会或居委会模板</p>
+</div>
+
+<!-- 选举配置区 -->
+<div class="card" id="config-card">
+  <div class="card-title">⚙️ 选举配置</div>
+  <div class="form-top">
+    <div class="form-group">
+      <label>🏠 归属地</label>
+      <input type="text" id="displayLocation" readonly style="background:#FDF6E3;font-weight:700;color:#B22222;cursor:pointer;" onclick="openLocationModal()" value="点击选择归属地">
+    </div>
+    <div class="form-group">
+      <label>类型分流</label>
+      <input type="text" id="displayType" readonly style="background:#f8f9fc;font-weight:600;" value="—">
+    </div>
+    <div class="form-group">
+      <label>选举模板</label>
+      <select id="displayTemplate" onchange="onTemplateChange()" style="background:#fafbfc;font-weight:600;">
+        <option value="">— 请先选择归属地 —</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>选举日 🎯</label>
+      <input type="date" id="electionDate" value="2026-11-20" onchange="autoGenerate()">
+    </div>
+    <div class="form-group" style="flex:0 0 auto;">
+      <button class="btn btn-primary" onclick="autoGenerate()">⚡ 重新生成</button>
+    </div>
+  </div>
+  <!-- 类型专属岗位提示 -->
+  <div id="typeJobHint" style="display:none;"></div>
+</div>
+
+<!-- 结果区 -->
+<div id="result-area">
+  <div class="card">
+    <div class="stat-bar">
+      <div class="stat-item"><div class="stat-num" id="stat-stages">-</div><div class="stat-label">阶段</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-days">-</div><div class="stat-label">总天数</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-notices">-</div><div class="stat-label">公告</div></div>
+      <div class="stat-item"><div class="stat-num" id="stat-files">-</div><div class="stat-label">文件</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+      📅 选举时间轴（🔒 锁定阶段关联系统数据；⠿ 可编辑阶段支持拖动排序/删除/新增）
+      <button class="btn btn-outline btn-sm" onclick="exportData()">📤 导出数据</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:46px">#</th>
+            <th style="width:140px">阶段名称</th>
+            <th style="width:120px">开始日期</th>
+            <th style="width:120px">结束日期</th>
+            <th style="width:56px">天数</th>
+            <th style="width:180px">核心工作</th>
+            <!-- 2026-07-14 产品语义：
+                 “关联材料”在 2.0 应改为“对外下载资料”，后台上传后供前端用户下载；
+                 公告编辑弹窗从本阶段资料池下拉多选 fileId，不重复上传。
+                 “上传文件”应改为“上传档案”，存线下会议记录、活动照片等内部档案。
+                 两者进入同一届/同一 stageKey 的归档目录，但分 public-download 与 internal-archive 桶。
+            -->
+            <th style="width:200px">关联材料</th>
+            <th style="width:80px">上传文件</th>
+            <th style="width:130px">操作</th>
+          </tr>
+        </thead>
+        <tbody id="timeline-body"></tbody>
+      </table>
+    </div>
+    <div class="add-stage-bar">
+      <button class="btn-add-stage" onclick="addStage()">＋ 新增阶段</button>
+      <div class="lock-legend">
+        <span>🔒 锁定阶段：关联系统核心数据，不可删除/越序</span>
+        <span>⠿ 可编辑阶段：可拖动排序、删除、修改文案</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ============ 前置弹窗：选择归属地 ============ -->
+<div class="modal-overlay show" id="locationModal">
+  <div class="modal">
+    <h3>📍 选择归属地</h3>
+    <div class="modal-sub">城厢区：社区 29 个 · 行政村 93 个 | 选后将自动分流到村委会或居委会模板</div>
+
+    <!-- 手工选择归属地（乡镇→村/社区两级联动，数据来自 villages 表 122 条真名单） -->
+    <div id="manualPanel">
+      <div class="manual-select">
+        <div class="form-group">
+          <label>乡镇/街道</label>
+          <select id="selTown" onchange="onTownChange()">
+            <option value="">-- 请选择乡镇/街道 --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>村/社区</label>
+          <select id="selVillage" onchange="onVillageChange()">
+            <option value="">-- 请先选择乡镇 --</option>
+          </select>
+        </div>
+      </div>
+      <div id="manualResult" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- 分流提示 -->
+    <div class="diverge-info" id="divergeInfo" style="display:none;">
+      <strong>🔀 系统分流判断：</strong><br>
+      <span id="divergeText"></span>
+    </div>
+
+    <!-- 类型详情卡片 -->
+    <div id="typeDetailCard" style="display:none;"></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="resetLocation()">🔄 重置</button>
+      <button class="btn btn-primary" id="btnConfirmLocation" onclick="confirmLocation()" disabled>✅ 确认归属地，进入选举系统</button>
+    </div>
+  </div>
+</div>
+
+<!-- 公告编辑弹窗（富文本 + 定时发布） -->
+<div class="modal-overlay" id="noticeModal">
+  <div class="modal" style="max-width:680px;width:96%">
+    <h3 id="noticeModalTitle">编辑公告</h3>
+    <div style="font-size:12px;color:#888;margin-bottom:14px" id="noticeModalStage"></div>
+
+    <!-- 公告标题 -->
+    <div style="margin-bottom:12px">
+      <label style="font-size:12px;color:#888;font-weight:600;display:block;margin-bottom:4px">公告标题</label>
+      <input id="noticeTitle" type="text" placeholder="例：涧口社区第七届换届选举选民登记公告"
+        style="width:100%;padding:8px 12px;border:1.5px solid #e0e3e8;border-radius:8px;font:inherit;font-size:13px">
+    </div>
+
+    <!-- 富文本工具栏 -->
+    <div id="rtToolbar" style="display:flex;flex-wrap:wrap;gap:4px;padding:7px 10px;background:#f8f7f5;border:1.5px solid #e0e3e8;border-bottom:none;border-radius:8px 8px 0 0">
+      <button type="button" class="rt-btn" onclick="rtExec('bold')" title="加粗"><b>B</b></button>
+      <button type="button" class="rt-btn" onclick="rtExec('italic')" title="斜体"><i>I</i></button>
+      <button type="button" class="rt-btn" onclick="rtExec('underline')" title="下划线"><u>U</u></button>
+      <span style="border-left:1px solid #ddd;margin:2px 4px"></span>
+      <button type="button" class="rt-btn" onclick="rtExec('insertUnorderedList')" title="无序列表">• 列表</button>
+      <button type="button" class="rt-btn" onclick="rtExec('insertOrderedList')" title="有序列表">1. 列表</button>
+      <span style="border-left:1px solid #ddd;margin:2px 4px"></span>
+      <button type="button" class="rt-btn" onclick="rtHeading('h3')" title="小标题">标题</button>
+      <button type="button" class="rt-btn" onclick="rtInsertDate()" title="插入当前日期">📅 日期</button>
+      <button type="button" class="rt-btn" onclick="rtInsertSig()" title="插入落款">落款</button>
+    </div>
+    <!-- 富文本编辑区 -->
+    <div id="noticeContent" contenteditable="true"
+      style="min-height:160px;max-height:280px;overflow-y:auto;padding:12px 14px;border:1.5px solid #e0e3e8;border-radius:0 0 8px 8px;font-size:13.5px;line-height:1.85;background:#fff;outline:none"
+      oninput="syncNoticeHtml()"></div>
+    <div style="font-size:11px;color:#bbb;margin-top:4px">工具栏支持加粗、列表、标题等基本排版；公告正文会随母版阶段自动存档。</div>
+
+    <!-- 定时发布 -->
+    <div style="margin-top:16px;padding:12px 14px;background:#FDF6E3;border:1px solid #E8D5A0;border-radius:8px">
+      <div style="font-size:12px;font-weight:700;color:#8B6C28;margin-bottom:8px">📅 发布时间</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="radio" name="publishMode" value="immediate" id="pmImm" checked onchange="togglePublishTime()"> 立即发布
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="radio" name="publishMode" value="scheduled" id="pmSched" onchange="togglePublishTime()"> 定时发布
+        </label>
+        <input type="datetime-local" id="publishAt" style="display:none;padding:6px 10px;border:1.5px solid #e0e3e8;border-radius:7px;font:inherit;font-size:13px" onchange="onPublishTimeChange()">
+        <span id="publishAtHint" style="font-size:12px;color:#888;display:none">设置后将在仪表盘日历上显示提醒 🔔</span>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-outline btn-sm" onclick="closeNoticeModal()">取消</button>
+      <button class="btn btn-primary btn-sm" onclick="saveNotice()">💾 保存公告</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="hiddenFileInput" style="display:none" multiple onchange="handleFileUpload(this)">
+
+<script>
+const PAGE_PARAMS = new URLSearchParams(window.location.search);
+const READ_ONLY_MODE = PAGE_PARAMS.get('readonly') === '1';
+const ELECTION_ID = PAGE_PARAMS.get('electionId') || '';
+const ELECTION_NAME = PAGE_PARAMS.get('electionName') || '';
+
+function applyReadOnlyMode() {
+  if (!READ_ONLY_MODE) return;
+  document.getElementById('locationModal').classList.remove('show');
+  document.getElementById('header-title').textContent = '📋 选举活动历史明细（只读）';
+  document.getElementById('header-sub').textContent = '该届已归档，仅供查看与下载，不可修改、上传或发布公告';
+  document.querySelectorAll('input, select, textarea').forEach(function(el) { el.disabled = true; });
+  document.querySelectorAll('.upload-btn, .file-delete, .edit-notice-btn').forEach(function(el) { el.style.display = 'none'; });
+  document.querySelectorAll('button').forEach(function(btn) {
+    const label = btn.textContent || '';
+    if (/重新生成|保存公告|确认归属|重置/.test(label)) btn.style.display = 'none';
+  });
+}
+
+// ========== 城厢区完整数据（社区29 + 村93） ==========
+// 社区：只属于社区，楼房小区、城镇居民片区
+const COMMUNITIES = {
+  '龙桥街道': ['兴安','太平','下磨','北磨','龙桥','万辉','圳湖','雅颂居'],
+  '凤凰山街道': ['龙德井','南园','南门','筱塘','月塘','新塘'],
+  '霞林街道': ['棠坡','沟头','霞林','莆糖','肖厝','下黄','坂头','顶墩','屿上'],
+  '华亭镇': ['华亭','涧口','前黄'],
+  '灵川镇': ['何寨'],
+  '常太镇': ['常太'],
+  '东海镇': ['海头']
+};
+
+// 村：只属于村，农田、山林、自然村、务农人群
+const VILLAGES = {
+  '龙桥街道': ['延寿','洋西','泗华'],
+  '凤凰山街道': ['林桥','朱坑','白洋'],
+  '霞林街道': ['铁岭','木兰'],
+  '华亭镇': ['樟塘','万坂','兴沙','油潭','隆兴','郊尾','后角','坪坂','湖头','霞皋','郑庄','后枫','圳头','埔柳','五云','长岭','走马亭','宫利','园头','山牌','濑溪','云峰','后山','前柳','郊溪','南湖','西湖','濑厝','西许','西沙','顶宅','后塘'],
+  '常太镇': ['东太','候山','金川','内东坪','埔头','南川','利车','汀洋','渡里','松峰','东青','坑洋','马院','外东坪','溪南','洋边','顶坑','下莒','山坑','照车','山门','霞山','党城','过溪','溪北','长基','岭下'],
+  '灵川镇': ['径里','东进','山门里','柯朱','下尾','太湖','张边','青山','榜头','书峰','云庄','西墩','桂山','硋灶'],
+  '东海镇': ['东沙','东海','上图','蔡厝','西黄','东朱','坪洋','西厝','蔡亭','大埔','上亭','利角']
+};
+
+// 获取所有乡镇（含社区或村的乡镇去重）
+function getAllTowns() {
+  const towns = new Set();
+  Object.keys(COMMUNITIES).forEach(t => towns.add(t));
+  Object.keys(VILLAGES).forEach(t => towns.add(t));
+  return Array.from(towns).sort();
+}
+
+// ========== 类型专属信息 ==========
+const TYPE_INFO = {
+  village: {
+    label: '🏡 村（行政村）',
+    tagClass: 'village',
+    defaultTemplateKey: 'TEMPLATE_VILLAGE',
+    electionMode: '全民直选（唯一模式，不可更改）',
+    governLabel: '村委会',
+    // 选举类岗位（村民投票选出来，可自荐、群众联名推荐）——一期只有村委会主任/副主任/委员
+    electionAll: [
+      { name:'村委会', detail:'主任、副主任、委员', note:'✅ 可自荐竞选' }
+    ],
+    // 可竞选岗位（开放自荐报名）
+    campaignJobs: ['村委会主任', '村委会副主任', '村委会委员'],
+    // 专属工作
+    exclusiveWork: ['农田/耕地/山林/宅基地管理', '种粮补贴/农机/农业产业', '自然村道路/水利灌溉/山林防火', '农村宅基地审批/自建房管理', '集体经济（山林/农田/果园鱼塘发包）'],
+    // 不适用
+    notApplicable: ['居委会', '户代表选举', '居民代表选举', '物业/老旧小区', '城镇居民医保']
+  },
+  community: {
+    label: '🏙️ 社区（居委会）',
+    tagClass: 'community',
+    defaultTemplateKey: 'TEMPLATE_COMMUNITY_HOUSEHOLD',
+    electionMode: '三选一（全民直选 / 户代表选举 / 居民代表选举）',
+    governLabel: '居委会',
+    // 选举类岗位（居民投票选出来，可自荐、群众联名推荐）——一期只有居委会主任/副主任/委员
+    electionAll: [
+      { name:'社区居委会', detail:'主任、副主任、委员', note:'✅ 可自荐竞选' }
+    ],
+    // 可竞选岗位（开放自荐报名）
+    campaignJobs: ['居委会主任', '居委会副主任', '居委会委员'],
+    // 专属工作
+    exclusiveWork: ['小区物业矛盾调解/业主委员会对接', '城镇居民医保/灵活就业/流动人口', '老旧小区改造/市容环境/沿街商铺', '城市网格化/文明城市/文体活动'],
+    // 不适用
+    notApplicable: ['村委会', '农田/山林/征地', '农业补贴/养殖', '宅基地审批']
+  }
+};
+
+// ========== 全局状态 ==========
+let selectedTown = '';
+let selectedVillage = '';
+let selectedType = ''; // 'village' | 'community'
+let selectedLocationMode = ''; // 'manual' | 'map'
+let runtimeStages = [];
+let currentUploadRow = null;
+let currentNoticeStageIdx = null;
+
+// ========== 4种选举模板 ==========
+// 2026-07-14 架构铁律：四套是“官方模板配置”，不是四套系统。
+// 村和社区共用同一页面、弹窗、API、岗位/材料/候选/公告/归档/花名册状态机；
+// 仅由 organizationType + electionMethod 选择阶段、术语和经官方核验的法定规则。
+// 禁止复制 village/community 页面或业务实现，否则必然发生数据合同与交互漂移。
+// lock:true = 与系统核心表关联，不可删不可越序；其余阶段可拖动排序/删除/新增
+const TEMPLATES = {
+
+  // ─── 模板1：农村村委会 · 全民直选（唯一合法方式）───
+  TEMPLATE_VILLAGE: {
+    name: '村民委员会 · 全民直选',
+    shortName: '村委会直选',
+    totalDays: 46, noticeCount: 16,
+    stages: [
+      { name:'前期准备·成立选委会', lock:false, days:5, offset:-46,
+        work:'制定选举工作方案；召开村民大会成立选举委员会；发布1号公告（选举通知）',
+        files:['1号公告-选举通知.docx','选举工作方案.docx','选委会成员名单.docx'] },
+      // 系统锁：写入选民管理表，联动候选人提名资格校验
+      { name:'选民资格确认·登记', lock:true, days:7, offset:-41,
+        work:'逐户核查全村18周岁以上村民资格；登记造册；发布2号公告（选民登记通知）',
+        files:['2号公告-选民登记通知.docx','选民资格申报表.xlsx','选民登记汇总表.xlsx'] },
+      { name:'选民名单公示·受理异议', lock:false, days:5, offset:-34,
+        work:'公布初步选民名单；受理异议（3日内书面提出）；处理结果再次公示；发布3/4号公告',
+        files:['3号公告-初步选民名单.docx','4号公告-异议处理结果.docx','选民异议申请表.docx'] },
+      // 系统锁：村委会法定——选委会合法成立须经村民代表会议确认
+      { name:'推选村民代表', lock:true, days:5, offset:-29,
+        work:'按村民小组推选村民代表（每20~30户推1名）；召开村民代表会议确认选委会组成；发布5号公告',
+        files:['5号公告-村民代表名单.docx','村民代表推选表.xlsx','村民代表名册.xlsx','代表会议记录.docx'] },
+      // 系统锁：提名开始=候选人管理系统三阶段漏斗入口
+      { name:'候选人提名', lock:true, days:5, offset:-24,
+        work:'收集提名（自荐需本人申请、联名须10名以上选民签字、党组织可推荐）；初审材料；发布6号公告',
+        files:['6号公告-提名通知.docx','候选人自荐申请表.docx','候选人联名推荐表.docx','党组织推荐说明.docx'] },
+      { name:'竞选演讲·差额预选', lock:false, days:3, offset:-19,
+        work:'组织初步候选人竞选演讲；差额预选（主任1→2名，副主任/委员同比差额）；发布7号公告',
+        files:['7号公告-正式候选人公示.docx','竞选演讲安排表.docx','预选统计表.xlsx'] },
+      // 系统锁：审查结果直接推进候选人管理系统状态
+      { name:'候选人资格审查', lock:true, days:5, offset:-16,
+        work:'逐一审查正式候选人（户籍、年龄、无违规记录）；公示审查结论；发布8/9号公告',
+        files:['8号公告-资格审查结果.docx','9号公告-正式候选人公示.docx','候选人资格审查表.xlsx'] },
+      { name:'投票筹备', lock:false, days:5, offset:-11,
+        work:'印制选票；布置投票站；培训唱票/计票人员；发布10~15号公告（投票安排系列）',
+        files:['10号公告-选举日通知.docx','11号公告-投票站设置.docx','选票(村委会).xlsx','投票工作人员名单.docx'] },
+      // 系统锁：选举日=结果回填入库，触发岗位状态更新至"结果公示"
+      { name:'选举日 🎯', lock:true, days:1, offset:0,
+        work:'正式投票（过半数选民出席方有效）；当场计票唱票；公布结果；发布16号公告（选举结果公告）',
+        files:['16号公告-选举结果公告.docx','选举结果统计表.xlsx','当选通知书.docx','选举会议记录.docx'] },
+      { name:'建章立制·工作移交', lock:false, days:10, offset:1,
+        work:'新委员会制定工作规章制度；旧委员会移交账目、印章、文件、档案；完成交接签字',
+        files:['工作移交清单.docx','账目交接表.xlsx','印章移交记录.docx','档案交接单.docx'] }
+    ]
+  },
+
+  // ─── 模板2：城市居委会 · 全民直选 ───
+  TEMPLATE_COMMUNITY_DIRECT: {
+    name: '居民委员会 · 全民直选',
+    shortName: '居委会直选',
+    totalDays: 46, noticeCount: 17,
+    stages: [
+      { name:'前期准备·成立选委会', lock:false, days:5, offset:-46,
+        work:'制定选举工作方案；成立选举委员会；发布1号公告（选举通知）；发布2号公告（选举方式说明：本次采用全民直选）',
+        files:['1号公告-选举通知.docx','2号公告-选举方式说明.docx','选举工作方案.docx','选委会名单.docx'] },
+      // 系统锁：写入选民管理表
+      { name:'选民资格确认·登记', lock:true, days:7, offset:-41,
+        work:'核查全体18周岁以上居民资格；登记造册；发布3号公告（选民登记通知）',
+        files:['3号公告-选民登记通知.docx','选民资格申报表.xlsx','选民登记汇总表.xlsx'] },
+      { name:'选民名单公示·受理异议', lock:false, days:5, offset:-34,
+        work:'公布初步选民名单；受理异议；处理结果再次公示；发布4/5号公告',
+        files:['4号公告-初步选民名单.docx','5号公告-异议处理结果.docx','选民异议申请表.docx'] },
+      // 建议保留：居委会居民代表存档合规，可支撑后续居民代表会议决议
+      { name:'推选居民代表（建议保留）', lock:false, days:5, offset:-29,
+        work:'各小组按20~30户推选1名居民代表；登记造册并公示；发布6号公告（居民代表名单）',
+        files:['6号公告-居民代表名单.docx','居民代表推选表.xlsx','居民代表名册.xlsx'] },
+      // 系统锁：提名开始=候选人管理系统入口
+      { name:'候选人提名', lock:true, days:5, offset:-24,
+        work:'收集提名（自荐/联名/党组织推荐）；初审材料；发布7号公告（提名通知）',
+        files:['7号公告-提名通知.docx','候选人自荐申请表.docx','候选人联名推荐表.docx'] },
+      { name:'竞选演讲·差额预选', lock:false, days:3, offset:-19,
+        work:'组织候选人竞选演讲；差额预选；发布8号公告（正式候选人公示）',
+        files:['8号公告-正式候选人公示.docx','竞选演讲安排表.docx'] },
+      // 系统锁：审查推进候选人管理系统状态
+      { name:'候选人资格审查', lock:true, days:5, offset:-16,
+        work:'审查正式候选人资格；公示审查结论；发布9/10号公告',
+        files:['9号公告-资格审查结果.docx','10号公告-正式候选人公示.docx','候选人资格审查表.xlsx'] },
+      { name:'投票筹备', lock:false, days:5, offset:-11,
+        work:'印制选票；布置投票站；培训工作人员；发布11~16号公告（投票安排系列）',
+        files:['11号公告-选举日通知.docx','12号公告-投票站设置.docx','选票(居委会).xlsx','投票工作人员名单.docx'] },
+      // 系统锁：结果回填，触发岗位状态更新
+      { name:'选举日 🎯', lock:true, days:1, offset:0,
+        work:'正式投票；计票唱票；公布结果；发布17号公告（选举结果公告）',
+        files:['17号公告-选举结果公告.docx','选举结果统计表.xlsx','当选通知书.docx'] },
+      { name:'建章立制·工作移交', lock:false, days:10, offset:1,
+        work:'新委员会制定规章；旧委员会移交账目、印章、档案；完成交接签字',
+        files:['工作移交清单.docx','账目交接表.xlsx','印章移交记录.docx'] }
+    ]
+  },
+
+  // ─── 模板3：城市居委会 · 户代表选举 ───
+  // 注意：不能混入居民代表流程——两套投票主体并用法律无效
+  TEMPLATE_COMMUNITY_HOUSEHOLD: {
+    name: '居民委员会 · 户代表选举',
+    shortName: '居委会户代表',
+    totalDays: 44, noticeCount: 15,
+    stages: [
+      { name:'前期准备·成立选委会', lock:false, days:5, offset:-44,
+        work:'制定选举方案；成立选委会；发布1号公告（选举通知）；发布2号公告（选举方式说明：本次采用户代表选举）',
+        files:['1号公告-选举通知.docx','2号公告-选举方式说明.docx','选举工作方案.docx','选委会名单.docx'] },
+      // 系统锁：户代表名册写入，是本模式唯一投票主体
+      { name:'户代表推选·登记', lock:true, days:7, offset:-39,
+        work:'以家庭户为单位每户推选1名户代表；登记造册；公示户代表名单；发布3号公告',
+        files:['3号公告-户代表登记通知.docx','户代表登记表.xlsx','户代表名册.xlsx'] },
+      { name:'名单公示·受理异议', lock:false, days:4, offset:-32,
+        work:'公示户代表名单；受理户代表资格异议；处理结果公示；发布4/5号公告',
+        files:['4号公告-户代表名单公示.docx','5号公告-异议处理结果.docx'] },
+      // 系统锁：候选人管理系统入口
+      { name:'候选人提名', lock:true, days:5, offset:-28,
+        work:'以户代表身份收集提名（自荐/联名/党组织推荐）；发布6号公告（提名通知）',
+        files:['6号公告-提名通知.docx','候选人自荐申请表.docx','候选人联名推荐表.docx'] },
+      { name:'竞选演讲·差额预选', lock:false, days:3, offset:-23,
+        work:'候选人竞选演讲；差额预选；发布7号公告（正式候选人公示）',
+        files:['7号公告-正式候选人公示.docx','竞选演讲安排表.docx'] },
+      // 系统锁：审查推进候选人管理系统状态
+      { name:'候选人资格审查', lock:true, days:5, offset:-20,
+        work:'审查正式候选人资格；公示结论；发布8/9号公告',
+        files:['8号公告-资格审查结果.docx','9号公告-正式候选人公示.docx','候选人资格审查表.xlsx'] },
+      { name:'投票筹备', lock:false, days:5, offset:-15,
+        work:'印制选票（户代表持票）；布置投票站；培训工作人员；发布10~14号公告',
+        files:['10号公告-选举日通知.docx','11号公告-投票站设置.docx','选票(居委会-户代表).xlsx'] },
+      // 系统锁：结果回填，触发岗位状态更新
+      { name:'选举日 🎯', lock:true, days:1, offset:0,
+        work:'户代表凭证投票；计票唱票；公布结果；发布15号公告（选举结果公告）',
+        files:['15号公告-选举结果公告.docx','选举结果统计表.xlsx','当选通知书.docx'] },
+      { name:'建章立制·工作移交', lock:false, days:10, offset:1,
+        work:'新委员会制定规章；移交账目、印章、档案；完成交接签字',
+        files:['工作移交清单.docx','账目交接表.xlsx','印章移交记录.docx'] }
+    ]
+  },
+
+  // ─── 模板4：城市居委会 · 居民代表选举 ───
+  // 注意：居民代表是唯一投票主体，代表名册直连投票资格，系统强锁
+  TEMPLATE_COMMUNITY_REPRESENTATIVE: {
+    name: '居民委员会 · 代表选举',
+    shortName: '居委会代表选举',
+    totalDays: 42, noticeCount: 15,
+    stages: [
+      { name:'前期准备·成立选委会', lock:false, days:5, offset:-42,
+        work:'制定选举方案；成立选委会；发布1号公告（选举通知）；发布2号公告（选举方式说明：本次采用居民代表选举）',
+        files:['1号公告-选举通知.docx','2号公告-选举方式说明.docx','选举工作方案.docx','选委会名单.docx'] },
+      // 系统强锁：居民代表是本模式唯一投票主体，代表名册=选民名册
+      { name:'居民代表推选·登记', lock:true, days:8, offset:-37,
+        work:'各小组每20~30户推选1名居民代表；逐一登记公示；发布3号公告（代表名册公示）',
+        files:['3号公告-居民代表推选通知.docx','居民代表推选表.xlsx','居民代表名册.xlsx'] },
+      { name:'名单公示·受理异议', lock:false, days:4, offset:-29,
+        work:'公示居民代表名单；受理资格异议；处理结果公示；发布4/5号公告',
+        files:['4号公告-代表名单公示.docx','5号公告-异议处理结果.docx'] },
+      // 系统锁：候选人管理系统入口
+      { name:'候选人提名', lock:true, days:5, offset:-25,
+        work:'居民代表参与提名（自荐/联名/党组织推荐）；发布6号公告（提名通知）',
+        files:['6号公告-提名通知.docx','候选人自荐申请表.docx','候选人联名推荐表.docx'] },
+      { name:'竞选演讲·差额预选', lock:false, days:3, offset:-20,
+        work:'候选人竞选演讲；差额预选；发布7号公告（正式候选人公示）',
+        files:['7号公告-正式候选人公示.docx','竞选演讲安排表.docx'] },
+      // 系统锁：审查推进候选人管理系统状态
+      { name:'候选人资格审查', lock:true, days:5, offset:-17,
+        work:'审查正式候选人资格；公示结论；发布8/9号公告',
+        files:['8号公告-资格审查结果.docx','9号公告-正式候选人公示.docx','候选人资格审查表.xlsx'] },
+      { name:'投票筹备', lock:false, days:5, offset:-12,
+        work:'印制选票（居民代表持票）；布置投票站；培训工作人员；发布10~14号公告',
+        files:['10号公告-选举日通知.docx','11号公告-投票站设置.docx','选票(居委会-代表).xlsx'] },
+      // 系统锁：结果回填，触发岗位状态更新
+      { name:'选举日 🎯', lock:true, days:1, offset:0,
+        work:'居民代表凭证投票；计票唱票；公布结果；发布15号公告（选举结果公告）',
+        files:['15号公告-选举结果公告.docx','选举结果统计表.xlsx','当选通知书.docx'] },
+      { name:'建章立制·工作移交', lock:false, days:10, offset:1,
+        work:'新委员会制定规章；移交账目、印章、档案；完成交接签字',
+        files:['工作移交清单.docx','账目交接表.xlsx','印章移交记录.docx'] }
+    ]
+  }
+
+};
+
+// 模板选项配置（按归属地类型）
+const TEMPLATE_OPTIONS = {
+  village: [
+    { key: 'TEMPLATE_VILLAGE', label: '🏡 村民直接选举（全民直选）' }
+  ],
+  community: [
+    { key: 'TEMPLATE_COMMUNITY_DIRECT', label: '🏙️ 居民直接选举（全民直选）' },
+    { key: 'TEMPLATE_COMMUNITY_HOUSEHOLD', label: '🏘️ 户的代表选举（户代表选举）' },
+    { key: 'TEMPLATE_COMMUNITY_REPRESENTATIVE', label: '🏢 居民代表选举（代表选举）' }
+  ]
+};
+
+// ========== 初始化 ==========
+function initTownSelect() {
+  const sel = document.getElementById('selTown');
+  const towns = getAllTowns();
+  towns.forEach(t => {
+    sel.innerHTML += `<option value="${t}">${t}</option>`;
+  });
+}
+
+function onTownChange() {
+  selectedTown = document.getElementById('selTown').value;
+  const selV = document.getElementById('selVillage');
+  selV.innerHTML = '<option value="">-- 请选择村/社区 --</option>';
+  document.getElementById('manualResult').innerHTML = '';
+  document.getElementById('divergeInfo').style.display = 'none';
+  document.getElementById('typeDetailCard').style.display = 'none';
+  document.getElementById('btnConfirmLocation').disabled = true;
+  selectedVillage = '';
+  selectedType = '';
+
+  if (!selectedTown) return;
+
+  const communities = COMMUNITIES[selectedTown] || [];
+  const villages = VILLAGES[selectedTown] || [];
+
+  if (communities.length > 0) {
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = '🏙️ 社区 — 居委会（城镇居民、小区住户）';
+    communities.forEach(c => {
+      optgroup.innerHTML += `<option value="${c}" data-type="community">${c}</option>`;
+    });
+    selV.appendChild(optgroup);
+  }
+  if (villages.length > 0) {
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = '🏡 村 — 村委会（农田、山林、自然村）';
+    villages.forEach(v => {
+      optgroup.innerHTML += `<option value="${v}" data-type="village">${v}</option>`;
+    });
+    selV.appendChild(optgroup);
+  }
+}
+
+function onVillageChange() {
+  const selV = document.getElementById('selVillage');
+  selectedVillage = selV.value;
+  const opt = selV.selectedOptions[0];
+  selectedType = opt ? opt.getAttribute('data-type') : '';
+
+  if (!selectedVillage || !selectedType) {
+    document.getElementById('manualResult').innerHTML = '';
+    document.getElementById('divergeInfo').style.display = 'none';
+    document.getElementById('typeDetailCard').style.display = 'none';
+    document.getElementById('btnConfirmLocation').disabled = true;
+    return;
+  }
+
+  const info = TYPE_INFO[selectedType];
+  document.getElementById('manualResult').innerHTML = `
+    <span class="result-tag ${info.tagClass}">${info.label}：${selectedTown} · ${selectedVillage}</span>
+  `;
+
+  showDivergeInfo();
+  showTypeDetailCard();
+  document.getElementById('btnConfirmLocation').disabled = false;
+  selectedLocationMode = 'manual';
+}
+
+function showDivergeInfo() {
+  const divergeInfo = document.getElementById('divergeInfo');
+  const divergeText = document.getElementById('divergeText');
+  const info = TYPE_INFO[selectedType];
+  divergeInfo.style.display = 'block';
+
+  if (selectedType === 'village') {
+    divergeText.innerHTML = `
+      ✅ 检测到「<strong>村</strong>」→ 自动匹配 <strong>${info.templateName}</strong> 模板<br>
+      📌 选举方式：<strong>${info.electionMode}</strong><br>
+      📌 可竞选岗位：${info.campaignJobs.join('、')}<br>
+      ❌ 不适用：${info.notApplicable.join('、')}
+    `;
+  } else {
+    divergeText.innerHTML = `
+      ✅ 检测到「<strong>社区</strong>」→ 自动匹配 <strong>${info.templateName}</strong> 模板<br>
+      📌 选举方式：<strong>${info.electionMode}</strong><br>
+      📌 可竞选岗位：${info.campaignJobs.join('、')}<br>
+      ❌ 不适用：${info.notApplicable.join('、')}
+    `;
+  }
+}
+
+function showTypeDetailCard() {
+  const info = TYPE_INFO[selectedType];
+  const card = document.getElementById('typeDetailCard');
+  card.style.display = 'block';
+
+  const electionRows = info.electionAll.map(e =>
+    `<span class="info-line">🔹 <strong>${e.name}</strong>：${e.detail} <span style="font-size:10px;color:#888;">(${e.note})</span></span>`
+  ).join('<br>');
+  const workLines = info.exclusiveWork.map(w => `<span class="info-line">🔹 ${w}</span>`).join('<br>');
+
+  card.innerHTML = `
+    <div class="type-detail-card">
+      <h4>${info.label} · 专属岗位与业务</h4>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:4px;">🗳️ 选举类岗位（投票产生）</div>
+        ${electionRows}
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #e0e3e8;">
+        <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:4px;">📌 ${selectedType==='village'?'村':'社区'}专属工作内容</div>
+        ${workLines}
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:#e67e22;">
+        ⚠️ 一块地域只能是社区 OR 村，不会重复，岗位完全分开，不能跨着任职。
+      </div>
+    </div>
+  `;
+}
+
+// ========== 确认归属地 ==========
+function confirmLocation() {
+  if (!selectedTown || !selectedVillage || !selectedType) {
+    toast('请先选择归属地');
+    return;
+  }
+
+  const info = TYPE_INFO[selectedType];
+
+  document.getElementById('locationModal').classList.remove('show');
+  document.getElementById('displayLocation').value = `${selectedTown} · ${selectedVillage}`;
+  document.getElementById('displayType').value = info.label;
+
+  // 填充模板下拉框
+  const tplSel = document.getElementById('displayTemplate');
+  tplSel.innerHTML = '';
+  const options = TEMPLATE_OPTIONS[selectedType] || [];
+  options.forEach(opt => {
+    const selected = opt.key === info.defaultTemplateKey ? ' selected' : '';
+    tplSel.innerHTML += `<option value="${opt.key}"${selected}>${opt.label}</option>`;
+  });
+
+  const tpl = TEMPLATES[info.defaultTemplateKey];
+  document.getElementById('header-title').textContent =
+    `📋 ${selectedTown}${selectedVillage} · ${tpl.name}`;
+  document.getElementById('header-sub').textContent =
+    selectedType === 'village'
+      ? '农村 → 村委会模板 | 选举方式：全民直选（唯一模式）| 可竞选：主任/副主任/委员'
+      : '城市社区 → 居委会模板 | 选举方式：直选 / 户代表 / 代表选举（三选一）| 可竞选：主任/副主任/委员';
+
+  // 显示岗位提示
+  const jobHint = document.getElementById('typeJobHint');
+  jobHint.style.display = 'block';
+  jobHint.innerHTML = `
+    <div class="job-hint">
+      <div class="job-hint-item"><span class="label">🗳️ 可竞选：</span><span class="value">${info.campaignJobs.join('、')}</span></div>
+      <div class="job-hint-item"><span class="label">📋 选举方式：</span><span class="value">${info.electionMode}</span></div>
+      <div class="job-hint-item"><span class="label">⚠️ 不能跨：</span><span class="value">${selectedType==='village'?'只在本村参选':'只在本社区参选'}</span></div>
+    </div>
+  `;
+
+  autoGenerate();
+}
+
+function onTemplateChange() {
+  autoGenerate();
+}
+
+function resetLocation() {
+  selectedTown = '';
+  selectedVillage = '';
+  selectedType = '';
+  document.getElementById('selTown').value = '';
+  document.getElementById('selVillage').innerHTML = '<option value="">-- 请先选择乡镇 --</option>';
+  document.getElementById('manualResult').innerHTML = '';
+  document.getElementById('divergeInfo').style.display = 'none';
+  document.getElementById('typeDetailCard').style.display = 'none';
+  document.getElementById('btnConfirmLocation').disabled = true;
+  document.getElementById('displayLocation').value = '点击选择归属地';
+  document.getElementById('displayType').value = '—';
+  const tplSel = document.getElementById('displayTemplate');
+  tplSel.innerHTML = '<option value="">— 请先选择归属地 —</option>';
+  document.getElementById('typeJobHint').style.display = 'none';
+  document.getElementById('result-area').style.display = 'none';
+  document.getElementById('header-title').textContent = '📋 选举系统 · 可编辑模板引擎';
+  document.getElementById('header-sub').textContent = '请先选择归属地，系统将自动分流到村委会或居委会模板';
+  document.getElementById('locationModal').classList.add('show');
+}
+
+function openLocationModal() {
+  document.getElementById('locationModal').classList.add('show');
+}
+
+// ========== 工具函数 ==========
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ========== 自动生成 ==========
+function autoGenerate() {
+  if (!selectedType) return;
+  const electionDate = document.getElementById('electionDate').value;
+  if (!electionDate) return;
+
+  const tplKey = document.getElementById('displayTemplate').value;
+  if (!tplKey) return;
+  const tpl = TEMPLATES[tplKey];
+  if (!tpl) return;
+
+  runtimeStages = JSON.parse(JSON.stringify(tpl.stages));
+  runtimeStages.forEach((stage, index) => {
+    stage.stageKey = stage.stageKey || `S${index + 1}`;
+    const start = addDays(electionDate, stage.offset);
+    const end = addDays(start, stage.days - 1);
+    stage.startDate = start;
+    stage.endDate = end;
+    stage.noticeContent = '';
+    stage.uploadedFiles = [];
+  });
+
+  document.getElementById('result-area').style.display = 'block';
+  document.getElementById('header-title').textContent =
+    `📋 ${selectedTown}${selectedVillage} · ${tpl.name}`;
+  updateStats(tpl);
+  renderTimeline();
+  document.getElementById('result-area').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function updateStats(tpl) {
+  let totalFiles = 0;
+  runtimeStages.forEach(s => { totalFiles += s.files.length + (s.uploadedFiles||[]).length; });
+  document.getElementById('stat-stages').textContent = runtimeStages.length;
+  document.getElementById('stat-days').textContent = tpl.totalDays;
+  document.getElementById('stat-notices').textContent = tpl.noticeCount;
+  document.getElementById('stat-files').textContent = totalFiles;
+}
+
+function renderTimeline() {
+  let html = '';
+  runtimeStages.forEach((stage, i) => {
+    const isElectionDay = stage.offset === 0;
+    const isLocked = !!stage.lock;
+    const fileLinks = stage.files.map((f, fi) =>
+      `<div class="file-row"><a class="file-link" href="javascript:void(0)" onclick="downloadFile('${f.replace(/'/g,"\\'")}')">📄 ${f}</a>${isLocked?'':`<span class="file-delete" onclick="removeTemplateFile(${i},${fi})">×</span>`}</div>`
+    ).join('');
+    const uploadedLinks = (stage.uploadedFiles||[]).map((f, ufi) =>
+      `<div class="file-row"><a class="file-link" href="javascript:void(0)" onclick="toast('演示模式：实际系统中打开已上传文件')">📎 ${f}</a><span class="file-delete" onclick="removeUploadedFile(${i},${ufi})">×</span></div>`
+    ).join('');
+
+    // 锁定行不可拖动/不可删/名称只读；可编辑行挂拖拽事件+拖拽手柄+删除
+    const dragAttr = isLocked ? '' :
+      `draggable="true" ondragstart="stageDragStart(event,${i})" ondragover="stageDragOver(event,${i})" ondrop="stageDrop(event,${i})" ondragend="stageDragEnd()" ondragleave="stageDragLeave(this)"`;
+    const rowClass = isLocked ? 'stage-row-locked' : 'stage-row-editable';
+    const numCell = isLocked
+      ? `<td class="idx-cell locked-idx" title="此阶段关联系统核心数据，锁定，不可移动或删除">🔒 ${i+1}${isElectionDay?' 🎯':''}</td>`
+      : `<td class="idx-cell drag-idx" title="按住拖动可调整顺序">⠿ ${i+1}</td>`;
+    const nameCell = isLocked
+      ? `<td class="stage-name"><span class="stage-name-locked">${stage.name}</span></td>`
+      : `<td class="stage-name"><input type="text" value="${stage.name}" onchange="updateStage(${i},'name',this.value)"></td>`;
+    const opCell = isLocked
+      ? `<td><button class="btn btn-outline btn-xs edit-notice-btn" onclick="openNoticeEditor(${i})">✏️ 编辑公告</button></td>`
+      : `<td><button class="btn btn-outline btn-xs edit-notice-btn" onclick="openNoticeEditor(${i})">✏️ 编辑公告</button> <button class="btn btn-xs del-stage-btn" onclick="deleteStage(${i})" title="删除此阶段">🗑 删除</button></td>`;
+
+    html += `
+    <tr class="${rowClass}" data-idx="${i}" ${dragAttr}>
+      ${numCell}
+      ${nameCell}
+      <td><input type="date" class="date-pair" value="${stage.startDate}" onchange="updateStage(${i},'startDate',this.value);recalcDays(${i})"></td>
+      <td><input type="date" class="date-pair" value="${stage.endDate}" onchange="updateStage(${i},'endDate',this.value);recalcDays(${i})"></td>
+      <td><input type="number" class="day-num" value="${stage.days}" min="1" max="99" onchange="updateStage(${i},'days',parseInt(this.value)||1);recalcEnd(${i})"></td>
+      <td><input type="text" value="${stage.work}" onchange="updateStage(${i},'work',this.value)"></td>
+      <td class="material-cell">${fileLinks}${uploadedLinks}${(!fileLinks&&!uploadedLinks)?'<span style="color:#ccc;font-size:11px">暂无材料</span>':''}</td>
+      <td><button class="btn btn-outline btn-xs upload-btn" onclick="triggerUpload(${i})">📤 上传</button></td>
+      ${opCell}
+    </tr>`;
+  });
+  document.getElementById('timeline-body').innerHTML = html;
+  const tplKey = document.getElementById('displayTemplate').value;
+  updateStats(TEMPLATES[tplKey]);
+  applyReadOnlyMode();
+}
+
+// ===== 阶段拖拽排序（锁定阶段是锚点，不可越过）=====
+let _dragFrom = null;
+function stageDragStart(e, idx) { if (READ_ONLY_MODE) { e.preventDefault(); return; } _dragFrom = idx; e.dataTransfer.effectAllowed = 'move'; }
+function stageDragOver(e, idx) { if (_dragFrom === null || _dragFrom === idx) return; e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function stageDragLeave(row) { row.classList.remove('drag-over'); }
+function stageDragEnd() { _dragFrom = null; document.querySelectorAll('.drag-over').forEach(r => r.classList.remove('drag-over')); }
+function stageDrop(e, toIdx) {
+  e.preventDefault();
+  const from = _dragFrom;
+  stageDragEnd();
+  if (from === null || from === toIdx) return;
+  // 边界：起点终点之间若夹着锁定阶段，禁止越过
+  const lo = Math.min(from, toIdx), hi = Math.max(from, toIdx);
+  for (let k = lo; k <= hi; k++) { if (k !== from && runtimeStages[k].lock) { toast('🔒 不能越过锁定阶段'); return; } }
+  const moved = runtimeStages.splice(from, 1)[0];
+  runtimeStages.splice(toIdx, 0, moved);
+  renderTimeline();
+  toast(`已移动「${moved.name}」`);
+}
+
+// ===== 删除 / 新增 可编辑阶段 =====
+function deleteStage(idx) {
+  if (READ_ONLY_MODE) return;
+  if (runtimeStages[idx].lock) { toast('🔒 锁定阶段不能删除'); return; }
+  const name = runtimeStages[idx].name;
+  runtimeStages.splice(idx, 1);
+  renderTimeline();
+  toast(`已删除「${name}」`);
+}
+function addStage() {
+  if (READ_ONLY_MODE) return;
+  // 插在选举日（offset=0 的锁定阶段）之前，没有则追加到末尾
+  let insertIdx = runtimeStages.length;
+  for (let i = 0; i < runtimeStages.length; i++) { if (runtimeStages[i].lock && runtimeStages[i].offset === 0) { insertIdx = i; break; } }
+  const ref = runtimeStages[insertIdx] || runtimeStages[runtimeStages.length - 1];
+  const start = ref && ref.startDate ? addDays(ref.startDate, -3) : (document.getElementById('electionDate').value || '');
+  runtimeStages.splice(insertIdx, 0, {
+    name: '新增阶段', lock: false, days: 3,
+    offset: ref ? ref.offset - 3 : -3,
+    work: '填写本阶段核心工作内容',
+    files: [], uploadedFiles: [],
+    startDate: start, endDate: start ? addDays(start, 2) : '',
+    noticeContent: ''
+  });
+  renderTimeline();
+  toast('已新增阶段，可拖动调整位置');
+}
+
+function updateStage(idx, field, value) { if (!READ_ONLY_MODE) runtimeStages[idx][field] = value; }
+function recalcDays(idx) {
+  const s = runtimeStages[idx];
+  s.days = Math.max(1, Math.round((new Date(s.endDate+'T00:00:00') - new Date(s.startDate+'T00:00:00')) / 86400000) + 1);
+  renderTimeline();
+}
+function recalcEnd(idx) {
+  runtimeStages[idx].endDate = addDays(runtimeStages[idx].startDate, runtimeStages[idx].days - 1);
+  renderTimeline();
+}
+function removeTemplateFile(si, fi) { if (READ_ONLY_MODE) return; runtimeStages[si].files.splice(fi,1); renderTimeline(); toast('模板文件已移除'); }
+function removeUploadedFile(si, fi) { if (READ_ONLY_MODE) return; runtimeStages[si].uploadedFiles.splice(fi,1); renderTimeline(); toast('已上传文件已删除'); }
+function downloadFile(f) { toast(`演示模式：实际系统中下载「${f}」`); }
+
+function triggerUpload(rowIdx) { if (READ_ONLY_MODE) return; currentUploadRow = rowIdx; document.getElementById('hiddenFileInput').click(); }
+function handleFileUpload(input) {
+  if (!input.files.length) return;
+  const stage = runtimeStages[currentUploadRow];
+  if (!stage.uploadedFiles) stage.uploadedFiles = [];
+  for (let f of input.files) stage.uploadedFiles.push(f.name);
+  renderTimeline();
+  toast(`已上传 ${input.files.length} 个文件到「${stage.name}」`);
+  input.value = ''; currentUploadRow = null;
+}
+
+function openNoticeEditor(idx) {
+  currentNoticeStageIdx = idx;
+  const stage = runtimeStages[idx];
+  document.getElementById('noticeModalTitle').textContent = `编辑公告 - ${stage.name}`;
+  document.getElementById('noticeModalStage').textContent = `${selectedTown}${selectedVillage} · ${stage.name}`;
+  // 填充标题
+  document.getElementById('noticeTitle').value = stage.noticeTitle || `${selectedVillage}${stage.name}公告`;
+  // 填充富文本内容（HTML）
+  const editor = document.getElementById('noticeContent');
+  editor.innerHTML = stage.noticeHtml || stage.noticeContent || '';
+  // 重置发布模式
+  document.getElementById('pmImm').checked = true;
+  document.getElementById('publishAt').style.display = 'none';
+  document.getElementById('publishAtHint').style.display = 'none';
+  if (stage.publishAt) {
+    document.getElementById('pmSched').checked = true;
+    document.getElementById('publishAt').value = stage.publishAt;
+    document.getElementById('publishAt').style.display = '';
+    document.getElementById('publishAtHint').style.display = '';
+  }
+  document.getElementById('noticeModal').classList.add('show');
+  setTimeout(() => editor.focus(), 100);
+}
+function closeNoticeModal() { document.getElementById('noticeModal').classList.remove('show'); currentNoticeStageIdx = null; }
+function saveNotice() {
+  if (READ_ONLY_MODE) return;
+  if (currentNoticeStageIdx === null) return;
+  const stage = runtimeStages[currentNoticeStageIdx];
+  stage.noticeTitle = document.getElementById('noticeTitle').value;
+  stage.noticeHtml  = document.getElementById('noticeContent').innerHTML;
+  stage.noticeContent = document.getElementById('noticeContent').innerText; // 纯文本兜底
+  const sched = document.getElementById('pmSched').checked;
+  stage.publishAt = sched ? document.getElementById('publishAt').value : '';
+  // 日历 callback：定时发布时间写入 localStorage，仪表盘日历读取渲染铃铛
+  if (stage.publishAt) {
+    try {
+      const calKey = 'election_calendar_events';
+      let evts = JSON.parse(localStorage.getItem(calKey) || '[]');
+      // 移除同一阶段的旧事件
+      evts = evts.filter(e => e.stageRef !== `${ELECTION_ID}_${currentNoticeStageIdx}`);
+      evts.push({
+        date: stage.publishAt.slice(0, 10),
+        title: `📢 ${stage.noticeTitle || stage.name}公告定时发布`,
+        type: 'notice',
+        stageRef: `${ELECTION_ID}_${currentNoticeStageIdx}`
+      });
+      localStorage.setItem(calKey, JSON.stringify(evts));
+    } catch(e) {}
+  }
+  closeNoticeModal();
+  toast(`「${stage.name}」公告已保存${stage.publishAt ? '，定时发布：' + stage.publishAt.replace('T',' ') : ''}`);
+}
+
+// ===== 富文本辅助函数 =====
+function rtExec(cmd) { document.getElementById('noticeContent').focus(); document.execCommand(cmd, false, null); }
+function rtHeading(tag) {
+  document.getElementById('noticeContent').focus();
+  document.execCommand('formatBlock', false, tag);
+}
+function rtInsertDate() {
+  const d = new Date();
+  const s = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  document.execCommand('insertText', false, s);
+}
+function rtInsertSig() {
+  document.execCommand('insertHTML', false, `<p>${selectedVillage}换届选举工作领导小组</p>`);
+}
+function syncNoticeHtml() { /* 实时同步，暂无需额外操作 */ }
+function togglePublishTime() {
+  const sched = document.getElementById('pmSched').checked;
+  document.getElementById('publishAt').style.display = sched ? '' : 'none';
+  document.getElementById('publishAtHint').style.display = sched ? '' : 'none';
+}
+function onPublishTimeChange() { /* 选完时间后可预览提示 */ }
+
+function exportData() {
+  const tplKey = document.getElementById('displayTemplate').value;
+  const tpl = TEMPLATES[tplKey];
+  const data = {
+    electionId: ELECTION_ID,
+    town: selectedTown, village: selectedVillage, type: selectedType,
+    templateKey: tplKey,
+    templateName: tpl ? tpl.name : '',
+    electionDate: document.getElementById('electionDate').value,
+    stages: runtimeStages
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `选举数据_${selectedVillage}_${data.electionDate}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('数据已导出为 JSON');
+}
+
+// 弹窗背景点击关闭
+document.getElementById('locationModal').addEventListener('click', function(e) {
+  if (e.target === this && selectedType) this.classList.remove('show');
+});
+document.getElementById('noticeModal').addEventListener('click', function(e) {
+  if (e.target === this) closeNoticeModal();
+});
+
+// 从村/社区名反查它属于哪个乡镇 + 是村还是社区（漏斗上一层，村隶属唯一的镇）
+function lookupTownType(name) {
+  for (const t in VILLAGES)   { if (VILLAGES[t].includes(name))   return { town: t, type: 'village' }; }
+  for (const t in COMMUNITIES) { if (COMMUNITIES[t].includes(name)) return { town: t, type: 'community' }; }
+  return null;
+}
+// 读登录账号带下来的归属地（漏斗式：上层已锁定，母版这层直接继承，不再弹窗重选）
+function inheritFromSession() {
+  let raw;
+  try { raw = localStorage.getItem('election_session'); } catch (e) { return false; }
+  if (!raw) return false;
+  let s; try { s = JSON.parse(raw); } catch (e) { return false; }
+  if (!s.village) return false;
+  const hit = lookupTownType(s.village);
+  selectedVillage = s.village;
+  // villageType 优先用账号存的(village|community)，反查兜底补乡镇
+  selectedType = s.villageType || (hit ? hit.type : 'community');
+  selectedTown = hit ? hit.town : (s.town || '');
+  return !!selectedTown;
+}
+
+// 漏斗继承时锁死归属地显示：村长已在登录时锁定本村，母版这层不再允许重选
+function lockLocationDisplay() {
+  const el = document.getElementById('displayLocation');
+  el.onclick = null;
+  el.style.cursor = 'default';
+  el.title = '归属地由登录账号锁定，如需切换请重新登录';
+  const resetBtn = document.querySelector('[onclick="resetLocation()"]');
+  if (resetBtn) resetBtn.style.display = 'none';
+}
+
+function bootstrapPage() {
+  initTownSelect();
+  if (ELECTION_ID) {
+    // ① 超管从活动列表下钻：URL 参数继承
+    selectedTown = PAGE_PARAMS.get('townName') || '华亭镇';
+    selectedVillage = PAGE_PARAMS.get('villageName') || '涧口';
+    selectedType = PAGE_PARAMS.get('orgType') || 'community';
+    document.getElementById('locationModal').classList.remove('show');
+    confirmLocation();
+    if (ELECTION_NAME) document.getElementById('header-title').textContent = `📋 ${ELECTION_NAME}`;
+    lockLocationDisplay(); // 下钻进来的归属地已锁，不允许重选
+  } else if (inheritFromSession()) {
+    // ② 村长登录进来：继承账号锁定的本村，跳过弹窗
+    document.getElementById('locationModal').classList.remove('show');
+    confirmLocation();
+    lockLocationDisplay(); // 漏斗锁死，归属地跟登录账号走
+  }
+  // ③ 都没有(独立调试打开)：保留弹窗手工选，兜底不崩
+  applyReadOnlyMode();
+}
+
+// 初始化：漏斗式继承——上层(下钻electionId / 登录账号)已锁归属地，母版不再重复选择。
+bootstrapPage();
+if (ELECTION_NAME) document.getElementById('motherCrumbCur').textContent = ELECTION_NAME;
+</script>
+<script src="shared-shell.js" data-active="选举活动管理"></script>
+
+<style>html.embedded .ss-side{display:none!important}html.embedded body{margin-left:0!important}</style>
+<script>if(window.self!==window.top){document.documentElement.classList.add("embedded");}<\/script>
+</body>
+</html>

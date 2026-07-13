@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<!--
+  ===== 组件小纸条（真前端照此套 isdream-vue-admin / Element Plus 组件）=====
+  这块地 = 选举活动总列表。静态HTML靶子，真前端照样式+此纸条套组件：
+
+  [面包屑]          → el-breadcrumb + el-breadcrumb-item，separator="/"
+  [页头标题+新建按钮] → el-page-header 或自定义 flex 行；
+                       新建按钮 → el-button type="primary"，触发新建选举活动弹窗/路由
+  [筛选条]          → el-form :inline="true" + el-form-item；
+                       届次/年份/状态下拉 → el-select + el-option（v-for 枚举或接口返回）；
+                       查询/重置 → el-button type="primary" / default
+  [活动列表表格]     → el-table :data="list" stripe highlight-current-row；
+                       届次列 → el-table-column prop="session_no"，自定义 formatter 转汉字序数；
+                       活动名称 → el-table-column prop="name"；
+                       选举方式 → el-table-column prop="election_method"；
+                       状态列  → el-table-column，内嵌 el-tag：进行中 type="danger"，已归档 type="info"；
+                       操作列  → el-table-column fixed="right" width="120"，内嵌 el-button：
+                                  进行中 → el-button type="primary" size="small" @click="openMother(row, false)"；
+                                  已归档 → el-button type="default" size="small" @click="openMother(row, true)"
+  [分页]            → el-pagination layout="total, prev, pager, next"，:total="total"，@current-change="onPage"
+  [下钻目标]        → 跳转 选举系统_填空模板(1).html（母版小看板），携参 electionId / electionName / villageName / readonly；
+                       真前端改为 router.push('/election/template/:id') 或 window.open，保留 readonly 标志位
+  [字段批注行 fh-row] → 纯开发标注，真前端可删；如需保留，改用 el-tooltip 悬浮展示字段来源
+
+  皮：美化版红金（Noto Serif SC 标题 + Noto Sans SC 正文，主色 #B22222，金 #C8A45C，宣纸底 #FAF8F5）。
+  ==========================================================================
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>选举活动管理 · 活动总列表</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-primary);line-height:1.7;padding:0;}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 28px 60px;}
+/* 面包屑 */
+.crumb{font-size:13px;color:var(--text-muted);margin-bottom:18px;}
+.crumb a{color:var(--info);text-decoration:none;cursor:pointer;}
+.crumb a:hover{color:var(--red);}
+.crumb .sep{margin:0 7px;color:var(--border);}
+/* 页头 */
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.page-head h2{font-family:var(--font-serif);font-size:22px;font-weight:700;display:flex;align-items:center;gap:9px;}
+.page-head h2 .bar{width:5px;height:22px;background:var(--red);border-radius:2px;}
+.star{font-size:12px;color:var(--gold-hover);background:var(--gold-bg);border:1px solid var(--gold-light);padding:2px 10px;border-radius:var(--r-full);font-weight:600;}
+/* 筛选条 */
+.filters{background:var(--bg-container);border:1px solid var(--border-light);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);padding:16px 20px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:12px;color:var(--text-muted);font-weight:600;}
+.field select,.field input{font-family:inherit;font-size:13px;padding:7px 11px;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;color:var(--text-primary);min-width:150px;}
+.btn{border:none;cursor:pointer;font-family:inherit;font-weight:600;border-radius:var(--r-md);transition:all .15s;}
+.btn-primary{background:var(--red);color:#fff;padding:8px 18px;font-size:13px;}
+.btn-primary:hover{background:var(--red-hover);}
+.btn-ghost{background:var(--bg-muted);color:var(--text-secondary);padding:8px 16px;font-size:13px;border:1px solid var(--border);}
+/* 表格卡 */
+.table-card{background:var(--bg-container);border:1px solid var(--border-light);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+.table-card .th-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border-light);}
+.table-card .th-bar h3{font-family:var(--font-serif);font-size:15px;font-weight:700;}
+.tb{width:100%;border-collapse:collapse;font-size:13.5px;}
+.tb th{text-align:left;padding:12px 16px;background:var(--gold-bg);color:var(--gold-hover);font-weight:700;font-size:12.5px;border-bottom:1px solid var(--gold-light);white-space:nowrap;}
+.tb td{padding:13px 16px;border-bottom:1px solid var(--border-light);color:var(--text-secondary);}
+.tb tr:hover td{background:var(--bg-hover);}
+.tb tr:last-child td{border-bottom:none;}
+.tb .sess{font-weight:700;color:var(--text-primary);font-family:var(--font-serif);}
+.tb .an{color:var(--text-primary);font-weight:500;}
+/* 状态标 */
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 11px;border-radius:var(--r-full);font-weight:600;}
+.st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+.st.run{background:var(--red-bg);color:var(--red);}
+.st.done{background:var(--bg-muted);color:var(--text-muted);}
+/* 大色块操作按钮（状态即路由） */
+.op-enter{background:var(--red);color:#fff;padding:8px 16px;border-radius:var(--r-md);font-size:13px;font-weight:600;border:none;cursor:pointer;white-space:nowrap;}
+.op-enter:hover{background:var(--red-hover);}
+.op-view{background:#fff;color:var(--text-secondary);padding:8px 16px;border-radius:var(--r-md);font-size:13px;font-weight:600;border:1px solid var(--border);cursor:pointer;white-space:nowrap;}
+.op-view:hover{border-color:var(--gold);color:var(--gold-hover);}
+/* 分页 */
+.pager{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:14px 20px;font-size:13px;color:var(--text-muted);}
+.pager .pg{padding:5px 10px;border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;background:#fff;}
+.pager .pg.on{background:var(--red);color:#fff;border-color:var(--red);}
+/* 小圆圆字段批注 */
+.fh{display:inline-block;font-size:10px;line-height:1.5;color:#9A9A9A;background:#F5F3F0;border:1px dashed #D4D0CA;border-radius:4px;padding:1px 6px;margin:2px 3px 0 0;font-weight:400;}
+.fh b{color:var(--gold-hover);font-weight:600;}
+.fh-row{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin:10px 0 2px;padding:8px 12px;background:#FBFAF8;border-radius:var(--r-md);}
+.fh-row .lead{font-size:11px;color:var(--text-muted);font-weight:600;margin-right:4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb"><a href="村长仪表盘-美化版.html">首页工作台</a><span class="sep">/</span><a href="页面-活动总列表.html">选举活动管理</a><span class="sep">/</span>活动总列表</div>
+
+  <div class="page-head">
+    <h2><span class="bar"></span>活动总列表 <span class="star">⭐ 母版 · 单一真相源</span></h2>
+    <button class="btn btn-primary" onclick="go('新建选举活动')">＋ 新建选举活动</button>
+  </div>
+
+  <!-- 筛选条 -->
+  <div class="filters">
+    <div class="field"><label>届次</label><select><option>全部</option><option>第七届</option><option>第六届</option></select></div>
+    <div class="field"><label>年份</label><select><option>全部</option><option>2026</option><option>2023</option></select></div>
+    <div class="field"><label>状态</label><select><option>全部</option><option>进行中</option><option>已归档</option></select></div>
+    <div class="field"><label>&nbsp;</label><button class="btn btn-primary">查询</button></div>
+    <div class="field"><label>&nbsp;</label><button class="btn btn-ghost">重置</button></div>
+  </div>
+  <div class="fh-row"><span class="lead">筛选字段 →</span>
+    <span class="fh">届次 <b>elections.session_no</b></span>
+    <span class="fh">年份 <b>elections.election_end_date</b></span>
+    <span class="fh">状态 <b>elections.status</b> (进行中/已归档由时间算)</span>
+  </div>
+
+  <!-- 列表 -->
+  <div class="table-card">
+    <div class="th-bar"><h3>本村历届选举活动（本期 + 历届漏斗）</h3><span style="font-size:12px;color:var(--text-muted);">共 3 届</span></div>
+    <table class="tb">
+      <thead><tr><th>届次</th><th>活动名称</th><th>选举方式</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="sess">第十五届<div style="font-size:11px;color:var(--text-muted);font-weight:400;">2026</div></td>
+          <td class="an">第15届涧口社区居委会换届选举</td>
+          <td>全民直选</td>
+          <td><span class="st run">进行中</span></td>
+          <td style="text-align:right;"><button class="op-enter" onclick="openMother(1, false, '第15届涧口社区居委会换届选举')">🔴 进入管理</button></td>
+        </tr>
+        <tr>
+          <td class="sess">第十四届<div style="font-size:11px;color:var(--text-muted);font-weight:400;">2021</div></td>
+          <td class="an">第14届涧口社区居委会换届选举</td>
+          <td>全民直选</td>
+          <td><span class="st done">已归档</span></td>
+          <td style="text-align:right;"><button class="op-view" onclick="openMother(2, true, '第14届涧口社区居委会换届选举')">⚪ 查看明细</button></td>
+        </tr>
+        <tr>
+          <td class="sess">第十三届<div style="font-size:11px;color:var(--text-muted);font-weight:400;">2018</div></td>
+          <td class="an">第13届涧口社区居委会换届选举</td>
+          <td>居民代表选举</td>
+          <td><span class="st done">已归档</span></td>
+          <td style="text-align:right;"><button class="op-view" onclick="openMother(3, true, '第13届涧口社区居委会换届选举')">⚪ 查看明细</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pager"><span>共 3 条</span><span class="pg">‹</span><span class="pg on">1</span><span class="pg">›</span></div>
+  </div>
+  <div class="fh-row"><span class="lead">列表字段 →</span>
+    <span class="fh">届次 <b>elections.session_no</b></span>
+    <span class="fh">活动名称 <b>elections.name</b></span>
+    <span class="fh">选举方式 <b>elections.election_method</b></span>
+    <span class="fh">状态 <b>elections.status</b></span>
+    <span class="fh">数据源 <b>GET /api/election-v2/list</b></span>
+  </div>
+  <div class="fh-row"><span class="lead">下钻规则 →</span>
+    <span class="fh">阈值 = <b>elections.enroll_start_at</b> 起始时间</span>
+    <span class="fh">今天≥起始且没走完 → 进行中 → <b>进入管理</b></span>
+    <span class="fh">已结束 → 往期 → <b>查看明细(只读)</b></span>
+  </div>
+</div>
+<script>
+function openMother(electionId, readonly, electionName){
+  var params=new URLSearchParams({electionId:String(electionId),electionName:electionName,villageName:'涧口',townName:'华亭镇',orgType:'community'});
+  if(readonly) params.set('readonly','1');
+  window.location.href='选举系统_填空模板 (1).html?'+params.toString();
+}
+function go(msg){toast(msg||'返回上级');}
+var _t;
+function toast(msg){
+  var b=document.getElementById('_t');
+  if(!b){b=document.createElement('div');b.id='_t';b.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;padding:11px 22px;border-radius:8px;font-size:13px;z-index:99;opacity:0;transition:opacity .2s;';document.body.appendChild(b);}
+  b.textContent='跳转：'+msg;b.style.opacity='1';clearTimeout(_t);_t=setTimeout(function(){b.style.opacity='0';},1600);
+}
+</script>
+<script src="shared-shell.js" data-active="选举活动管理"></script>
+<style>html.embedded .ss-side{display:none!important}html.embedded body{margin-left:0!important}</style>
+<script>if(window.self!==window.top){document.documentElement.classList.add("embedded");}<\/script>
+</body>
+</html>

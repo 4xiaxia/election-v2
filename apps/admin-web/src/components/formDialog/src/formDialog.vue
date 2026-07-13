@@ -1,0 +1,136 @@
+<template>
+  <el-dialog
+    v-bind="$attrs"
+    v-model="visible"
+    class="m-form-dialog"
+    :title="title"
+    @close="cancel"
+  >
+    <MForm
+      v-model="formData"
+      :fields="props.fields"
+      :disabled="props.disabled"
+      :inline="false"
+      :col-attrs="24"
+      :loading="loading"
+      @get-form="getForm"
+      @submit="submit"
+      @cancel="cancel"
+    >
+      <template
+        v-for="field in slotFields"
+        :key="field.key"
+        #[field.key]="attrs"
+      >
+        <slot :name="field.key" v-bind="attrs"></slot>
+      </template>
+    </MForm>
+  </el-dialog>
+</template>
+
+<script setup lang="ts">
+import type { FormInstance } from 'element-plus'
+import { computed, watch, ref } from 'vue'
+import { cloneDeep } from '@/utils'
+import { formDialogProps, formDialogEmits } from './formDialog'
+
+defineOptions({
+  name: 'MFormDialog',
+  inheritAttrs: false
+})
+
+const props = defineProps(formDialogProps)
+const emit = defineEmits(formDialogEmits)
+
+const slotFields = computed(() => props.fields.filter((item) => item.slot))
+
+const title = computed(() =>
+  props.disabled
+    ? props.disabledTitle
+    : props.id
+      ? props.editTitle
+      : props.addTitle
+)
+const loading = ref(false)
+const visible = ref(props.modelValue)
+
+// 生成请求ID来标识每个请求
+let currentRequestId = 0
+
+let elFormRef: Nullable<FormInstance> = null
+const getForm = (form: FormInstance) => {
+  elFormRef = form
+}
+
+const formData = ref({})
+watch(
+  () => props.value,
+  (val) => {
+    formData.value = props.getHandler(
+      cloneDeep({
+        ...formData.value,
+        ...val
+      })
+    )
+  },
+  {
+    deep: true
+  }
+)
+
+const init = () => {
+  visible.value = true
+  const value = cloneDeep(props.value)
+  if (props.id) {
+    const requestId = ++currentRequestId
+    props.httpGet(props.id).then((res) => {
+      if (requestId !== currentRequestId) return
+      formData.value = props.getHandler({
+        ...value,
+        ...res.data
+      })
+    })
+  } else {
+    formData.value = props.getHandler(value)
+  }
+}
+
+const cancel = () => {
+  if (!visible.value) {
+    return
+  }
+  elFormRef?.resetFields()
+  visible.value = false
+  emit('update:modelValue', false)
+}
+
+const submit = (formData: Record<string, any>) => {
+  formData = props.handler(formData)
+  loading.value = true
+  let requestRes: Promise<any>
+  if (props.id) {
+    requestRes = props.httpEdit(props.id, formData)
+  } else {
+    requestRes = props.httpAdd(formData)
+  }
+  requestRes
+    .then(() => {
+      cancel()
+      emit('reload')
+    })
+    .finally(() => (loading.value = false))
+}
+
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (val) {
+      init()
+    } else {
+      cancel()
+    }
+  }
+)
+</script>
+
+<style lang="scss" scoped></style>

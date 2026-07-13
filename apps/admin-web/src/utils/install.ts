@@ -1,0 +1,58 @@
+import type { App, AppContext, Directive, Plugin } from 'vue'
+import { NOOP } from './plugins'
+
+export type SFCWithInstall<T> = T & Plugin
+
+export type SFCInstallWithContext<T> = SFCWithInstall<T> & {
+  _context: AppContext | null
+}
+
+export const withInstall = <T, E extends Record<string, any>>(
+  main: T,
+  extra?: E,
+  mainName?: string
+) => {
+  ;(main as SFCWithInstall<T>).install = (app: App): void => {
+    const name = mainName || (main as any).name
+    if (import.meta.env.DEV && !name) {
+      console.warn('[withInstall] Component name is required for registration')
+    }
+    app.component(name, main as any)
+    for (const comp of [...Object.values(extra ?? {})]) {
+      app.component(comp.name, comp)
+    }
+  }
+
+  if (extra) {
+    for (const [key, comp] of Object.entries(extra)) {
+      ;(main as any)[key] = comp
+    }
+  }
+  return main as SFCWithInstall<T> & E
+}
+
+export const withInstallFunction = <T>(fn: T, name: string) => {
+  ;(fn as SFCWithInstall<T>).install = (app: App) => {
+    ;(fn as SFCInstallWithContext<T>)._context = app._context
+    app.config.globalProperties[name] = fn
+  }
+
+  return fn as SFCInstallWithContext<T>
+}
+
+export const withInstallDirective = <T extends Directive<any, any>>(
+  directive: T,
+  name: string
+) => {
+  ;(directive as SFCWithInstall<T>).install = (app: App): void => {
+    app.directive(name, directive)
+  }
+
+  return directive as SFCWithInstall<T>
+}
+
+export const withNoopInstall = <T>(component: T) => {
+  ;(component as SFCWithInstall<T>).install = NOOP
+
+  return component as SFCWithInstall<T>
+}

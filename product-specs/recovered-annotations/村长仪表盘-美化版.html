@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<!--
+  ===== 组件小纸条（真前端照此套 isdream-vue-admin / Element Plus 组件）=====
+  这块地 = 村长仪表盘(工作台)。静态HTML靶子，真前端照样式+此纸条套组件：
+  - [侧边栏导航 .sidebar/.nav-item/.sub-menu] → el-menu + el-sub-menu（深色侧栏，active 红底金图标）
+  - [顶部信息条 .topbar] → 自绘条 / el-page-header 插槽（归属地·角色·账号，底边 2px 红线）
+  - [选举日程周日历 .week/.day/红点/金铃] → el-calendar 改皮，或保留自绘周视图（事件源绑 timeline；有阶段=红点+红格，有通知=金铃）
+  - [日程详情弹窗 #schMask] → ElDialog（只读字段：日期/阶段说明 + 关闭/跳业务/设置通知）
+  - [通知设置弹窗 #notifyMask] → ElDialog + ElForm（方式/内容/手机号/是否提前）+ ElDatePicker(datetime) 联动提前发送；落 notifications
+  - [管理员配置入口方块 .admin-entry/.entry-box] → 自绘入口卡（或 el-card hover）
+  - [管理员账号配置弹窗 #adminCfgMask] → ElDialog + 角色 pills + ElTable（增删改账号，手机号=登录凭证）
+  - [提案审批列表 .appr-item] → ElCard + 列表项 + ElTag(pass/wait/reject)
+  - [选举活动列表 .act-item] → ElCard + 列表项（进入管理/只读查看）
+  - [本期选举岗位 .post-item] → ElCard + 列表 + ElTag/状态徽标(.st)
+  - [当期干部花名册 .roster-table] → ElTable（岗位/姓名/联系方式/任期，表头金底）
+  - [岗位换届状态数据卡] → ElCard + 四宫格统计入口（材料/候选人/公告/归档）
+  - [状态徽标 .tag/.st] → ElTag（通过/待审/驳回；在岗/报名/公示/审核/结果）
+  - [主按钮/幽灵按钮 .btn-primary/.btn-ghost] → el-button type=primary / plain（红底 / 金底描边）
+  - [轻提示 toast] → ElMessage
+  皮：美化版红金(Noto Serif SC + Noto Sans SC · #B22222/#C8A45C · 宣纸底#FAF8F5 · r-xl/三档阴影)。
+  ==========================================================================
+-->
+<!--
+  ================= 接力给下一个小圆圆的话（别删，踩上去不硌脚）=================
+  ★这份 HTML 就是"设计稿/靶子"★——不是要你照着手搓，是让你【看着它长什么样，
+    去把标准组件的 CSS 改成这个样子】。夏夏不写代码，但她把"目标长相"用 HTML
+    钉死了，你下一棒不用猜审美，照着这份的红金皮、间距、红点调组件皮就对了。
+
+  【HTML 这块 = 那个组件要改成的样子（照着调 CSS 皮）】
+    · 周日历（.week/.day/红点/红色格子）
+        = Element Plus 的 el-calendar，改 CSS 改成这个红金皮的样子。
+          （我们托管用 vue-element-plus-admin 那套，日历组件现成）
+          手搓的 mondayOf/ymd/renderWeek 是让静态页能跑用的，套组件时扔掉。
+    · 两个弹层（.modal-box 日程详情 + 通知设置表单）
+        = formily(element-plus 适配器) 按 schema 渲染，长成这份弹层的样子。
+          字段增减改 schema 即可；"是否提前发送→冒出提前小时数"这种联动它天生有。
+
+  【要接力的骨，别当垃圾清掉——这几根是夏夏心疼大家才切出来的】
+    1. 日历只是母版 elections.content.timeline 的【投影】，自己不造日期。
+       组件事件源绑 GET /election-v2/detail 的 timeline。
+    2. 母版有填那天→红点+红色；没填→"时间待公示"，绝不假编日期（陆续公示）。
+    3. 通知发送【寄生】在日历格子的"设置通知"里——所以后面不用单独造通知管理模块。
+       字段：方式(站内信/短信)、内容、发送给手机号(逗号分隔)、是否提前发送(≤48h)。
+       统一落 notifications 表。
+
+  【短信：先预留口子，别实装】
+    · 短信是标准化的东西，腾讯云/阿里云 SDK 接口都一个样，到时后端接一下就通。
+    · 我们托管就是【腾讯云】托管——同一家云，短信用 tencentcloud-sdk-nodejs 的
+      sms 客户端（参考 qcloudsms 的 sendSms 段，只挖发送、不要它的验证码登录）。
+      需要 SmsSdkAppid/Sign/TemplateID + 手机号数组，甲方去腾讯云控制台申请。
+    · 前端只到"填手机号+内容+落 notifications 表"为止；发送永远在后端。
+      ⚠️ secretId/secretKey 绝不能进前端，漏了会被盗刷烧钱。
+    · 兜底：甲方没申请短信模板/签名时，走"站内信/消息中心新消息"，一样发得出去。
+  =============================================================================
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>涧口社区 · 换届选举工作台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+:root{
+  --red:#B22222;--red-hover:#961C1C;--red-light:#D4453A;--red-bg:#FDE8E8;--red-bg-soft:#FFF5F5;
+  --gold:#C8A45C;--gold-hover:#B08E3A;--gold-light:#E8D5A0;--gold-bg:#FDF6E3;
+  --success:#2D8B55;--success-bg:#E8F5ED;--warning:#C27A1A;--warning-bg:#FEF5E7;
+  --info:#2874A6;--info-bg:#EBF5FB;
+  --text-primary:#1A1A1A;--text-secondary:#4A4A4A;--text-muted:#7A7A7A;--text-inverse:#FFF;
+  --border-light:#E8E5E0;--border:#D4D0CA;
+  --bg-page:#FAF8F5;--bg-container:#FFFFFF;--bg-muted:#F5F3F0;--bg-hover:#F0EDE8;--bg-dark:#1C1C1C;--bg-dark-sec:#2A2A2A;
+  --r-sm:4px;--r-md:6px;--r-lg:8px;--r-xl:12px;--r-2xl:16px;--r-full:9999px;
+  --shadow-sm:0 1px 4px rgba(0,0,0,.06);--shadow-md:0 4px 12px rgba(0,0,0,.08);--shadow-lg:0 8px 24px rgba(0,0,0,.1);
+  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-primary);line-height:1.7;-webkit-font-smoothing:antialiased;}
+/* 整体框架：左侧栏 + 右主区 */
+.app{display:flex;min-height:100vh;}
+.sidebar{width:210px;flex-shrink:0;background:linear-gradient(180deg,var(--bg-dark),var(--bg-dark-sec));color:#F0EDE8;padding:24px 0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar .brand{padding:0 22px 20px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px;}
+.sidebar .brand .kick{font-size:10px;letter-spacing:2px;color:var(--gold);font-weight:600;margin-bottom:6px;}
+.sidebar .brand h1{font-family:var(--font-serif);font-size:15px;font-weight:700;color:#F5F2EC;line-height:1.5;}
+.nav-group{padding:0 12px;margin-bottom:8px;}
+.nav-group .g-label{font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.3);padding:12px 12px 6px;font-weight:600;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;color:rgba(255,255,255,.55);border-radius:7px;cursor:pointer;font-size:13px;transition:all .18s;margin-bottom:1px;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.9);}
+.nav-item.active{background:rgba(178,34,34,.28);color:#fff;font-weight:500;}
+.nav-item.active .ic{color:var(--gold);}
+.nav-item .ic{width:18px;text-align:center;font-size:14px;}
+.nav-item .arrow{margin-left:auto;font-size:10px;color:rgba(255,255,255,.3);transition:transform .2s;}
+.nav-item.open .arrow{transform:rotate(90deg);color:var(--gold);}
+.nav-item.has-sub{cursor:pointer;}
+/* 二级子菜单（漏斗） */
+.sub-menu{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+.sub-menu.open{max-height:240px;}
+.sub-item{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 39px;color:rgba(255,255,255,.4);font-size:12.5px;cursor:pointer;border-radius:6px;transition:all .15s;margin-bottom:1px;}
+.sub-item:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.85);}
+.sub-item::before{content:'·';margin-right:-3px;color:var(--gold);}
+.sub-item .s-note{margin-left:auto;font-size:10px;color:rgba(255,255,255,.25);}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+/* 顶部信息条 */
+.topbar{display:flex;align-items:center;justify-content:flex-end;gap:28px;background:var(--bg-container);border-bottom:2px solid var(--red);padding:16px 32px;position:sticky;top:0;z-index:20;box-shadow:var(--shadow-sm);}
+.topbar .tb-item{font-size:14px;color:var(--text-secondary);}
+.topbar .tb-item b{color:var(--text-primary);font-weight:600;margin-left:4px;}
+.topbar .tb-item .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--success);margin-right:5px;vertical-align:middle;}
+
+.content{padding:26px 32px 60px;max-width:1360px;width:100%;}
+/* 卡片通用 */
+.card{background:var(--bg-container);border:1px solid var(--border-light);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-light);}
+.card-head h3{font-family:var(--font-serif);font-size:16px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:8px;}
+.card-head h3 .bar{width:4px;height:16px;background:var(--red);border-radius:2px;}
+.card-head .more{font-size:12px;color:var(--text-muted);cursor:pointer;}
+.card-head .more:hover{color:var(--red);}
+.card-body{padding:18px 20px;}
+
+/* 网格 */
+.grid{display:grid;gap:18px;margin-bottom:18px;}
+.grid-row1{grid-template-columns:1.6fr 1fr;}
+.grid-row2{grid-template-columns:1fr 1fr 1fr;}
+.grid-row3{grid-template-columns:1fr 1.4fr;}
+
+/* 日历（本周进程提醒） */
+.cal-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;}
+.cal-head .today{font-size:13px;color:var(--text-muted);}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.week .wd{text-align:center;font-size:12px;color:var(--text-muted);padding-bottom:8px;font-weight:600;}
+.day{text-align:center;border-radius:var(--r-lg);padding:10px 4px;background:var(--bg-muted);min-height:78px;display:flex;flex-direction:column;gap:5px;justify-content:flex-start;}
+.day .dnum{position:relative;font-size:17px;font-weight:700;color:var(--text-secondary);font-family:var(--font-serif);}
+/* 母版填了阶段的那天：数字右上角冒一颗小红点（一眼看出这天有正式日程） */
+.day .dnum .reddot{position:absolute;top:-2px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px #fff;}
+/* 设了通知的那天：金色小闹铃。有红点就贴红点左边一点，没红点就占红点的位 */
+.day .dnum .bell{position:absolute;top:-5px;right:calc(50% - 15px);font-size:11px;line-height:1;filter:drop-shadow(0 0 1px #fff);}
+.day .dnum .bell.with-dot{right:calc(50% - 4px);}
+.day.today-mark{background:var(--red-bg-soft);border:1.5px solid var(--red);}
+.day.today-mark .dnum{color:var(--red);}
+.day .act{font-size:11px;color:var(--info);cursor:pointer;}
+.day .act:hover{text-decoration:underline;}
+.day .act.hot{color:var(--red);font-weight:600;}
+.day.empty{background:transparent;}
+/* 有母版阶段的那天：颜色变红（母表有填写的信号） */
+.day.has-stage{background:var(--red-bg-soft);border:1.5px solid var(--red-light);}
+/* 日程小条：红条=母版阶段（只读继承），金条=自己加的特殊事件 */
+.day .chip{font-size:10.5px;line-height:1.25;padding:2px 5px;border-radius:4px;cursor:pointer;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.day .chip-stage{background:var(--red);color:#fff;font-weight:600;}
+.day .chip-custom{background:var(--gold);color:#fff;font-weight:600;}
+.day .chip:hover{opacity:.85;}
+/* 数字下面的"设置通知"入口——通知发送就藏在这里，不另造通知模块 */
+.day .set-notify{margin-top:auto;font-size:10px;color:var(--red);cursor:pointer;padding:2px 0;font-weight:600;}
+.day .set-notify:hover{text-decoration:underline;}
+/* 母版阶段格子（日历只是母版时间轴的投影，不自己造日子） */
+.stage-track{display:flex;flex-direction:column;gap:8px;}
+.stage-cell{display:flex;align-items:center;gap:14px;padding:11px 14px;border-radius:var(--r-lg);background:var(--bg-muted);cursor:pointer;transition:all .15s;border-left:3px solid var(--border);}
+.stage-cell:hover{background:var(--red-bg-soft);transform:translateX(2px);}
+.stage-cell.cur{background:var(--red-bg-soft);border-left-color:var(--red);}
+.stage-cell .sc-date{font-family:var(--font-serif);font-weight:700;font-size:13px;color:var(--red);min-width:104px;white-space:nowrap;}
+.stage-cell .sc-date.empty{color:var(--text-muted);font-weight:400;font-size:12px;}
+.stage-cell .sc-name{font-size:14px;font-weight:600;color:var(--text-primary);flex:1;}
+.stage-cell .sc-st{font-size:11px;padding:2px 10px;border-radius:var(--r-full);font-weight:600;white-space:nowrap;}
+.stage-cell .sc-st.done{background:var(--bg-muted);color:var(--text-muted);border:1px solid var(--border);}
+.stage-cell .sc-st.cur{background:var(--red-bg);color:var(--red);}
+.stage-cell .sc-st.wait{background:var(--gold-bg);color:var(--gold-hover);}
+/* 两层弹窗（红金皮） */
+.modal-mask{position:fixed;inset:0;background:rgba(28,28,28,.5);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.modal-mask.show{display:flex;}
+.modal-box{background:#fff;width:520px;max-width:94vw;max-height:88vh;overflow-y:auto;border-radius:var(--r-2xl);box-shadow:var(--shadow-lg);}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border-light);}
+.modal-hd h3{font-family:var(--font-serif);font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.modal-hd h3 .bar{width:4px;height:17px;background:var(--red);border-radius:2px;}
+.modal-hd .x{border:none;background:none;font-size:22px;cursor:pointer;color:var(--text-muted);line-height:1;}
+.modal-bd{padding:20px 22px;}
+.modal-bd .m-row{margin-bottom:14px;font-size:14px;}
+.modal-bd .m-row .mk{color:var(--text-muted);font-size:12px;font-weight:600;margin-bottom:5px;display:block;}
+.modal-bd .m-row .mv{color:var(--text-primary);}
+.modal-bd input,.modal-bd select,.modal-bd textarea{width:100%;font-family:inherit;font-size:13px;padding:9px 11px;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;color:var(--text-primary);}
+.modal-bd input[readonly]{background:var(--bg-muted);color:var(--text-secondary);}
+.modal-bd textarea{min-height:74px;resize:vertical;}
+.modal-note{font-size:11px;color:var(--text-muted);background:var(--gold-bg);border:1px solid var(--gold-light);border-radius:var(--r-md);padding:9px 12px;line-height:1.6;margin-top:6px;}
+.modal-ft{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--border-light);flex-wrap:wrap;}
+
+/* 管理员配置卡（绿意，柔和） */
+/* 管理员配置：卡片区两个入口方块（①编辑自己 ②账号配置） */
+.admin-entry{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.entry-box{display:flex;align-items:center;gap:12px;padding:14px;background:var(--success-bg);border:1px solid #CDE9D8;border-radius:var(--r-lg);cursor:pointer;transition:transform .12s,box-shadow .12s;}
+.entry-box:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.06);}
+.entry-box .ico{width:40px;height:40px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;}
+.entry-box .tx .t1{font-size:13px;font-weight:600;color:var(--text-primary);}
+.entry-box .tx .t2{font-size:12px;color:var(--text-muted);margin-top:2px;}
+/* 长方形占位方块：填住卡片下方空白，跟左边日历卡片平齐（预留扩展区） */
+.placeholder-box{margin-top:12px;min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:repeating-linear-gradient(45deg,var(--bg-muted),var(--bg-muted) 10px,#fff 10px,#fff 20px);border:1.5px dashed var(--border);border-radius:var(--r-lg);color:var(--text-muted);}
+.placeholder-box .ph-ico{font-size:22px;opacity:.5;}
+.placeholder-box .ph-tx{font-size:12px;}
+/* 弹窗：角色横向圆钮 */
+.role-pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.role-pill{padding:6px 14px;border-radius:999px;border:1.5px solid var(--border);background:#fff;color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;transition:all .12s;}
+.role-pill:hover{border-color:var(--pc);color:var(--pc);}
+.role-pill.on{background:var(--pc);border-color:var(--pc);color:#fff;}
+/* 弹窗：账号表格 */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border-light);border-radius:var(--r-lg);}
+.admin-tbl{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap;}
+.admin-tbl th{background:var(--bg-muted);color:var(--text-secondary);font-weight:600;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border-light);}
+.admin-tbl th small{color:var(--text-muted);font-weight:400;}
+.admin-tbl td{padding:11px 12px;border-bottom:1px solid var(--border-light);color:var(--text-primary);}
+.admin-tbl tbody tr:last-child td{border-bottom:none;}
+.admin-tbl td.empty{text-align:center;color:var(--text-muted);padding:24px;}
+.admin-tbl td.ops{white-space:nowrap;}
+.admin-tbl .op{color:var(--info);cursor:pointer;font-weight:600;margin-right:12px;}
+.admin-tbl .op.del{color:var(--red);}
+.btn-gold{background:#C8860D;color:#fff;}
+
+/* 提案审批列表 */
+.appr-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px dashed var(--border-light);}
+.appr-item:last-child{border-bottom:none;}
+.tag{font-size:11px;padding:2px 9px;border-radius:var(--r-full);font-weight:600;white-space:nowrap;}
+.tag.pass{background:var(--success-bg);color:var(--success);}
+.tag.wait{background:var(--warning-bg);color:var(--warning);}
+.tag.reject{background:var(--red-bg);color:var(--red);}
+.appr-item .txt{flex:1;font-size:13px;color:var(--text-secondary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.appr-item .ops{display:flex;gap:8px;flex-shrink:0;}
+.link-op{font-size:12px;color:var(--info);cursor:pointer;}
+.link-op:hover{color:var(--red);}
+.btn{border:none;cursor:pointer;font-family:inherit;font-weight:600;border-radius:var(--r-md);transition:all .15s;}
+.btn-primary{background:var(--red);color:#fff;padding:6px 14px;font-size:12px;}
+.btn-primary:hover{background:var(--red-hover);}
+.btn-ghost{background:var(--gold-bg);color:var(--gold-hover);padding:6px 14px;font-size:12px;border:1px solid var(--gold-light);}
+
+/* 选举活动列表 */
+.act-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:var(--r-lg);background:var(--bg-muted);margin-bottom:9px;cursor:pointer;transition:all .15s;}
+.act-item:hover{background:var(--red-bg-soft);}
+.act-item:last-child{margin-bottom:0;}
+.act-item .an{font-size:13px;color:var(--text-primary);font-weight:500;}
+.act-item .as{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.act-item .enter{font-size:12px;color:var(--red);font-weight:600;white-space:nowrap;}
+
+/* 本期选举岗位 */
+.post-item{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px dashed var(--border-light);}
+.post-item:last-child{border-bottom:none;}
+.post-item .pn{font-size:14px;font-weight:600;color:var(--text-primary);}
+.post-item .pq{font-size:12px;color:var(--text-muted);margin-left:8px;}
+.post-item .plinks{display:flex;gap:10px;}
+
+/* 状态徽标（岗位状态） */
+.st{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:var(--r-full);font-weight:600;}
+.st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+.st.s-onpost{background:var(--success-bg);color:var(--success);}
+.st.s-signup{background:var(--info-bg);color:var(--info);}
+.st.s-public{background:#F3EAF7;color:#8E44AD;}
+.st.s-review{background:var(--warning-bg);color:var(--warning);}
+.st.s-result{background:var(--red-bg);color:var(--red);}
+
+/* 花名册表 */
+.roster-table{width:100%;border-collapse:collapse;font-size:13px;}
+.roster-table th{text-align:left;padding:9px 10px;background:var(--gold-bg);color:var(--gold-hover);font-weight:700;font-size:12px;border-bottom:1px solid var(--gold-light);}
+.roster-table td{padding:10px;border-bottom:1px solid var(--border-light);color:var(--text-secondary);}
+.roster-table tr:hover td{background:var(--bg-hover);}
+
+@media(max-width:1100px){.grid-row1,.grid-row2,.grid-row3{grid-template-columns:1fr;}.sidebar{display:none;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边栏（阿姨叔叔基本不翻，仪表盘才是主入口） -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="kick">城厢区换届选举</div>
+      <h1>涧口社区 · 工作台</h1>
+    </div>
+    <div class="nav-group">
+      <div class="nav-item active"><span class="ic">🏠</span>首页工作台</div>
+
+      <div class="nav-item has-sub"><span class="ic">📄</span>提案审批<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item" data-page="页面-提案审批.html">提案列表<span class="s-note">本期+历届</span></div>
+      </div>
+
+      <div class="nav-item has-sub"><span class="ic">📋</span>选举活动管理<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item" data-page="页面-活动总列表.html">活动总列表<span class="s-note">⭐母版</span></div>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="g-label">办理中</div>
+
+      <div class="nav-item has-sub"><span class="ic">👥</span>岗位管理<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item" data-page="页面-岗位管理.html">历届岗位选举表<span class="s-note">本期+历届</span></div>
+      </div>
+
+      <div class="nav-item has-sub"><span class="ic">📝</span>材料提交管理<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item" data-page="页面-业务模块.html?module=materials">历届材料记录<span class="s-note">本期+历届</span></div>
+      </div>
+
+      <div class="nav-item has-sub"><span class="ic">🙋</span>候选人管理<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item" data-page="页面-业务模块.html?module=candidates">历届候选人名录<span class="s-note">含审批</span></div>
+      </div>
+
+      <div class="nav-item has-sub"><span class="ic">📢</span>公告通知<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item" data-page="页面-业务模块.html?module=notices">历届公告记录<span class="s-note">母版镜像</span></div>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="g-label">收尾归档</div>
+      <div class="nav-item has-sub"><span class="ic">🗄️</span>历史归档<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item" data-page="页面-业务模块.html?module=archives">历届活动列表<span class="s-note">目录树</span></div>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="g-label">后台管理</div>
+      <div class="nav-item has-sub"><span class="ic">⚙️</span>后台管理<span class="arrow">▶</span></div>
+      <div class="sub-menu">
+        <div class="sub-item">人员管理<span class="s-note">users</span></div>
+        <div class="sub-item">短信配置</div>
+        <div class="sub-item">通知管理<span class="s-note">notifications</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <!-- 顶部信息条 -->
+    <div class="topbar">
+      <span class="tb-item"><span class="dot"></span>归属地<b id="tbVillage">涧口社区</b></span>
+      <span class="tb-item">角色<b id="tbRole">经办</b></span>
+      <span class="tb-item">账号<b id="tbPhone">150****0000</b></span>
+    </div>
+
+    <div class="content" id="content">
+
+      <!-- 第一排：本周进程提醒（大） + 本村管理员配置 -->
+      <div class="grid grid-row1">
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar"></span>选举日程
+              <select id="weekFilter" onchange="renderWeek()" onclick="event.stopPropagation()"
+                style="margin-left:12px;font-family:inherit;font-size:12px;font-weight:400;padding:4px 8px;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;color:var(--text-secondary);cursor:pointer;"></select>
+            </h3>
+            <span class="today" id="todayLabel">今天：2026年7月10日 · 星期五</span>
+          </div>
+          <div class="card-body">
+            <!-- 周日历皮：一次看一周，母版有阶段的那天才冒出来，点它弹详情。筛选周切换 -->
+            <div class="week" id="weekGrid"></div>
+            <div id="stageHint" style="margin-top:14px;padding:12px 14px;background:var(--red-bg-soft);border-radius:var(--r-lg);font-size:13px;color:var(--red-hover);border-left:3px solid var(--red);"></div>
+          </div>
+        </div>
+
+        <!-- 2026-07-14 产品边界确认：
+             右侧不是“管理员摘要卡”，而是子管理视角的完整本村人员管理模块入口。
+             “编辑我的信息”负责当前账号；“账号配置”弹窗负责本村角色、账号、名额、
+             手机号登录凭证、新增/编辑/停用与扩容。迁移时不得只保留卡片外观或 toast。
+             它与平台级人员管理不是同一权限范围，也不得再为子管理复制第二套人员管理。
+        -->
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar" style="background:var(--success);"></span>本村管理员配置</h3>
+            <span class="more" onclick="openAdminCfg()">管理 →</span>
+          </div>
+          <div class="card-body">
+            <!-- 两个入口方块：①编辑自己 ②账号配置（弹窗表格增删管理员） -->
+            <div class="admin-entry">
+              <div class="entry-box" onclick="toast('编辑当前角色信息：子管理员·王建国')">
+                <div class="ico" style="background:var(--success);">王</div>
+                <div class="tx"><div class="t1">当前角色 · 子管理员</div><div class="t2">编辑我的信息 →</div></div>
+              </div>
+              <div class="entry-box" onclick="openAdminCfg()">
+                <div class="ico" style="background:var(--info);">⚙</div>
+                <div class="tx"><div class="t1">账号配置</div><div class="t2">管理本村各角色账号 →</div></div>
+              </div>
+            </div>
+            <!-- 长方形占位方块：填住管理员卡片下方腾出来的空白，跟左边日历卡片视觉平齐。
+                 现在不知道放啥，但夏夏说"感觉很有用"，先占着位——将来放数据卡/快捷入口都行。
+                 （🤫 甲方要是问这块干嘛的，就说"预留的扩展区"，显得咱考虑周到嘿嘿） -->
+            <div class="placeholder-box">
+              <div class="ph-ico">▦</div>
+              <div class="ph-tx">预留区域</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 第二排：提案审批 + 选举活动列表 + 本期选举岗位 -->
+      <div class="grid grid-row2">
+        <!-- 2026-07-14 产品边界确认：
+             这张卡浓缩的是完整提案模块，不是三条静态消息。
+             首页的创建/查看/编辑/删除/审批动作应复用提案弹窗与同一数据记录；
+             “查看更多”只进入筛选和历史列表，详情与审批尽量留在弹窗中完成。
+             当前 toast 只是原型占位，迁移时不得视为功能完成。
+             待确认：待审批状态的编辑/删除权限；审批通过后向选举活动输出什么。
+        -->
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar"></span>选举前 · 提案审批</h3>
+            <button class="btn btn-primary" onclick="toast('新建选举提案')">＋ 新建</button>
+          </div>
+          <div class="card-body">
+            <div class="appr-item">
+              <span class="tag pass">通过</span>
+              <span class="txt">第15届涧口社区居委会换届方案</span>
+              <div class="ops"><span class="link-op" onclick="toast('查看')">查看</span></div>
+            </div>
+            <div class="appr-item">
+              <span class="tag wait">待审批</span>
+              <span class="txt">第15届选举委员会成立方案</span>
+              <div class="ops"><span class="link-op" onclick="toast('编辑')">编辑</span><span class="link-op" onclick="toast('删除')">删除</span></div>
+            </div>
+            <div class="appr-item">
+              <span class="tag reject">驳回</span>
+              <span class="txt">选民登记实施细则（草案）</span>
+              <div class="ops"><span class="link-op" onclick="toast('编辑')">编辑</span><span class="link-op" onclick="toast('删除')">删除</span></div>
+            </div>
+            <div style="text-align:center;margin-top:10px;"><span class="more" onclick="window.location.href='页面-提案审批.html'">查看更多 →</span></div>
+          </div>
+        </div>
+
+        <!-- 2026-07-14 产品边界确认：
+             “选举活动列表”卡是届次上下文的浓缩入口，不是第二套母版。
+             当前届携 electionId 进入可编辑母版；历史届进入同一母版的只读状态；
+             “查看更多”只负责完整历届筛选。子页面继承 electionId，不得再次选届。
+             新建活动与提案通过后的贸易合同尚未确认，迁移时不得自行创建孤立母版。
+        -->
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar"></span>选举活动列表</h3>
+          </div>
+          <div class="card-body">
+            <div class="act-item" onclick="window.location.href='选举系统_填空模板 (1).html?electionId=1&amp;electionName=第15届涧口社区居委会换届选举&amp;villageName=涧口&amp;townName=华亭镇&amp;orgType=community'">
+              <div><div class="an">第15届涧口社区居委会换届选举</div><div class="as">居民直接选举 · 候选人提名阶段</div></div>
+              <span class="enter">进入管理 →</span>
+            </div>
+            <div class="act-item" onclick="window.location.href='选举系统_填空模板 (1).html?electionId=2&amp;electionName=第14届涧口社区居委会换届选举&amp;villageName=涧口&amp;townName=华亭镇&amp;orgType=community&amp;readonly=1'">
+              <div><div class="an">第14届涧口社区居委会换届选举</div><div class="as">已归档 · 2021年</div></div>
+              <span class="enter" style="color:var(--text-muted);">查看 →</span>
+            </div>
+            <div class="act-item" onclick="window.location.href='选举系统_填空模板 (1).html?electionId=3&amp;electionName=第13届涧口社区居委会换届选举&amp;villageName=涧口&amp;townName=华亭镇&amp;orgType=community&amp;readonly=1'">
+              <div><div class="an">第13届涧口社区居委会换届选举</div><div class="as">已归档 · 2018年</div></div>
+              <span class="enter" style="color:var(--text-muted);">查看 →</span>
+            </div>
+            <div style="text-align:center;margin-top:10px;"><span class="more" onclick="window.location.href='页面-活动总列表.html'">查看更多 →</span></div>
+          </div>
+        </div>
+
+        <!-- 2026-07-14 产品边界确认：
+             本期岗位是和花名册类似的简单独立弹窗模块，不再跳岗位管理内页。
+             岗位配置由甲方在 PositionModuleDialog 手工编辑，保存后供母版按 positionId 调用；
+             母版、材料报名、候选人和最终结果不得重复新建或手填第二套岗位。
+             下方旧 onclick 跳页仅为静态原型占位，迁移到 Vue 时由弹窗入口替换。
+        -->
+        <div class="card">
+          <div class="card-head">
+            <h3 onclick="window.location.href='页面-岗位管理.html'" style="cursor:pointer;"><span class="bar"></span>本期选举岗位</h3>
+            <span class="more" onclick="toast('岗位说明 / 资料下载')">资料下载 ↓</span>
+          </div>
+          <div class="card-body">
+            <div class="post-item">
+              <div><span class="pn">居委会主任</span><span class="pq">需求 1 人</span></div>
+              <span class="st s-signup">竞选报名</span>
+            </div>
+            <div class="post-item">
+              <div><span class="pn">副主任</span><span class="pq">需求 1 人</span></div>
+              <span class="st s-signup">竞选报名</span>
+            </div>
+            <div class="post-item">
+              <div><span class="pn">委员</span><span class="pq">需求 5 人</span></div>
+              <span class="st s-onpost">在岗（未换届）</span>
+            </div>
+            <div style="margin-top:10px;padding:9px 12px;background:var(--gold-bg);border-radius:var(--r-md);font-size:12px;color:var(--gold-hover);">
+              💡 点岗位状态可进入对应操作：在岗→花名册，竞选报名→材料/公告
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 第三排：当期干部花名册 + 岗位状态面板（联动） -->
+      <div class="grid grid-row3">
+        <!-- 2026-07-14 产品边界确认：
+             初始/存量干部花名册由甲方手工录入，和本村管理员/登录账号没有数据关系。
+             后续更新来源是岗位选举最新一期的最终确认中选人；普通候选人不得提前进入。
+             系统只提示“有新结果可刷新”，由甲方预览后手动确认刷新，不得自动覆盖当期花名册。
+             2.0 用独立 RosterModuleDialog 展示简单组织树，并在同一弹窗内新增、修改、查看；
+             树按岗位分组，每个岗位必须支持并展示多人；点击人员节点在同一弹窗显示岗位、姓名、
+             联系方式、简介、资历、事迹，以上个人详情由甲方手工编辑。
+             当前/历届属于同一花名册模块。不得从 users 或未确认中选的候选人生成花名册。
+        -->
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar" style="background:#8E44AD;"></span>当期干部花名册</h3>
+            <!-- 2.0：点击“历史名录”打开独立花名册弹窗的历届列表模式；
+                 可按届次/年份、岗位、姓名、当前/历史筛选，再在同一弹窗查看该届只读树状图。 -->
+            <span class="more" onclick="toast('查看历史在任名录')">历史名录 →</span>
+          </div>
+          <div class="card-body">
+            <table class="roster-table">
+              <thead><tr><th>岗位</th><th>姓名</th><th>联系方式</th><th>本届任期</th></tr></thead>
+              <tbody>
+                <tr><td>主任</td><td>陈志强</td><td>138****1234</td><td>2021–2026</td></tr>
+                <tr><td>副主任</td><td>林美华</td><td>139****5678</td><td>2021–2026</td></tr>
+                <tr><td>委员</td><td>黄大鹏</td><td>137****9012</td><td>2021–2026</td></tr>
+                <tr><td>委员</td><td>吴丽娟</td><td>135****3456</td><td>2021–2026</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3><span class="bar" style="background:#8E44AD;"></span>岗位换届状态</h3>
+            <span class="more">主任 · 竞选报名中</span>
+          </div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div style="padding:14px;background:var(--info-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="window.location.href='页面-业务模块.html?module=materials'">
+                <div style="font-size:13px;color:var(--info);font-weight:600;margin-bottom:4px;">📄 竞选材料</div>
+                <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">3 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">份待审</span></div>
+              </div>
+              <div style="padding:14px;background:var(--red-bg-soft);border-radius:var(--r-lg);cursor:pointer;" onclick="window.location.href='页面-业务模块.html?module=candidates'">
+                <div style="font-size:13px;color:var(--red);font-weight:600;margin-bottom:4px;">👤 候选人</div>
+                <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">2 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">已入围</span></div>
+              </div>
+              <div style="padding:14px;background:var(--warning-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="window.location.href='页面-业务模块.html?module=notices'">
+                <div style="font-size:13px;color:var(--warning);font-weight:600;margin-bottom:4px;">📢 阶段公告</div>
+                <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">4 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">条已发</span></div>
+              </div>
+              <div style="padding:14px;background:var(--success-bg);border-radius:var(--r-lg);cursor:pointer;" onclick="window.location.href='页面-业务模块.html?module=archives'">
+                <div style="font-size:13px;color:var(--success);font-weight:600;margin-bottom:4px;">🗂️ 归档件</div>
+                <div style="font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-serif);">6 <span style="font-size:13px;color:var(--text-muted);font-weight:400;">份</span></div>
+              </div>
+            </div>
+            <div style="margin-top:12px;padding:10px 14px;background:var(--bg-muted);border-radius:var(--r-md);font-size:12px;color:var(--text-secondary);">
+              🔔 通知：李秀兰刚提交1份材料待您审核 · <span class="link-op" onclick="toast('查看通知')">查看</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗①：日程详情（点日历条目弹出） -->
+<div class="modal-mask" id="schMask" onclick="if(event.target===this)closeSch()">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3><span class="bar"></span><span id="schTitle">日程详情</span></h3>
+      <button class="x" onclick="closeSch()">×</button>
+    </div>
+    <div class="modal-bd">
+      <div class="m-row"><span class="mk">日程日期</span><span class="mv" id="schDate">—</span></div>
+      <div class="m-row"><span class="mk">阶段说明</span><span class="mv" id="schNote">—</span></div>
+      <div class="modal-note">📌 本日程按选举活动安排自动生成，如需调整请到活动设置中修改。</div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeSch()">关闭</button>
+      <button class="btn btn-ghost" onclick="jumpFromSch()">跳到对应业务 →</button>
+      <button class="btn btn-primary" onclick="openNotify()">🔔 设置通知</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗②：通知设置（从日程详情再点🔔弹出，标题/日期继承）
+     2026-07-14 产品边界确认（迁移到 Vue 时必须修正，当前仅保留演示外观）：
+     1. 公告 = 组织对大众的正式发布，面向居民/选民，承载阶段大事件。
+     2. 通知 = 对具体人的系统私信/短信，提醒管理员、经办、审核等人员完成工作。
+     3. 通知应选择具体账号或角色，再由系统解析账号绑定手机号；手机号不是业务身份。
+     4. 下方“发送给本村选民 + 手填手机号”属于旧演示理解偏移，不得照搬到 2.0。
+     5. 通知可引用公告/阶段/审核任务，但通知记录与公告记录必须分开。
+-->
+<div class="modal-mask" id="notifyMask" onclick="if(event.target===this)closeNotify()">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3><span class="bar"></span>🔔 通知设置</h3>
+      <button class="x" onclick="closeNotify()">×</button>
+    </div>
+    <div class="modal-bd">
+      <div class="m-row"><span class="mk">通知标题（继承日程）</span><input id="ntTitle" type="text" readonly></div>
+      <div class="m-row"><span class="mk">时间（就是选中的这天）</span><input id="ntDate" type="text" readonly></div>
+      <div class="m-row"><span class="mk">通知方式</span>
+        <select id="ntType">
+          <option value="站内信">小程序站内信（消息中心新消息小红点）</option>
+          <option value="短信">短信（走系统设置的短信通道）</option>
+        </select>
+      </div>
+      <div class="m-row"><span class="mk">请输入内容</span><textarea id="ntContent" placeholder="输入要发送给本村选民的通知内容"></textarea></div>
+      <div class="m-row"><span class="mk">发送给（手机号，多个用逗号隔开）</span><textarea id="ntPhones" placeholder="只发给本村已绑定手机号的选民，如：138****0001,139****0002"></textarea></div>
+      <div class="m-row"><span class="mk">发送时间</span>
+        <select id="ntAdvance" onchange="toggleAdvance()">
+          <option value="no">立即发送（点发送就发）</option>
+          <option value="yes">提前发送（约定一个时间点）</option>
+        </select>
+      </div>
+      <div class="m-row" id="ntAdvanceRow" style="display:none;">
+        <span class="mk">约定发送时间（24 小时制，叔叔阿姨自己填）</span>
+        <input id="ntSendAt" type="datetime-local" step="60">
+      </div>
+      <div class="modal-note">🔐 仅发送给本村（涧口社区）已绑定手机号的选民，不会跨村误发。<br>📮 未开通短信服务时，通知将通过站内消息中心送达，确保每位选民都能收到。</div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeNotify()">关闭</button>
+      <button class="btn btn-primary" onclick="sendNotify()">发送通知</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗③：本村管理员配置（弹窗解决，取代独立的子管理人员配置模块） -->
+<div class="modal-mask" id="adminCfgMask" onclick="if(event.target===this)closeAdminCfg()">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3><span class="bar" style="background:var(--success);"></span>本村管理员配置</h3>
+      <button class="x" onclick="closeAdminCfg()">×</button>
+    </div>
+    <div class="modal-bd">
+      <div id="adminCfgBody"></div>
+      <div class="modal-note" style="margin-top:14px;">👤 各角色人数上限由平台统一分配：子管理1人、经办2人、运营编辑3人、审核2人。<br>📱 手机号为<b>唯一登录账号和凭证</b>；归属地默认为本村，不可跨村。<br>➕ 如需增加账号名额，请联系平台开通。</div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeAdminCfg()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 侧边栏：有二级的展开漏斗，无二级的直接高亮
+document.querySelectorAll('.nav-item').forEach(function(el){
+  el.addEventListener('click',function(){
+    if(this.classList.contains('has-sub')){
+      // 展开/收起自己的二级，同时收起其他已展开的
+      var sub=this.nextElementSibling;
+      var isOpen=this.classList.contains('open');
+      document.querySelectorAll('.nav-item.has-sub').forEach(function(n){
+        n.classList.remove('open');
+        if(n.nextElementSibling) n.nextElementSibling.classList.remove('open');
+      });
+      if(!isOpen){this.classList.add('open');if(sub)sub.classList.add('open');}
+      return;
+    }
+    // 无二级（首页工作台）
+    document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+    this.classList.add('active');
+  });
+});
+// 二级子项点击 → 进入具体页面
+document.querySelectorAll('.sub-item').forEach(function(el){
+  el.addEventListener('click',function(e){
+    e.stopPropagation();
+    var page=this.getAttribute('data-page');
+    if(page){window.location.href=page;return;}
+    toast('进入：'+this.childNodes[0].textContent.trim());
+  });
+});
+// 轻提示
+var _t;
+function toast(msg){
+  var box=document.getElementById('_toast');
+  if(!box){
+    box=document.createElement('div');box.id='_toast';
+    box.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1C1C1C;color:#fff;padding:11px 22px;border-radius:8px;font-size:13px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transition:opacity .2s;pointer-events:none;';
+    document.body.appendChild(box);
+  }
+  box.textContent=msg;box.style.opacity='1';
+  clearTimeout(_t);_t=setTimeout(function(){box.style.opacity='0';},1600);
+}
+
+/* ===== 选举日程：母版时间轴的投影 =====
+   真相在母版 elections.content.timeline；日历只投影、不造日期。
+   子阶段时间陆续公示：填了的有日期，没公示的 date 为空 → 显示"时间待公示"。
+   demo 先用一届假母版数据撑样子，真实系统换成 GET /election-v2/detail 拉 timeline。 */
+var TODAY='2026-07-10';
+var WD=['周日','周一','周二','周三','周四','周五','周六'];
+// 管理员角色：继承超管分配的名额上限，占满要加钱扩容（子管理=村长/经办=书记）
+// 手机号=唯一登录账号和凭证；归属地仅本村（继承预设）
+var VILLAGE='涧口社区';
+var ADMIN_ROLES=[
+  {role:'子管理',alias:'村长',limit:1,color:'var(--success)',members:[
+    {nm:'王建国',av:'王',phone:'150****0000',pwd:'••••••',setAt:'2026-06-18 09:20',lastAt:'2026-07-10 08:05'}
+  ]},
+  {role:'经办',alias:'书记',limit:2,color:'var(--info)',members:[
+    {nm:'李秀兰',av:'李',phone:'138****0001',pwd:'••••••',setAt:'2026-06-20 14:10',lastAt:'2026-07-09 16:42'}
+  ]},
+  {role:'运营编辑',alias:'',limit:3,color:'#8B7BD8',members:[]},
+  {role:'审核',alias:'',limit:2,color:'#C8860D',members:[]}
+];
+var _cfgRole=0; // 弹窗当前选中的角色下标
+// 叔叔阿姨自己加的"特殊事件提醒"，和母版阶段可同一天并存、不互斥
+var CUSTOM_EVENTS=[{date:'2026-07-10',title:'入户宣传',content:'组织志愿者到未登记选民家中宣传登记。'}];
+// 合并母版定时发布公告事件（公告弹窗设置定时发布后写入此key）
+try{var _cal=JSON.parse(localStorage.getItem('election_calendar_events')||'[]');_cal.forEach(function(e){if(e.date&&e.title)CUSTOM_EVENTS.push({date:e.date,title:e.title,content:'定时发布公告'});});}catch(e){}
+var _customDate=null;
+var STAGES=[
+  {key:'S1',name:'选举委员会成立',date:'2026-06-20',biz:'页面-提案审批.html',note:'成立选举委员会、公布选举方案（母版1号公告）。'},
+  {key:'S2',name:'选民登记',date:'2026-06-28',biz:'页面-业务模块.html?module=materials',note:'登记造册、公示选民名单（母版2号公告）。'},
+  {key:'S3',name:'候选人提名',date:'2026-07-08',biz:'页面-业务模块.html?module=candidates',note:'提名候选人、资格审查、材料提交（需7月15日前完成）。'},
+  {key:'S4',name:'确定正式候选人',date:'',biz:'页面-业务模块.html?module=candidates',note:'从提名中确定正式候选人、张榜公示（3号公告）。'},
+  {key:'S5',name:'正式选举投票',date:'',biz:'页面-业务模块.html?module=notices',note:'组织投票、现场唱票计票（线下）。'},
+  {key:'S6',name:'公布结果·归档',date:'',biz:'页面-业务模块.html?module=archives',note:'公布当选结果、材料归档（4号公告）。'}
+];
+// 当前阶段=最后一个"日期已到今天"的阶段
+function curIndex(){var idx=0;for(var i=0;i<STAGES.length;i++){if(STAGES[i].date&&STAGES[i].date<=TODAY)idx=i;}return idx;}
+function fmtDate(d){if(!d)return'时间待公示';var p=d.split('-');return p[0]+'年'+(+p[1])+'月'+(+p[2])+'日';}
+// 取某日期所在周的周一
+function mondayOf(dstr){var d=new Date(dstr+'T00:00:00');var wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd);return d;}
+function ymd(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+// 周下拉：今天所在周 + 每个已公示阶段所在周，去重排序
+function buildWeekOptions(){
+  var keys={},today=ymd(mondayOf(TODAY));keys[today]=1;
+  STAGES.forEach(function(s){if(s.date)keys[ymd(mondayOf(s.date))]=1;});
+  var weeks=Object.keys(keys).sort();var sel=document.getElementById('weekFilter');
+  sel.innerHTML=weeks.map(function(m){
+    var d=new Date(m+'T00:00:00'),e=new Date(d);e.setDate(e.getDate()+6);
+    var label=(d.getMonth()+1)+'月'+d.getDate()+'日 ~ '+(e.getMonth()+1)+'月'+e.getDate()+'日';
+    if(m===today)label+='（本周）';
+    return '<option value="'+m+'"'+(m===today?' selected':'')+'>'+label+'</option>';
+  }).join('');
+}
+// 渲染选中那一周的七天格子
+function renderWeek(){
+  var mon=new Date(document.getElementById('weekFilter').value+'T00:00:00');
+  var head=WD.slice(1).concat(WD[0]).map(function(w){return '<div class="wd">'+w+'</div>';}).join('');
+  var cells='';
+  for(var i=0;i<7;i++){
+    var d=new Date(mon);d.setDate(d.getDate()+i);var ds=ymd(d);
+    var stage=STAGES.find(function(s){return s.date===ds;});
+    var evs=CUSTOM_EVENTS.filter(function(e){return e.date===ds;});
+    var isToday=ds===TODAY;
+    // 数字右上角两个记号：母版有填→小红点；这天设了通知→金色小闹铃（有红点就贴红点左边）
+    var hasBell=evs.length>0;
+    var mark=(stage?'<span class="reddot"></span>':'')
+      +(hasBell?'<span class="bell'+(stage?' with-dot':'')+'" title="这天设了通知">🔔</span>':'');
+    var inner='<div class="dnum">'+d.getDate()+mark+'</div>';
+    // 母版阶段（红条，只读继承通知）
+    if(stage)inner+='<div class="chip chip-stage" onclick="event.stopPropagation();openSch(\''+stage.key+'\')" title="母版阶段">'+stage.name+'</div>';
+    // 自己加的特殊事件（金条，点开可看/发）
+    evs.forEach(function(e){var idx=CUSTOM_EVENTS.indexOf(e);
+      inner+='<div class="chip chip-custom" onclick="event.stopPropagation();openCustomEvent('+idx+')" title="我加的特殊事件">'+e.title+'</div>';});
+    if(!stage&&!evs.length)inner+='<div class="act" style="color:var(--text-muted);">—</div>';
+    // 每格数字下都有"设置通知"：通知发送入口就藏这，不另造通知模块
+    inner+='<div class="set-notify" onclick="event.stopPropagation();openCustomNotify(\''+ds+'\')">设置通知</div>';
+    cells+='<div class="day'+(isToday?' today-mark':'')+(stage?' has-stage':'')+'">'+inner+'</div>';
+  }
+  document.getElementById('weekGrid').innerHTML=head+cells;
+  // 底部提示：当前阶段 + 还有几个待公示
+  var c=curIndex(),cur=STAGES[c];
+  var waitCnt=STAGES.filter(function(s){return !s.date;}).length;
+  document.getElementById('stageHint').innerHTML='📌 当前阶段：<b>'+cur.name+'</b>'
+    +(cur.date?' · 起于 '+fmtDate(cur.date):'')
+    +' · <span class="link-op" style="color:var(--red);" onclick="openSch(\''+cur.key+'\')">查看详情 →</span>'
+    +(waitCnt?'　（另有 '+waitCnt+' 个阶段时间待公示）':'');
+}
+
+/* 两层弹窗 */
+var _curKey=null;
+function findStage(k){for(var i=0;i<STAGES.length;i++){if(STAGES[i].key===k)return STAGES[i];}return null;}
+function openSch(k){_curKey=k;var s=findStage(k);var d=fmtDate(s.date);
+  document.getElementById('schTitle').textContent=s.name;
+  document.getElementById('schDate').textContent=d;
+  document.getElementById('schNote').textContent=s.note;
+  document.getElementById('schMask').classList.add('show');}
+function closeSch(){document.getElementById('schMask').classList.remove('show');}
+function jumpFromSch(){var s=findStage(_curKey);if(s&&s.biz)window.location.href=s.biz;}
+// 从母版阶段详情来：标题只读继承阶段名
+function openNotify(){var s=findStage(_curKey);var d=fmtDate(s.date);
+  var t=document.getElementById('ntTitle');
+  t.value='【'+s.name+'】通知';t.readOnly=true;
+  document.getElementById('ntDate').value=d;
+  document.getElementById('ntContent').value='';document.getElementById('ntPhones').value='';
+  resetAdvance();
+  document.getElementById('schMask').classList.remove('show');
+  document.getElementById('notifyMask').classList.add('show');}
+function closeNotify(){document.getElementById('notifyMask').classList.remove('show');}
+// "是否提前发送"切是→冒出"提前几小时"（最多48）；切否→收起
+function toggleAdvance(){
+  var yes=document.getElementById('ntAdvance').value==='yes';
+  document.getElementById('ntAdvanceRow').style.display=yes?'':'none';
+}
+// 每次打开通知弹层都把"提前发送"复位成"否"
+function resetAdvance(){document.getElementById('ntAdvance').value='no';toggleAdvance();}
+
+/* ===== 第二层：叔叔阿姨自己在某天加特殊事件 + 发提醒 =====
+   和母版阶段并存不互斥。发送复用同一张 notifications 表/接口，
+   所以日历本身就是通知发送入口，后面不用再单独造通知管理模块。 */
+// 点某天"＋提醒"：新建特殊事件，标题可自己写
+function openCustomNotify(ds){
+  _customDate=ds;_curKey=null;
+  var t=document.getElementById('ntTitle');
+  t.value='';t.readOnly=false;t.placeholder='自己写：如"入户宣传""老党员座谈"';
+  document.getElementById('ntDate').value=fmtDate(ds);
+  document.getElementById('ntContent').value='';document.getElementById('ntPhones').value='';
+  resetAdvance();
+  document.getElementById('notifyMask').classList.add('show');}
+// 点已加的红条：看这条特殊事件（用日程详情窗，可再发提醒）
+function openCustomEvent(idx){var e=CUSTOM_EVENTS[idx];_customDate=e.date;_curKey=null;
+  document.getElementById('schTitle').textContent=e.title;
+  document.getElementById('schDate').textContent=fmtDate(e.date);
+  document.getElementById('schNote').textContent=e.content||'（本村自定义特殊事件）';
+  document.getElementById('schMask').classList.add('show');}
+function sendNotify(){
+  var title=document.getElementById('ntTitle').value.trim();
+  var content=document.getElementById('ntContent').value.trim();
+  var phones=document.getElementById('ntPhones').value.trim();
+  if(!document.getElementById('ntTitle').readOnly&&!title){toast('请先写这条提醒的标题');return;}
+  if(!content){toast('请填写通知内容');return;}
+  if(!phones){toast('请填写通知手机号');return;}
+  // 提前发送：校验约定的时间点（24小时制），须晚于现在
+  var advance=document.getElementById('ntAdvance').value==='yes';
+  var sendAt='';
+  if(advance){
+    sendAt=document.getElementById('ntSendAt').value;
+    if(!sendAt){toast('请约定一个发送时间');return;}
+    if(new Date(sendAt.replace('T',' ').replace(/-/g,'/'))<=new Date()){toast('约定时间要晚于现在');return;}
+  }
+  var way=document.getElementById('ntType').value;
+  // demo 里把 datetime-local 的值美化成 "M月D日 HH:MM" 给 toast 看
+  var atTxt=sendAt?(function(s){var p=s.split('T'),d=p[0].split('-');return (+d[1])+'月'+(+d[2])+'日 '+p[1];})(sendAt):'';
+  // 自己加的特殊事件：落进那天格子（demo；真实系统一并写 notifications 表 scheduled_at 字段）
+  if(_customDate&&!_curKey){CUSTOM_EVENTS.push({date:_customDate,title:title,content:content});renderWeek();}
+  closeNotify();
+  toast('通知已'+(advance?('预约发送（'+atTxt+'·'+way+'）'):('发送（'+way+'）'))+'，仅送达本村已绑定手机号的选民');
+}
+// 弹窗：角色横向圆钮切换 + 表格增删管理员账号
+function renderAdminCfg(){
+  // 顶部角色圆钮（横向，点击切换）
+  var pills=ADMIN_ROLES.map(function(r,i){
+    var name=r.role+(r.alias?'（'+r.alias+'）':'');
+    return '<button class="role-pill'+(i===_cfgRole?' on':'')+'" style="--pc:'+r.color+'" onclick="_cfgRole='+i+';renderAdminCfg()">'+name+' '+r.members.length+'/'+r.limit+'</button>';
+  }).join('');
+  var r=ADMIN_ROLES[_cfgRole],full=r.members.length>=r.limit;
+  // 表格行
+  var rows=r.members.map(function(m,idx){
+    return '<tr>'
+      +'<td>'+VILLAGE+'</td>'
+      +'<td>'+m.nm+'</td>'
+      +'<td>'+m.phone+'</td>'
+      +'<td>'+m.pwd+'</td>'
+      +'<td>'+m.setAt+'</td>'
+      +'<td>'+(m.lastAt||'—')+'</td>'
+      +'<td class="ops"><span class="op" onclick="toast(\'编辑：'+m.nm+'\')">编辑</span><span class="op del" onclick="toast(\'删除：'+m.nm+'\')">删除</span></td>'
+      +'</tr>';
+  }).join('');
+  if(!r.members.length)rows='<tr><td colspan="7" class="empty">该角色暂无账号</td></tr>';
+  // 新增/扩容按钮
+  var addBtn= full
+    ? '<button class="btn btn-gold" onclick="toast(\''+r.role+'名额已满（'+r.limit+'人），如需增加请联系平台开通\')">名额已满 · 联系平台开通</button>'
+    : '<button class="btn btn-primary" onclick="toast(\'新增'+r.role+'账号\')">＋ 新增'+r.role+'账号（'+r.members.length+'/'+r.limit+'）</button>';
+  document.getElementById('adminCfgBody').innerHTML=
+    '<div class="role-pills">'+pills+'</div>'
+    +'<div class="tbl-wrap"><table class="admin-tbl"><thead><tr>'
+    +'<th>归属地</th><th>姓名</th><th>手机号<br><small>唯一登录账号</small></th><th>登录密码</th><th>设置时间</th><th>最后登录</th><th>操作</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div style="margin-top:12px;">'+addBtn+'</div>';
+}
+function openAdminCfg(){_cfgRole=0;renderAdminCfg();document.getElementById('adminCfgMask').classList.add('show');}
+function closeAdminCfg(){document.getElementById('adminCfgMask').classList.remove('show');}
+// 读登录带下来的身份，填顶部信息条（读不到就保留默认，直接开页也不崩）
+function applySession(){
+  var raw=localStorage.getItem('election_session');
+  if(!raw)return;
+  try{
+    var s=JSON.parse(raw);
+    if(s.village)document.getElementById('tbVillage').textContent=s.village;
+    if(s.roleDisplay)document.getElementById('tbRole').textContent=s.roleDisplay;
+    if(s.phoneMask)document.getElementById('tbPhone').textContent=s.phoneMask;
+  }catch(e){}
+}
+applySession();
+buildWeekOptions();
+renderWeek();
+</script>
+</body>
+</html>

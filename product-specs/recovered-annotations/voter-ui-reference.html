@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>城厢区村居换届选举系统 - UI设计稿展示</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    .border-l-3 { border-left-width: 3px; }
+    @keyframes marquee {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    /* ============ PhoneFrame ============ */
+    function PhoneFrame({ title, children }) {
+      return (
+        <div className="flex flex-col items-center gap-3">
+          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+          <div className="relative w-[280px] h-[560px] bg-gray-900 rounded-[2.5rem] p-2 shadow-2xl border border-gray-700">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-gray-900 rounded-b-2xl z-10" />
+            <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden relative">
+              {children}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ============ BrowserFrame ============ */
+    function BrowserFrame({ title, children }) {
+      return (
+        <div className="flex flex-col items-center gap-3">
+          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+          <div className="w-[640px] h-[440px] bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden flex flex-col">
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 border-b border-gray-200 shrink-0">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-400" />
+                <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                <div className="w-3 h-3 rounded-full bg-green-400" />
+              </div>
+              <div className="flex-1 ml-3 px-3 py-1 bg-white rounded-md text-xs text-gray-400 border border-gray-200">
+                https://cxq-election.gov.cn/admin
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto">
+              {children}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ============ PC Sidebar & TopBar ============ */
+    const SIDEBAR_ITEMS = [
+      '首页概览', '公告管理', '选举管理', '职位管理', '候选人管理',
+      '材料管理', '通知管理', '档案管理', '管理员设置', '角色设置',
+    ];
+
+    function Sidebar({ active }) {
+      return (
+        <div className="w-36 bg-white border-r border-gray-200 py-2 shrink-0">
+          {SIDEBAR_ITEMS.map((name) => (
+            <div key={name} className={`px-3 py-1.5 text-[9px] cursor-pointer ${
+              name === active ? 'bg-teal-50 text-teal-600 font-bold border-r-2 border-teal-600' : 'text-gray-600'
+            }`}>{name}</div>
+          ))}
+        </div>
+      );
+    }
+
+    function TopBar() {
+      return (
+        <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-teal-600 rounded flex items-center justify-center">
+              <span className="text-white text-[8px] font-bold">选</span>
+            </div>
+            <span className="text-[10px] font-bold text-gray-700">城厢区村居换届选举管理系统</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-gray-500">管理员</span>
+            <div className="w-5 h-5 bg-gray-200 rounded-full cursor-pointer" />
+          </div>
+        </div>
+      );
+    }
+
+    /* ============ Mini: NoticeDetailModal ============ */
+    function NoticeDetailModal({ notice, onClose }) {
+      return (
+        <div className="absolute inset-0 z-50 bg-black/50 flex items-end">
+          <div className="w-full bg-white rounded-t-2xl max-h-[90%] flex flex-col">
+            <div className="shrink-0 px-3 pt-3 pb-2 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-gray-400">公告详情</span>
+                <button onClick={onClose} className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center">
+                  <span className="text-[9px] text-gray-500">✕</span>
+                </button>
+              </div>
+              <h2 className="text-xs font-bold text-gray-800 mt-1.5 leading-snug">{notice.title}</h2>
+            </div>
+            <div className="flex-1 overflow-auto px-3 py-2.5 space-y-3">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="text-[9px] text-gray-500">⏰ 参选时间</div>
+                  <span className="text-[8px] text-amber-600 font-bold bg-amber-100 px-1.5 py-0.5 rounded">⚠ 请在有效期内提交材料</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="bg-white border border-amber-200 rounded px-2 py-1">
+                    <div className="text-[8px] text-gray-400">起始时间</div>
+                    <div className="text-[10px] font-bold text-amber-700">{notice.startTime}</div>
+                  </div>
+                  <span className="text-amber-400 text-[10px]">→</span>
+                  <div className="bg-white border border-amber-200 rounded px-2 py-1">
+                    <div className="text-[8px] text-gray-400">截止时间</div>
+                    <div className="text-[10px] font-bold text-amber-700">{notice.endTime}</div>
+                  </div>
+                </div>
+                <div className="text-[8px] text-amber-600 mt-1.5 flex items-center gap-0.5">
+                  <span>⚠️</span>
+                  <span className="font-medium">参选截止时间以公告为准，逾期将无法提交材料</span>
+                </div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-2.5">
+                <div className="text-[10px] font-bold text-gray-700 mb-1.5">📄 公告正文</div>
+                <div className="text-[9px] text-gray-600 leading-relaxed whitespace-pre-line">{notice.content}</div>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                <div className="text-[10px] font-bold text-amber-800 mb-2">📖 {notice.guide.title}</div>
+                <div className="w-full h-28 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 rounded-lg flex flex-col items-center justify-center mb-2.5 border border-amber-200">
+                  <div className="text-2xl mb-1">📋</div>
+                  <div className="text-[9px] text-gray-500 font-medium">参选流程示意图</div>
+                  <div className="flex items-center gap-1 mt-1.5">
+                    {['选民登记', '→', '资格审核', '→', '领取选票', '→', '投票选举'].map((step, i) => (
+                      <span key={i} className={`text-[7px] ${step === '→' ? 'text-amber-400' : 'bg-amber-200 text-amber-800 px-1 py-0.5 rounded'}`}>{step}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  {notice.guide.steps.map((step, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <div className="w-4 h-4 rounded-full bg-amber-500 text-white text-[8px] flex items-center justify-center shrink-0 mt-0.5">{i + 1}</div>
+                      <span className="text-[9px] text-gray-700 leading-relaxed">{step}</span>
+                    </div>
+                  ))}
+                </div>
+                {notice.guide.tips.length > 0 && (
+                  <div className="mt-2.5 bg-white/70 rounded p-2">
+                    <div className="text-[9px] font-bold text-amber-700 mb-1">💡 温馨提示</div>
+                    {notice.guide.tips.map((tip, i) => (
+                      <div key={i} className="text-[8px] text-amber-700 leading-relaxed">• {tip}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="shrink-0 px-3 pt-2 pb-1">
+              <button className="w-full bg-teal-600 text-white text-[10px] py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 shadow-sm">
+                <span>📋</span><span>快捷提交材料</span><span className="text-[8px] opacity-80">→ 前往材料提交</span>
+              </button>
+              <div className="text-[7px] text-slate-400 mt-1 text-center font-medium">可点击「快捷提交材料」跳转到材料提交页面</div>
+            </div>
+            <div className="shrink-0 px-3 py-2 border-t border-gray-100">
+              <button onClick={onClose} className="w-full bg-teal-600 text-white text-[10px] py-2 rounded-lg font-medium">我已知晓</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ============ Mini: ForecastDetailModal ============ */
+    function ForecastDetailModal({ forecast, onClose }) {
+      return (
+        <div className="absolute inset-0 z-50 bg-black/50 flex items-end">
+          <div className="w-full bg-white rounded-t-2xl max-h-[85%] flex flex-col">
+            <div className="shrink-0 px-3 pt-3 pb-2 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-teal-600 font-bold">🔔 选举预告详情</span>
+                <button onClick={onClose} className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center">
+                  <span className="text-[9px] text-gray-500">✕</span>
+                </button>
+              </div>
+              <h2 className="text-xs font-bold text-gray-800 mt-1.5 leading-snug">{forecast.title}</h2>
+            </div>
+            <div className="flex-1 overflow-auto px-3 py-2.5 space-y-2.5">
+              <div className="bg-amber-50 border border-amber-100 rounded-lg p-2.5">
+                <div className="text-[9px] text-gray-500 mb-1">📅 选举时间</div>
+                <div className="text-sm font-bold text-amber-700">{forecast.date}</div>
+                <div className="text-[10px] text-amber-600 mt-0.5">{forecast.timeRange}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-2.5">
+                <div className="text-[9px] text-gray-500 mb-1">📍 选举地点</div>
+                <div className="text-[10px] text-gray-700">{forecast.location}</div>
+              </div>
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-2.5">
+                <div className="text-[9px] text-gray-500 mb-1.5">🎯 竞选职位</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {forecast.positions.map((pos) => (
+                    <span key={pos} className="text-[9px] bg-white border border-blue-200 text-blue-700 px-2 py-1 rounded-full font-medium">{pos}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-amber-50 border border-amber-100 rounded-lg p-2.5">
+                <div className="text-[9px] font-bold text-amber-700 mb-1">⚠️ 注意事项</div>
+                <div className="text-[9px] text-amber-700 leading-relaxed">{forecast.notes}</div>
+              </div>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
+                <div className="text-[10px] font-bold text-emerald-800 mb-2">📊 选举活动流程图</div>
+                <div className="w-full h-32 bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-50 rounded-lg flex flex-col items-center justify-center mb-2 border border-emerald-200">
+                  <div className="text-2xl mb-1">🏛️</div>
+                  <div className="text-[9px] text-gray-500 font-medium">选举活动流程示意图</div>
+                  <div className="flex items-center gap-0.5 mt-2 flex-wrap justify-center px-2">
+                    {['成立选举委员会', '→', '选民登记', '→', '候选人提名', '→', '公示审核', '→', '投票选举', '→', '公布结果'].map((step, i) => (
+                      <span key={i} className={`text-[6px] ${step === '→' ? 'text-emerald-400' : 'bg-emerald-200 text-emerald-800 px-1 py-0.5 rounded'}`}>{step}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-2.5">
+                <div className="text-[10px] font-bold text-indigo-800 mb-2">📝 投票步骤指引</div>
+                <div className="space-y-1.5">
+                  {['携带本人身份证和选民证前往指定投票站', '在入口处核验身份，领取空白选票', '进入秘密写票处，在选票上勾选支持的候选人（可多选）', '将填写好的选票投入票箱', '如需委托投票，须提前3日办理委托手续，每人最多接受3人委托', '投票结束后，在监票人监督下公开计票'].map((step, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <div className="w-4 h-4 rounded-full bg-indigo-500 text-white text-[8px] flex items-center justify-center shrink-0 mt-0.5">{i + 1}</div>
+                      <span className="text-[9px] text-gray-700 leading-relaxed">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
+                <div className="text-[10px] font-bold text-gray-700 mb-2">📎 相关附件</div>
+                <div className="space-y-1.5">
+                  {[{ name: '选举工作实施方案.pdf', size: '2.3 MB' }, { name: '投票站分布图.png', size: '856 KB' }, { name: '委托投票申请表.docx', size: '128 KB' }].map((file, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-white rounded-md px-2 py-1.5 border border-gray-100">
+                      <span className="text-sm">📄</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[9px] text-gray-700 font-medium truncate">{file.name}</div>
+                        <div className="text-[8px] text-gray-400">{file.size}</div>
+                      </div>
+                      <span className="text-[9px] text-teal-600 font-medium shrink-0">下载</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="shrink-0 px-3 py-2 border-t border-gray-100">
+              <button onClick={onClose} className="w-full bg-slate-600 text-white text-[10px] py-2 rounded-lg font-medium">关闭</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ============ Mini: HistoryDetailModal ============ */
+    function HistoryDetailModal({ history, onClose }) {
+      return (
+        <div className="absolute inset-0 z-50 bg-black/50 flex items-end">
+          <div className="w-full bg-white rounded-t-2xl max-h-[90%] flex flex-col">
+            <div className="shrink-0 px-3 pt-3 pb-2 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-gray-400">历史公示详情</span>
+                <button onClick={onClose} className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center">
+                  <span className="text-[9px] text-gray-500">✕</span>
+                </button>
+              </div>
+              <h2 className="text-xs font-bold text-gray-800 mt-1.5 leading-snug">{history.title}</h2>
+            </div>
+            <div className="flex-1 overflow-auto px-3 py-2.5 space-y-3">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+                <div className="text-[9px] text-gray-500 mb-1.5">📅 发布日期</div>
+                <div className="flex items-center gap-1.5">
+                  <div className="bg-white border border-slate-200 rounded px-2 py-1">
+                    <div className="text-[8px] text-gray-400">公示期</div>
+                    <div className="text-[10px] font-bold text-slate-700">{history.publishRange}</div>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded px-2 py-1">
+                    <div className="text-[8px] text-gray-400">状态</div>
+                    <div className="text-[10px] font-bold text-slate-700">{history.status}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-2.5">
+                <div className="text-[10px] font-bold text-gray-700 mb-1.5">📄 正文内容</div>
+                <div className="text-[9px] text-gray-600 leading-relaxed whitespace-pre-line">{history.content}</div>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                <div className="text-[10px] font-bold text-amber-800 mb-2">📖 图文明细</div>
+                <div className="w-full h-24 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 rounded-lg flex flex-col items-center justify-center mb-2.5 border border-amber-200">
+                  <div className="text-2xl mb-1">📊</div>
+                  <div className="text-[9px] text-gray-500 font-medium">选举结果公示示意图</div>
+                </div>
+                <div className="text-[9px] text-gray-700 leading-relaxed mb-2.5">{history.detailText}</div>
+                {history.electedMembers.length > 0 && (
+                  <div className="bg-white/70 rounded-md p-2">
+                    <div className="text-[9px] font-bold text-amber-800 mb-1.5">🏆 当选人员</div>
+                    <div className="space-y-1">
+                      {history.electedMembers.map((member, i) => (
+                        <div key={i} className="flex items-center justify-between bg-white rounded px-2 py-1 border border-amber-100">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-4 rounded-full bg-amber-200 text-amber-700 text-[7px] flex items-center justify-center font-bold">{i + 1}</div>
+                            <span className="text-[9px] font-medium text-gray-700">{member.name}</span>
+                            <span className="text-[8px] bg-teal-50 text-teal-600 px-1 py-0.5 rounded">{member.position}</span>
+                          </div>
+                          <span className="text-[8px] text-gray-500">{member.votes}票</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div className="bg-white/70 rounded-md p-2 text-center">
+                    <div className="text-[8px] text-gray-400">参选率</div>
+                    <div className="text-sm font-bold text-teal-600">{history.participationRate}</div>
+                  </div>
+                  <div className="bg-white/70 rounded-md p-2 text-center">
+                    <div className="text-[8px] text-gray-400">参选人数</div>
+                    <div className="text-sm font-bold text-teal-600">{history.totalVoters}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="shrink-0 px-3 py-2 border-t border-gray-100">
+              <button onClick={onClose} className="w-full bg-slate-600 text-white text-[10px] py-2 rounded-lg font-medium">关闭</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ============ Mini: CandidateDetailModal ============ */
+    function CandidateDetailModal({ candidate, onClose }) {
+      return (
+        <div className="absolute inset-0 z-50 bg-black/50 flex items-end">
+          <div className="w-full bg-white rounded-t-2xl max-h-[90%] flex flex-col">
+            <div className="shrink-0 px-3 pt-3 pb-2 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-gray-400">候选人详情</span>
+                <button onClick={onClose} className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center">
+                  <span className="text-[9px] text-gray-500">✕</span>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto px-3 py-2.5 space-y-3">
+              <div className="flex flex-col items-center py-2">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-400 to-slate-400 flex items-center justify-center mb-2">
+                  <span className="text-white text-xl font-bold">{candidate.name[0]}</span>
+                </div>
+                <div className="text-sm font-bold text-gray-800">{candidate.name}</div>
+                <span className="text-[9px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full mt-1">{candidate.position}</span>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-2.5">
+                <div className="text-[10px] font-bold text-gray-700 mb-2">📋 基本信息</div>
+                <div className="grid grid-cols-2 gap-y-1.5 gap-x-3">
+                  {[['性别', candidate.gender], ['年龄', candidate.age + '岁'], ['党派', candidate.party], ['学历', candidate.education], ['民族', candidate.ethnicity], ['社区', candidate.village]].map(([label, val], i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <span className="text-[9px] text-gray-400">{label}</span>
+                      <span className="text-[9px] text-gray-700 font-medium">{val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-teal-50 border border-teal-100 rounded-lg p-2.5">
+                <div className="text-[10px] font-bold text-teal-700 mb-1.5">🎯 竞选纲领</div>
+                <div className="text-[9px] text-gray-700 leading-relaxed">{candidate.platform}</div>
+              </div>
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-2.5">
+                <div className="text-[10px] font-bold text-blue-700 mb-1.5">📘 个人履历</div>
+                <div className="text-[9px] text-gray-700 leading-relaxed">{candidate.career}</div>
+              </div>
+              <div className="bg-amber-50 border border-amber-100 rounded-lg p-2.5">
+                <div className="text-[10px] font-bold text-amber-700 mb-1.5">🤝 承诺事项</div>
+                <div className="space-y-1.5">
+                  {candidate.pledges.map((pledge, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <div className="w-4 h-4 rounded-full bg-amber-500 text-white text-[8px] flex items-center justify-center shrink-0 mt-0.5">{i + 1}</div>
+                      <span className="text-[9px] text-gray-700 leading-relaxed">{pledge}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="shrink-0 px-3 py-2 border-t border-gray-100">
+              <button onClick={onClose} className="w-full bg-slate-600 text-white text-[10px] py-2 rounded-lg font-medium">关闭</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ============ Mini: 首页 ============ */
+    function MiniHomePage() {
+      return (
+        <PhoneFrame title="首页">
+          <div className="h-full flex flex-col bg-gray-50">
+            <div className="bg-gradient-to-b from-slate-700 to-slate-800 text-white px-4 pt-6 pb-3">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs">9:41</span>
+                <div className="flex gap-1">
+                  <div className="w-3 h-2 bg-white/80 rounded-sm" />
+                  <div className="w-3 h-2 bg-white/80 rounded-sm" />
+                  <div className="w-4 h-2 bg-white/60 rounded-sm" />
+                </div>
+              </div>
+              <h1 className="text-base font-bold text-center tracking-wide">城厢区村居换届选举</h1>
+            </div>
+            {/* 走马灯 — 最顶部 */}
+            <div className="bg-amber-50 border-b border-amber-200/60 px-3 py-1 flex items-center gap-2 overflow-hidden">
+              <span className="shrink-0 text-[9px]">🔔</span>
+              <div className="flex-1 overflow-hidden">
+                <div className="whitespace-nowrap text-[9px] text-amber-800 font-medium animate-[marquee_15s_linear_infinite]">
+                  您有3条新消息未阅读 — 关于开展2025年村级组织换届选举工作的公告已更新 — 选民登记通知即将截止 — 候选人提名公告已发布
+                </div>
+              </div>
+              <span className="shrink-0 text-[8px] text-amber-600 font-medium cursor-pointer hover:text-amber-800 transition-colors">查看 ›</span>
+            </div>
+            <div className="mx-3 mt-2 rounded-lg bg-gradient-to-r from-slate-600 to-slate-700 p-3 text-white shadow-sm">
+              <div className="text-xs opacity-80">2025年村级组织换届</div>
+              <div className="text-sm font-bold mt-1">依法选举 公正公开</div>
+              <div className="text-[10px] mt-1 opacity-70">城厢区2025年度村（居）民委员会换届选举工作</div>
+            </div>
+            <div className="grid grid-cols-4 gap-2 mx-3 mt-3">
+              {[
+                { icon: '📢', label: '公告通知', color: 'from-amber-400 to-amber-500' },
+                { icon: '🗳️', label: '选举方式', color: 'from-slate-400 to-slate-500' },
+                { icon: '👤', label: '候选人', color: 'from-teal-400 to-teal-500' },
+                { icon: '📋', label: '材料提交', color: 'from-rose-400 to-rose-500' },
+              ].map((item) => (
+                <div key={item.label} className="flex flex-col items-center gap-1.5 py-2">
+                  <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-sm`}>
+                    <span className="text-white text-sm">{item.icon}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-600 font-medium">{item.label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mx-3 mt-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-800">📢 最新公告</span>
+                <span className="text-[10px] text-gray-400">更多 &gt;</span>
+              </div>
+              {[
+                { title: '关于开展2025年村级换届选举的公告', date: '2025-03-15', tag: '新' },
+                { title: '选民登记时间调整通知', date: '2025-03-12', tag: '新' },
+              ].map((item) => (
+                <div key={item.title} className="flex items-start gap-2 py-2 border-b border-gray-100">
+                  <span className="shrink-0 text-[9px] bg-teal-500 text-white px-1 py-0.5 rounded font-medium">{item.tag}</span>
+                  <span className="text-[10px] text-slate-700 flex-1 leading-tight">{item.title}</span>
+                  <span className="shrink-0 text-[9px] text-slate-400">{item.date}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mx-3 mt-3">
+              <div className="flex items-center gap-1 mb-2">
+                <span className="text-xs font-bold text-slate-700">🔔 近期选举预告</span>
+              </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+                <div className="text-[10px] font-semibold text-slate-800">凤凰社区居委会换届选举</div>
+                <div className="text-[9px] text-slate-500 mt-1">⏰ 选举时间：2025-04-10 08:00 ~ 18:00</div>
+                <div className="text-[9px] text-slate-500">📍 地点：凤凰社区党群服务中心</div>
+                <div className="text-[7px] text-amber-500 mt-1.5 font-medium">参选时间请以公告为准</div>
+              </div>
+            </div>
+            <div className="mt-auto border-t border-gray-200 bg-white grid grid-cols-4 py-1">
+              {['首页', '公告', '选举', '我的'].map((tab, i) => (
+                <div key={tab} className="flex flex-col items-center gap-0.5">
+                  <div className={`w-4 h-4 rounded ${i === 0 ? 'bg-teal-600' : 'bg-gray-300'}`} />
+                  <span className={`text-[9px] ${i === 0 ? 'text-teal-600 font-bold' : 'text-gray-400'}`}>{tab}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </PhoneFrame>
+      );
+    }
+
+    /* ============ Mini: 公告通知 ============ */
+    function MiniNoticePage() {
+      const [activeTab, setActiveTab] = useState('latest');
+      const [selectedNotice, setSelectedNotice] = useState(null);
+      const [selectedForecast, setSelectedForecast] = useState(null);
+      const [selectedHistory, setSelectedHistory] = useState(null);
+
+      const latestNotices = [
+        { id: 1, title: '关于开展2025年村级组织换届选举工作的公告', startTime: '2025-03-01', endTime: '2025-06-30', content: '根据《中华人民共和国村民委员会组织法》和《中华人民共和国城市居民委员会组织法》的有关规定，经城厢区人民政府批准，决定在全区范围内开展2025年度村（居）民委员会换届选举工作。\n\n本次换届选举涉及全区12个镇（街道）、156个村（社区），将依法选举产生新一届村（居）民委员会成员。', guide: { title: '图文参选指引 — 如何参与换届选举', steps: ['选民需携带本人身份证到指定登记点进行选民登记，登记时间截止2025年4月15日', '登记审核通过后，凭身份证到社区服务中心领取选民证', '选举日当天，凭选民证和身份证到指定投票站投票', '如需委托他人代为投票，须提前3日到社区办理委托手续，每人最多接受3人委托'], tips: ['请务必在规定时间内完成选民登记', '投票时请携带本人身份证和选民证', '委托投票需提前办理委托手续'] } },
+        { id: 2, title: '选民登记公告', startTime: '2025-03-15', endTime: '2025-04-15', content: '现就2025年村（居）民委员会换届选举选民登记有关事项公告如下：\n\n凡年满18周岁（2007年3月15日前出生）且户籍在本村（社区）的居民，均有权进行选民登记。非本村（社区）户籍但在本村（社区）居住满1年以上且未在其他地方登记的居民，可申请登记。', guide: { title: '图文参选指引 — 如何进行选民登记', steps: ['年满18周岁且户籍在本村（社区）的居民方可登记', '携带身份证、户口本到所属社区服务中心登记窗口', '现场填写选民登记表并签字确认', '登记截止日期（4月15日）前完成审核，逾期不予补登'], tips: ['非本社区户籍但居住满1年可申请登记', '登记信息须真实有效，如有虚假将取消资格', '登记完成后请妥善保管选民证'] } },
+        { id: 3, title: '候选人提名公告', startTime: '2025-04-01', endTime: '2025-04-20', content: '根据选举工作安排，现就2025年村（居）民委员会换届选举候选人提名事项公告如下：\n\n选民10人以上联名可提名1名候选人，同一候选人被不同选民联名提名的，不重复计算。候选人提名截止日期为2025年4月20日。', guide: { title: '图文参选指引 — 如何提名候选人', steps: ['选民10人以上联名可提名1名候选人，须所有联名选民签字', '候选人需提交个人简历、承诺书及无犯罪记录证明', '提名材料交至选举委员会办公室进行审核', '审核通过后在社区公示栏公示7天，无异议则确认为正式候选人'], tips: ['每位选民只能参与提名一次同一候选人', '候选人须符合法定任职资格条件', '提名材料须在截止日期前提交'] } },
+      ];
+      const forecasts = [
+        { id: 4, title: '凤凰社区居委会换届选举', date: '2025-04-10', timeRange: '08:00 - 18:00', location: '凤凰社区党群服务中心（城厢区凤凰路128号）', positions: ['主任 1名', '副主任 2名', '委员 4名'], notes: '请各位选民携带本人身份证和选民证，于选举日当天8:00-18:00前往指定投票站投票。' },
+        { id: 5, title: '龙桥街道村委会换届选举', date: '2025-04-15', timeRange: '09:00 - 17:00', location: '龙桥街道办事处（城厢区龙桥大道56号）', positions: ['主任 1名', '副主任 1名', '委员 3名'], notes: '投票采用无记名方式，请在选票上勾选您支持的候选人。' },
+        { id: 6, title: '霞林社区居委会换届选举', date: '2025-04-20', timeRange: '08:30 - 17:30', location: '霞林社区服务中心（城厢区霞林路88号）', positions: ['主任 1名', '委员 5名'], notes: '委托投票须提前3日办理委托手续，每人最多接受3人委托。' },
+      ];
+      const historyNotices = [
+        { id: 7, title: '2022年村级组织换届选举结果公示', date: '2022-06-15', status: '已完成', publishRange: '2022-06-15 ~ 2022-06-30', content: '凤凰社区2022年度村（居）民委员会换届选举工作已圆满完成。现将选举结果予以公示，公示期为15天。', detailText: '本次凤凰社区换届选举共登记选民3,842人，实际参加投票3,547人，参选率达92.3%。', electedMembers: [{ name: '林志强', position: '主任', votes: '2,856' }, { name: '黄丽萍', position: '副主任', votes: '2,634' }, { name: '陈伟', position: '副主任', votes: '2,518' }], participationRate: '92.3%', totalVoters: '3,547人' },
+        { id: 8, title: '2022年候选人资格审核结果公示', date: '2022-05-20', status: '已归档', publishRange: '2022-05-20 ~ 2022-06-05', content: '凤凰社区选举委员会对2022年度全部32名提名候选人进行了资格审核。', detailText: '共审核候选人32名，其中28名通过审核，4名未通过。', electedMembers: [], participationRate: '87.5%', totalVoters: '28/32人' },
+      ];
+
+      return (
+        <PhoneFrame title="公告通知">
+          <div className="h-full flex flex-col bg-gray-50 relative">
+            <div className="bg-gradient-to-b from-slate-700 to-slate-800 text-white px-4 pt-6 pb-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs">9:41</span>
+                <div className="flex gap-1">
+                  <div className="w-3 h-2 bg-white/80 rounded-sm" />
+                  <div className="w-3 h-2 bg-white/80 rounded-sm" />
+                  <div className="w-4 h-2 bg-white/60 rounded-sm" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">←</span>
+                <h1 className="text-sm font-bold flex-1 text-center">公告通知</h1>
+                <span className="text-sm">🔍</span>
+              </div>
+            </div>
+            <div className="flex bg-white border-b border-slate-200">
+              {[{ key: 'latest', label: '最新公告' }, { key: 'forecast', label: '近期预告' }, { key: 'history', label: '历史公示' }].map((tab) => (
+                <button key={tab.key}
+                  onClick={() => { setActiveTab(tab.key); setSelectedNotice(null); setSelectedForecast(null); setSelectedHistory(null); }}
+                  className={`flex-1 py-2.5 text-xs font-medium text-center relative transition-colors ${activeTab === tab.key ? 'text-teal-600 font-bold' : 'text-slate-400'}`}>
+                  {tab.label}
+                  {activeTab === tab.key && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-teal-500 rounded-full" />}
+                </button>
+              ))}
+            </div>
+            <div className="bg-amber-50 border-b border-amber-200/60 px-3 py-1 flex items-center gap-2 overflow-hidden">
+              <span className="shrink-0 text-[9px]">🔔</span>
+              <div className="flex-1 overflow-hidden">
+                <div className="whitespace-nowrap text-[9px] text-amber-800 font-medium animate-[marquee_15s_linear_infinite]">
+                  您有3条新消息未阅读 — 关于开展2025年村级组织换届选举工作的公告已更新 — 选民登记通知即将截止 — 候选人提名公告已发布
+                </div>
+              </div>
+              <span className="shrink-0 text-[8px] text-amber-600 font-medium cursor-pointer">查看 ›</span>
+            </div>
+            <div className="flex-1 overflow-auto px-3 py-2">
+              {activeTab === 'latest' && (
+                <div className="space-y-2">
+                  {latestNotices.map((notice) => (
+                    <div key={notice.id} className="bg-white rounded-lg shadow-sm border border-gray-100">
+                      <div className="p-2.5">
+                        <div className="flex items-start gap-1.5">
+                          <span className="shrink-0 text-[9px] bg-teal-600 text-white px-1 py-0.5 rounded mt-0.5">公告</span>
+                          <span className="text-[11px] font-medium text-gray-800 flex-1 leading-tight">{notice.title}</span>
+                        </div>
+                        <div className="mt-2 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[8px] text-amber-600 font-bold">⏰ 参选时间</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-[10px] font-bold text-amber-700">{notice.startTime}</span>
+                            <span className="text-[9px] text-amber-500">至</span>
+                            <span className="text-[10px] font-bold text-amber-700">{notice.endTime}</span>
+                            <span className="text-[8px] text-orange-500 ml-auto font-medium">⚠ 逾期不可提交</span>
+                          </div>
+                        </div>
+                        <div className="mt-1.5 flex gap-1.5">
+                          <button onClick={() => setSelectedNotice(notice)} className="flex-1 text-center py-1.5 bg-blue-50 text-blue-600 text-[9px] font-medium rounded-md hover:bg-blue-100 transition-colors">📖 查看详情</button>
+                          <button className="flex-1 text-center py-1.5 bg-teal-500 text-white text-[9px] font-bold rounded-md flex items-center justify-center gap-0.5">📋 提交材料</button>
+                        </div>
+                        <div className="text-[7px] text-slate-400 mt-1 text-center font-medium">可点击「📋 提交材料」前往材料提交页面</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {activeTab === 'forecast' && (
+                <div className="space-y-2">
+                  <div className="bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg p-2.5">
+                    <div className="text-xs font-bold">🔔 近期选举预告</div>
+                    <div className="text-[9px] opacity-80 mt-0.5">以下为即将开展的选举活动，请关注时间安排</div>
+                  </div>
+                  {forecasts.map((forecast) => (
+                    <div key={forecast.id} className="bg-white rounded-lg shadow-sm border-l-3 border-l-teal-500 p-2.5">
+                      <div className="text-[11px] font-bold text-gray-800">{forecast.title}</div>
+                      <div className="mt-1.5 space-y-1">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px]">📅</span>
+                          <span className="text-[9px] text-gray-500">选举日期：</span>
+                          <span className="text-[10px] font-bold text-amber-700">{forecast.date}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px]">⏰</span>
+                          <span className="text-[9px] text-gray-500">时间：</span>
+                          <span className="text-[10px] font-bold text-amber-700">{forecast.timeRange}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px]">📍</span>
+                          <span className="text-[9px] text-gray-500">地点：{forecast.location}</span>
+                        </div>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {forecast.positions.map((pos) => (
+                          <span key={pos} className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full">{pos}</span>
+                        ))}
+                      </div>
+                      <button onClick={() => setSelectedForecast(forecast)} className="mt-1.5 w-full text-center py-1.5 bg-teal-50 text-teal-600 text-[9px] font-medium rounded-md hover:bg-teal-100 transition-colors">📖 查看预告详情</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {activeTab === 'history' && (
+                <div className="space-y-2">
+                  {historyNotices.map((item) => (
+                    <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-2.5">
+                      <div className="flex items-start justify-between">
+                        <span className="text-[11px] text-gray-700 flex-1">{item.title}</span>
+                        <span className="shrink-0 text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded ml-2">{item.status}</span>
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-1">
+                        <span className="text-[9px] text-gray-400">发布日期：</span>
+                        <span className="text-[9px] text-slate-500 font-medium">{item.date}</span>
+                      </div>
+                      <button onClick={() => setSelectedHistory(item)} className="mt-1.5 w-full text-center py-1.5 bg-amber-50 text-amber-700 text-[9px] font-medium rounded-md hover:bg-amber-100 transition-colors">📖 查看明细</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="border-t border-gray-200 bg-white grid grid-cols-4 py-1 relative z-10">
+              {['首页', '公告', '选举', '我的'].map((tab, i) => (
+                <div key={tab} className="flex flex-col items-center gap-0.5">
+                  <div className={`w-4 h-4 rounded ${i === 1 ? 'bg-teal-600' : 'bg-gray-300'}`} />
+                  <span className={`text-[9px] ${i === 1 ? 'text-teal-600 font-bold' : 'text-gray-400'}`}>{tab}</span>
+                </div>
+              ))}
+            </div>
+            {selectedNotice && <NoticeDetailModal notice={selectedNotice} onClose={() => setSelectedNotice(null)} />}
+            {selectedForecast && <ForecastDetailModal forecast={selectedForecast} onClose={() => setSelectedForecast(null)} />}
+            {selectedHistory && <HistoryDetailModal history={selectedHistory} onClose={() => setSelectedHistory(null)} />}
+          </div>
+        </PhoneFrame>
+      );
+    }
+
+    /* ============ Mini: 选举方式 ============ */
+    function MiniElectionPage() {
+      return (
+        <PhoneFrame title="选举方式">
+          <div className="h-full flex flex-col bg-gray-50">
+            <div className="bg-gradient-to-b from-slate-700 to-slate-800 text-white px-4 pt-6 pb-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs">9:41</span>
+                <div className="flex gap-1"><div className="w-3 h-2 bg-white/80 rounded-sm" /><div className="w-3 h-2 bg-white/80 rounded-sm" /><div className="w-4 h-2 bg-white/60 rounded-sm" /></div>
+              </div>
+              <div className="flex items-center gap-2"><span className="text-sm">←</span><h1 className="text-sm font-bold flex-1 text-center">选举方式</h1><span className="text-sm w-4" /></div>
+            </div>
+            <div className="flex-1 overflow-auto px-3 py-3 space-y-2.5">
+              <div className="bg-white rounded-lg shadow-sm p-3 border-l-3 border-green-500">
+                <div className="flex items-center gap-2"><span className="text-lg">🗳️</span><span className="text-xs font-bold text-gray-800">直接选举</span></div>
+                <div className="text-[10px] text-gray-600 mt-1.5 leading-relaxed">由本村（社区）全体登记选民直接投票选举产生村（居）民委员会成员。</div>
+                <div className="mt-2 text-[9px] text-green-600 bg-green-50 px-2 py-1 rounded">✅ 适用：大多数村（社区）换届选举</div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm p-3 border-l-3 border-blue-500">
+                <div className="flex items-center gap-2"><span className="text-lg">📊</span><span className="text-xs font-bold text-gray-800">差额选举</span></div>
+                <div className="text-[10px] text-gray-600 mt-1.5 leading-relaxed">候选人名额多于应选名额，选民从多名候选人中投票选出当选者。</div>
+                <div className="mt-2 text-[9px] text-blue-600 bg-blue-50 px-2 py-1 rounded">✅ 适用：主任、副主任选举</div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm p-3 border-l-3 border-purple-500">
+                <div className="flex items-center gap-2"><span className="text-lg">🤫</span><span className="text-xs font-bold text-gray-800">无记名投票</span></div>
+                <div className="text-[10px] text-gray-600 mt-1.5 leading-relaxed">投票时不记名，保障选民自由表达意愿，选举结果公开计票。</div>
+                <div className="mt-2 text-[9px] text-purple-600 bg-purple-50 px-2 py-1 rounded">✅ 所有选举均采用无记名投票方式</div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm p-3">
+                <div className="text-xs font-bold text-gray-800 mb-2">📋 选举流程</div>
+                {['成立选举委员会', '选民登记', '提名候选人', '候选人公示', '投票选举', '公布结果'].map((step, i) => (
+                  <div key={step} className="flex items-center gap-2 py-1">
+                    <div className="w-5 h-5 rounded-full bg-slate-600 text-white text-[9px] flex items-center justify-center shrink-0">{i + 1}</div>
+                    <span className="text-[10px] text-gray-700">{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="border-t border-gray-200 bg-white grid grid-cols-4 py-1">
+              {['首页', '公告', '选举', '我的'].map((tab, i) => (
+                <div key={tab} className="flex flex-col items-center gap-0.5">
+                  <div className={`w-4 h-4 rounded ${i === 2 ? 'bg-teal-600' : 'bg-gray-300'}`} />
+                  <span className={`text-[9px] ${i === 2 ? 'text-teal-600 font-bold' : 'text-gray-400'}`}>{tab}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </PhoneFrame>
+      );
+    }
+
+    /* ============ Mini: 候选人展示 ============ */
+    function MiniCandidatePage() {
+      const [selectedCandidate, setSelectedCandidate] = useState(null);
+      const [activePeriodTab, setActivePeriodTab] = useState('current');
+      const [activeElection, setActiveElection] = useState('election-1');
+      const [activeFilter, setActiveFilter] = useState('全部');
+
+      const elections = [
+        { id: 'election-1', name: '凤凰社区居委会换届选举' },
+        { id: 'election-2', name: '龙桥街道村委会换届选举' },
+        { id: 'election-3', name: '霞林社区居委会换届选举' },
+      ];
+      const currentCandidates = [
+        { id: 1, name: '张明远', position: '主任候选人', village: '凤凰社区', intro: '中共党员，12年社区工作经验', gender: '男', age: 45, party: '中共党员', education: '本科', ethnicity: '汉族', platform: '致力于建设和谐宜居社区，重点推进社区基础设施改造升级。', career: '2013-2025年 凤凰社区党委委员\n2010-2013年 凤凰社区网格员', pledges: ['完成社区道路硬化及排水系统改造工程', '建立社区老年人日间照料中心', '推进智慧社区建设'] },
+        { id: 2, name: '李秀芳', position: '主任候选人', village: '凤凰社区', intro: '群众代表，8年社区服务经历', gender: '女', age: 42, party: '群众', education: '大专', ethnicity: '汉族', platform: '以服务居民为宗旨，推动社区环境整治和便民服务提升。', career: '2017-2025年 凤凰社区志愿者服务队队长', pledges: ['推动社区垃圾分类全覆盖', '设立便民服务站', '组建社区文艺队'] },
+        { id: 3, name: '王建国', position: '副主任候选人', village: '凤凰社区', intro: '退伍军人，5年基层工作经验', gender: '男', age: 38, party: '中共党员', education: '本科', ethnicity: '汉族', platform: '发扬军人优良传统，以严明纪律和务实作风服务社区。', career: '2020-2025年 凤凰社区治保主任', pledges: ['建立社区应急响应机制', '完善社区消防设施', '推进社区治安综合治理'] },
+        { id: 4, name: '陈丽华', position: '委员候选人', village: '凤凰社区', intro: '退休教师，热心公益事业', gender: '女', age: 55, party: '民进党员', education: '本科', ethnicity: '汉族', platform: '发挥教育工作者优势，推动社区教育和文化事业发展。', career: '2015-2025年 凤凰社区关工委委员\n1990-2015年 城厢区实验小学教师', pledges: ['创办社区四点半课堂', '建立社区图书阅览室', '组织社区老年大学'] },
+      ];
+      const historyCandidates = [
+        { id: 5, name: '林志强', position: '主任（已当选）', village: '凤凰社区', intro: '中共党员，上届社区主任', gender: '男', age: 50, party: '中共党员', education: '本科', ethnicity: '汉族', platform: '坚持为民服务，推动社区和谐发展。', career: '2022-2025年 凤凰社区居委会主任', pledges: ['持续改善社区环境', '推进社区养老服务', '加强社区治理创新'] },
+        { id: 6, name: '黄丽萍', position: '副主任（已当选）', village: '凤凰社区', intro: '群众代表，社区妇联主任', gender: '女', age: 47, party: '群众', education: '大专', ethnicity: '汉族', platform: '关注妇女儿童权益，推动社区和谐发展。', career: '2022-2025年 凤凰社区副主任', pledges: ['推动妇女创业就业', '完善儿童保护体系', '建设和谐邻里关系'] },
+      ];
+      const displayCandidates = activePeriodTab === 'current' ? currentCandidates : historyCandidates;
+      const filteredCandidates = activeFilter === '全部' ? displayCandidates : displayCandidates.filter(c => c.position.includes(activeFilter));
+
+      return (
+        <PhoneFrame title="候选人展示">
+          <div className="h-full flex flex-col bg-gray-50 relative">
+            <div className="bg-gradient-to-b from-slate-700 to-slate-800 text-white px-4 pt-6 pb-2">
+              <div className="flex items-center justify-between mb-2"><span className="text-xs">9:41</span><div className="flex gap-1"><div className="w-3 h-2 bg-white/80 rounded-sm" /><div className="w-3 h-2 bg-white/80 rounded-sm" /><div className="w-4 h-2 bg-white/60 rounded-sm" /></div></div>
+              <div className="flex items-center gap-2"><span className="text-sm">←</span><h1 className="text-sm font-bold flex-1 text-center">候选人展示</h1><span className="text-sm">🔍</span></div>
+            </div>
+            <div className="px-3 pt-2.5 pb-2 bg-white border-b border-slate-200">
+              <div className="flex gap-2 overflow-x-auto pb-0.5">
+                {elections.map((election) => (
+                  <button key={election.id} onClick={() => setActiveElection(election.id)}
+                    className={`shrink-0 text-[10px] px-3 py-1.5 rounded-full border-2 transition-all whitespace-nowrap ${activeElection === election.id ? 'bg-teal-600 text-white border-teal-600 font-bold shadow-sm' : 'bg-white text-slate-600 border-slate-200'}`}>
+                    {election.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex bg-slate-50 border-b border-slate-200">
+              {[{ key: 'current', label: '当前档期' }, { key: 'history', label: '往期历史' }].map((tab) => (
+                <button key={tab.key} onClick={() => { setActivePeriodTab(tab.key); setActiveFilter('全部'); }}
+                  className={`flex-1 py-2 text-xs text-center relative transition-colors ${activePeriodTab === tab.key ? 'text-slate-800 font-bold' : 'text-slate-400'}`}>
+                  {tab.label}
+                  {activePeriodTab === tab.key && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-slate-700 rounded-full" />}
+                </button>
+              ))}
+            </div>
+            <div className="px-3 py-1 bg-slate-50/80 border-b border-slate-100">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px]">🗳️</span>
+                <span className="text-[9px] font-medium text-slate-600">{elections.find(e => e.id === activeElection)?.name}</span>
+                <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${activePeriodTab === 'current' ? 'bg-teal-100 text-teal-700' : 'bg-slate-200 text-slate-500'}`}>
+                  {activePeriodTab === 'current' ? '进行中' : '已结束'}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-1.5 px-3 py-1.5 bg-white border-b border-slate-100">
+              {['全部', '主任', '副主任', '委员'].map((label) => (
+                <button key={label} onClick={() => setActiveFilter(label)}
+                  className={`text-[9px] px-2.5 py-0.5 rounded-full border transition-all ${activeFilter === label ? 'bg-teal-50 text-teal-600 border-teal-200 font-medium' : 'bg-white text-slate-400 border-slate-200'}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="flex-1 overflow-auto px-3 py-2 space-y-2">
+              {filteredCandidates.map((candidate) => (
+                <div key={candidate.id} className="bg-white rounded-lg shadow-sm border-l-[3px] border-l-teal-500 p-3 flex gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center shrink-0">
+                    <span className="text-white text-sm font-bold">{candidate.name[0]}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-800">{candidate.name}</span>
+                      <span className="text-[8px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">{candidate.position}</span>
+                    </div>
+                    <div className="text-[9px] text-slate-400 mt-0.5">{candidate.village}</div>
+                    <div className="text-[10px] text-gray-600 mt-1">{candidate.intro}</div>
+                    <button onClick={() => setSelectedCandidate(candidate)} className="mt-1.5 w-full text-center py-1.5 bg-blue-50 text-blue-600 text-[9px] font-medium rounded-md hover:bg-blue-100 transition-colors">📖 查看明细</button>
+                  </div>
+                </div>
+              ))}
+              {filteredCandidates.length === 0 && <div className="text-center py-8"><div className="text-2xl mb-2">📋</div><div className="text-[10px] text-gray-400">暂无候选人数据</div></div>}
+            </div>
+            <div className="border-t border-gray-200 bg-white grid grid-cols-4 py-1 relative z-10">
+              {['首页', '公告', '选举', '我的'].map((tab, i) => (
+                <div key={tab} className="flex flex-col items-center gap-0.5">
+                  <div className={`w-4 h-4 rounded ${i === 2 ? 'bg-teal-600' : 'bg-gray-300'}`} />
+                  <span className={`text-[9px] ${i === 2 ? 'text-teal-600 font-bold' : 'text-gray-400'}`}>{tab}</span>
+                </div>
+              ))}
+            </div>
+            {selectedCandidate && <CandidateDetailModal candidate={selectedCandidate} onClose={() => setSelectedCandidate(null)} />}
+          </div>
+        </PhoneFrame>
+      );
+    }
+
+    /* ============ Mini: 材料提交 ============ */
+    function MiniMaterialPage() {
+      const [selectedAnnouncement, setSelectedAnnouncement] = useState('');
+      const [showAnnouncementDropdown, setShowAnnouncementDropdown] = useState(false);
+      const [selectedMaterialType, setSelectedMaterialType] = useState('');
+      const [showMaterialTypeDropdown, setShowMaterialTypeDropdown] = useState(false);
+
+      const announcements = [
+        { id: 'ann-1', title: '关于开展2025年村级组织换届选举工作的公告', time: '2025-03-01 ~ 2025-06-30' },
+        { id: 'ann-2', title: '选民登记公告', time: '2025-03-15 ~ 2025-04-15' },
+        { id: 'ann-3', title: '候选人提名公告', time: '2025-04-01 ~ 2025-04-20' },
+      ];
+      const materialTypes = ['提名材料', '个人资料', '承诺书', '无犯罪记录证明', '个人简历', '其他'];
+      const selectedAnnouncementData = announcements.find(a => a.id === selectedAnnouncement);
+
+      return (
+        <PhoneFrame title="材料提交">
+          <div className="h-full flex flex-col bg-gray-50">
+            <div className="bg-gradient-to-b from-slate-700 to-slate-800 text-white px-4 pt-6 pb-2">
+              <div className="flex items-center justify-between mb-2"><span className="text-xs">9:41</span><div className="flex gap-1"><div className="w-3 h-2 bg-white/80 rounded-sm" /><div className="w-3 h-2 bg-white/80 rounded-sm" /><div className="w-4 h-2 bg-white/60 rounded-sm" /></div></div>
+              <div className="flex items-center gap-2"><span className="text-sm">←</span><h1 className="text-sm font-bold flex-1 text-center">材料提交</h1><span className="text-sm w-4" /></div>
+            </div>
+            <div className="flex-1 overflow-auto px-3 py-3 space-y-3">
+              <div className="bg-white rounded-lg shadow-sm p-3">
+                <div className="text-xs font-bold text-gray-800 mb-2">📸 拍照上传材料</div>
+                <div className="text-[9px] text-gray-500 mb-2">请拍摄或上传所需材料，支持 JPG/PNG/PDF 格式，单文件不超过 10MB</div>
+                <div className="flex gap-2 mb-3">
+                  <button className="flex-1 bg-teal-600 text-white text-[10px] py-2 rounded-lg font-medium flex items-center justify-center gap-1"><span className="text-xs">📸</span> 拍照上传</button>
+                  <button className="flex-1 border border-gray-300 text-gray-700 text-[10px] py-2 rounded-lg font-medium flex items-center justify-center gap-1 bg-white"><span className="text-xs">📎</span> 选择文件</button>
+                </div>
+                <div className="flex items-center justify-between mb-3 px-1">
+                  {[{ n: 1, label: '拍照/选择文件', bg: 'bg-teal-500' }, { n: 2, label: '关联公告+类型', bg: 'bg-teal-400' }, { n: 3, label: '填写说明', bg: 'bg-teal-300' }, { n: 4, label: '提交', bg: 'bg-teal-200 text-teal-600' }].map((s, i) => (
+                    <React.Fragment key={s.n}>
+                      <div className="flex flex-col items-center">
+                        <div className={`w-6 h-6 rounded-full ${s.bg} text-white text-[8px] flex items-center justify-center font-bold mb-0.5`}>{s.n}</div>
+                        <span className="text-[7px] text-gray-600 text-center leading-tight">{s.label}</span>
+                      </div>
+                      {i < 3 && <div className="text-[8px] text-gray-300">→</div>}
+                    </React.Fragment>
+                  ))}
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
+                  <div className="text-[9px] font-bold text-amber-700 mb-1">💡 上传提示</div>
+                  <ul className="space-y-0.5">
+                    <li className="text-[8px] text-amber-600">• 建议使用手机拍照，确保文字清晰可读</li>
+                    <li className="text-[8px] text-amber-600">• 支持多张图片上传</li>
+                    <li className="text-[8px] text-amber-600">• 材料审核通过后将不可修改</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm p-3">
+                <div className="text-xs font-bold text-gray-800 mb-2">📝 材料信息填写</div>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <div className="text-[9px] text-gray-500 mb-1">关联公告 <span className="text-red-500"> *</span></div>
+                    <button onClick={() => { setShowAnnouncementDropdown(!showAnnouncementDropdown); setShowMaterialTypeDropdown(false); }}
+                      className={`w-full border rounded px-2 py-1.5 text-[10px] flex items-center justify-between transition-colors ${selectedAnnouncement ? 'border-slate-300 bg-slate-50 text-gray-700' : 'border-slate-200 bg-slate-50 text-gray-400'}`}>
+                      <span className="truncate">{selectedAnnouncementData ? selectedAnnouncementData.title : '请选择关联公告'}</span>
+                      <span className="shrink-0 ml-1">▼</span>
+                    </button>
+                    {showAnnouncementDropdown && (
+                      <div className="absolute z-20 w-full mt-0.5 bg-white border border-gray-200 rounded-lg shadow-lg max-h-32 overflow-y-auto">
+                        {announcements.map((ann) => (
+                          <button key={ann.id} onClick={() => { setSelectedAnnouncement(ann.id); setShowAnnouncementDropdown(false); }}
+                            className={`w-full text-left px-2 py-1.5 text-[9px] hover:bg-teal-50 transition-colors border-b border-gray-50 last:border-0 ${selectedAnnouncement === ann.id ? 'bg-teal-50 text-teal-600 font-medium' : 'text-gray-600'}`}>
+                            <div className="font-medium truncate">📢 {ann.title}</div>
+                            <div className="text-[7px] text-amber-500 mt-0.5">参选时间：{ann.time}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div className="text-[7px] text-slate-400 mt-0.5">⚠ 请选择与材料对应的公告</div>
+                  </div>
+                  {selectedAnnouncementData && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5">
+                      <div className="flex items-center gap-1"><span className="text-[8px] text-amber-600 font-bold">⏰ 参选时间</span></div>
+                      <div className="text-[9px] font-bold text-amber-700 mt-0.5">{selectedAnnouncementData.time}</div>
+                      <div className="text-[7px] text-amber-500 mt-0.5">⚠ 请在参选时间截止前提交材料</div>
+                    </div>
+                  )}
+                  <div className="relative">
+                    <div className="text-[9px] text-gray-500 mb-1">材料类型 <span className="text-red-500"> *</span></div>
+                    <button onClick={() => { setShowMaterialTypeDropdown(!showMaterialTypeDropdown); setShowAnnouncementDropdown(false); }}
+                      className={`w-full border rounded px-2 py-1.5 text-[10px] flex items-center justify-between transition-colors ${selectedMaterialType ? 'border-gray-300 bg-white text-gray-700' : 'border-gray-200 bg-white text-gray-400'}`}>
+                      <span>{selectedMaterialType || '请选择材料类型'}</span><span className="shrink-0 ml-1">▼</span>
+                    </button>
+                    {showMaterialTypeDropdown && (
+                      <div className="absolute z-20 w-full mt-0.5 bg-white border border-gray-200 rounded-lg shadow-lg max-h-28 overflow-y-auto">
+                        {materialTypes.map((type) => (
+                          <button key={type} onClick={() => { setSelectedMaterialType(type); setShowMaterialTypeDropdown(false); }}
+                            className={`w-full text-left px-2 py-1.5 text-[9px] hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-0 ${selectedMaterialType === type ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600'}`}>
+                            📋 {type}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button className={`w-full text-[10px] py-2 rounded-lg font-medium transition-colors ${selectedAnnouncement && selectedMaterialType ? 'bg-teal-600 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>提交材料</button>
+                  {(!selectedAnnouncement || !selectedMaterialType) && <div className="text-[7px] text-slate-400 text-center">⚠ 请先选择关联公告和材料类型</div>}
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm p-3">
+                <div className="text-xs font-bold text-gray-800 mb-2">📋 我的提交记录</div>
+                {[
+                  { name: '候选人提名表.pdf', date: '2025-03-10', status: '已审核', type: '提名材料', icon: '📋', announcement: '换届选举公告' },
+                  { name: '个人简历.doc', date: '2025-03-08', status: '审核中', type: '个人资料', icon: '👤', announcement: '候选人提名公告' },
+                ].map((item) => (
+                  <div key={item.name} className="flex items-center gap-2 py-1.5 border-b border-gray-50">
+                    <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center flex-shrink-0"><span className="text-[10px]">{item.icon}</span></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1"><span className="text-[10px] text-gray-700 truncate">{item.name}</span></div>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[7px] bg-orange-50 text-orange-600 px-1 py-0 rounded-sm font-medium">📢 {item.announcement}</span>
+                        <span className="text-[7px] bg-teal-50 text-teal-600 px-1 py-0 rounded-sm font-medium">{item.type}</span>
+                        <span className="text-[8px] text-gray-400">{item.date}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                      <span className={`text-[8px] px-1.5 py-0.5 rounded ${item.status === '已审核' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>{item.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="border-t border-gray-200 bg-white grid grid-cols-4 py-1">
+              {['首页', '公告', '选举', '我的'].map((tab, i) => (
+                <div key={tab} className="flex flex-col items-center gap-0.5">
+                  <div className={`w-4 h-4 rounded ${i === 3 ? 'bg-teal-600' : 'bg-gray-300'}`} />
+                  <span className={`text-[9px] ${i === 3 ? 'text-teal-600 font-bold' : 'text-gray-400'}`}>{tab}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </PhoneFrame>
+      );
+    }
+
+    /* ============ Mini: 历史公示 ============ */
+    function MiniHistoryPage() {
+      return (
+        <PhoneFrame title="历史公示">
+          <div className="h-full flex flex-col bg-gray-50">
+            <div className="bg-gradient-to-b from-slate-700 to-slate-800 text-white px-4 pt-6 pb-2">
+              <div className="flex items-center justify-between mb-2"><span className="text-xs">9:41</span><div className="flex gap-1"><div className="w-3 h-2 bg-white/80 rounded-sm" /><div className="w-3 h-2 bg-white/80 rounded-sm" /><div className="w-4 h-2 bg-white/60 rounded-sm" /></div></div>
+              <div className="flex items-center gap-2"><span className="text-sm">←</span><h1 className="text-sm font-bold flex-1 text-center">历史公示</h1><span className="text-sm w-4" /></div>
+            </div>
+            <div className="flex gap-2 px-3 py-2 bg-white border-b border-gray-100">
+              {['2025', '2022', '2019', '2016'].map((year, i) => (
+                <span key={year} className={`text-[9px] px-2 py-0.5 rounded-full ${i === 1 ? 'bg-teal-600 text-white font-medium' : 'bg-slate-100 text-slate-500'}`}>{year}</span>
+              ))}
+            </div>
+            <div className="flex-1 overflow-auto px-3 py-2 space-y-2">
+              {[
+                { title: '2022年凤凰社区换届选举结果公示', date: '2022-06-15', result: '主任：林志强 | 副主任：黄丽萍、陈伟', voters: '参选率：92.3%' },
+                { title: '2022年龙桥街道换届选举结果公示', date: '2022-06-20', result: '主任：王德明 | 副主任：李淑芬', voters: '参选率：88.7%' },
+                { title: '2022年候选人资格审核结果', date: '2022-05-20', result: '共审核候选人32名，通过28名', voters: '通过率：87.5%' },
+                { title: '2022年选民名单公示', date: '2022-04-10', result: '登记选民：15,842人', voters: '登记率：95.1%' },
+              ].map((item) => (
+                <div key={item.title} className="bg-white rounded-lg shadow-sm p-2.5">
+                  <div className="flex items-start gap-1.5">
+                    <span className="shrink-0 text-[9px] bg-gray-200 text-gray-600 px-1 py-0.5 rounded">公示</span>
+                    <span className="text-[10px] font-medium text-gray-800 flex-1 leading-tight">{item.title}</span>
+                  </div>
+                  <div className="mt-1.5 text-[9px] text-gray-500">{item.result}</div>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span className="text-[9px] text-slate-500 font-medium">{item.date}</span>
+                    <span className="text-[9px] text-gray-400">{item.voters}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-gray-200 bg-white grid grid-cols-4 py-1">
+              {['首页', '公告', '选举', '我的'].map((tab, i) => (
+                <div key={tab} className="flex flex-col items-center gap-0.5">
+                  <div className={`w-4 h-4 rounded ${i === 1 ? 'bg-teal-600' : 'bg-gray-300'}`} />
+                  <span className={`text-[9px] ${i === 1 ? 'text-teal-600 font-bold' : 'text-gray-400'}`}>{tab}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </PhoneFrame>
+      );
+    }
+
+    /* ============ PC: 登录页 ============ */
+    function PcLoginPage() {
+      return (
+        <BrowserFrame title="登录页">
+          <div className="h-full flex bg-gradient-to-br from-teal-50 to-slate-50">
+            <div className="flex-1 flex items-center justify-center p-6">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-teal-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white text-2xl font-bold">选</span>
+                </div>
+                <div className="text-base font-bold text-gray-800">城厢区村居换届选举系统</div>
+                <div className="text-xs text-gray-500 mt-1">Chengxiang District Election Management</div>
+              </div>
+            </div>
+            <div className="w-72 bg-white flex items-center justify-center p-6 shadow-lg">
+              <div className="w-full">
+                <div className="text-sm font-bold text-gray-800 mb-4">系统登录</div>
+                <div className="space-y-3">
+                  <div><div className="text-[10px] text-gray-500 mb-1">用户名</div><div className="border border-gray-200 rounded px-2.5 py-1.5 text-[10px] text-gray-400">请输入用户名</div></div>
+                  <div><div className="text-[10px] text-gray-500 mb-1">密码</div><div className="border border-gray-200 rounded px-2.5 py-1.5 text-[10px] text-gray-400">请输入密码</div></div>
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 border border-gray-300 rounded cursor-pointer" /><span className="text-[10px] text-gray-500">记住密码</span></div>
+                  <button className="w-full bg-teal-600 text-white text-[10px] py-2 rounded font-medium">登 录</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </BrowserFrame>
+      );
+    }
+
+    /* ============ PC: 公告管理 ============ */
+    function PcAnnouncementPage() {
+      return (
+        <BrowserFrame title="公告管理">
+          <div className="h-full flex flex-col bg-gray-50">
+            <TopBar />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar active="公告管理" />
+              <div className="flex-1 p-3 overflow-auto">
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-2 mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2"><span className="text-sm">🔔</span><span className="text-[9px] font-bold text-amber-600">您有3条新消息未阅读</span></div>
+                  <button className="text-[8px] bg-teal-500 text-white px-2 py-0.5 rounded font-medium">立即查看</button>
+                </div>
+                <div className="flex gap-2 mb-3">
+                  <span className="text-[9px] bg-teal-500 text-white px-2 py-1 rounded cursor-pointer">全部公告</span>
+                  <span className="text-[9px] bg-gray-100 text-gray-600 px-2 py-1 rounded cursor-pointer">最新公告</span>
+                  <span className="text-[9px] bg-gray-100 text-gray-600 px-2 py-1 rounded cursor-pointer">近期预告</span>
+                  <span className="text-[9px] bg-gray-100 text-gray-600 px-2 py-1 rounded cursor-pointer">历史公示</span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex gap-2">
+                    <button className="text-[9px] bg-teal-500 text-white px-2 py-1 rounded">+ 新增公告</button>
+                    <button className="text-[9px] bg-gray-100 text-gray-600 px-2 py-1 rounded">批量删除</button>
+                  </div>
+                  <div className="border border-gray-200 rounded px-2 py-1 text-[9px] text-gray-400 cursor-pointer">搜索公告...</div>
+                </div>
+                <div className="bg-white rounded border border-gray-200">
+                  <div className="grid grid-cols-7 gap-1 px-2 py-1.5 bg-gray-50 border-b border-gray-200 text-[8px] font-bold text-gray-600">
+                    <div>标题</div><div>类型</div><div>参选时间</div><div>截止时间</div><div>状态</div><div>快捷提交</div><div>操作</div>
+                  </div>
+                  {[
+                    { title: '2025年换届选举公告', type: '最新公告', start: '2025-03-01', end: '2025-06-30', status: '已发布' },
+                    { title: '选民登记通知', type: '最新公告', start: '2025-03-15', end: '2025-04-15', status: '已发布' },
+                    { title: '凤凰社区选举预告', type: '近期预告', start: '2025-04-10', end: '2025-04-10', status: '待发布' },
+                    { title: '候选人提名公告', type: '最新公告', start: '2025-04-01', end: '2025-04-20', status: '已发布' },
+                  ].map((row) => (
+                    <div key={row.title} className="grid grid-cols-7 gap-1 px-2 py-1.5 border-b border-gray-50 text-[8px] text-gray-600">
+                      <div className="truncate">{row.title}</div>
+                      <div><span className="bg-blue-50 text-blue-600 px-1 rounded">{row.type}</span></div>
+                      <div className="text-amber-600 font-medium">{row.start}</div>
+                      <div className="text-amber-600 font-medium">{row.end}</div>
+                      <div><span className={`px-1 rounded ${row.status === '已发布' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>{row.status}</span></div>
+                      <div><button className="text-[7px] bg-teal-500 text-white px-1.5 py-0.5 rounded font-bold">📋 提交材料</button></div>
+                      <div className="flex gap-1"><span className="text-blue-500 cursor-pointer">编辑</span><span className="text-red-500 cursor-pointer">删除</span></div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[8px] text-gray-400">共 4 条记录</span>
+                  <div className="flex gap-1"><span className="text-[8px] bg-teal-500 text-white px-1.5 py-0.5 rounded cursor-pointer">1</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </BrowserFrame>
+      );
+    }
+
+    /* ============ PC: 选举管理 ============ */
+    function PcElectionPage() {
+      return (
+        <BrowserFrame title="选举管理">
+          <div className="h-full flex flex-col bg-gray-50">
+            <TopBar />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar active="选举管理" />
+              <div className="flex flex-1 overflow-hidden">
+                <div className="w-[45%] p-3 overflow-auto border-r border-gray-200">
+                  <div className="grid grid-cols-4 gap-2 mb-3">
+                    {[{ label: '选举活动', value: '12', color: 'bg-teal-50 text-teal-600' }, { label: '进行中', value: '3', color: 'bg-green-50 text-green-600' }, { label: '待开始', value: '5', color: 'bg-yellow-50 text-yellow-600' }, { label: '已完成', value: '4', color: 'bg-gray-50 text-gray-600' }].map((card) => (
+                      <div key={card.label} className="bg-white rounded border border-gray-100 p-2"><div className={`text-sm font-bold ${card.color}`}>{card.value}</div><div className="text-[8px] text-gray-500 mt-0.5">{card.label}</div></div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <button className="text-[9px] bg-teal-500 text-white px-2 py-1 rounded">+ 新增选举</button>
+                    <div className="border border-gray-200 rounded px-2 py-1 text-[9px] text-gray-400 cursor-pointer">搜索选举...</div>
+                  </div>
+                  <div className="bg-white rounded border border-gray-200">
+                    <div className="grid grid-cols-6 gap-1 px-2 py-1.5 bg-gray-50 border-b border-gray-200 text-[8px] font-bold text-gray-600">
+                      <div>选举名称</div><div>村（社区）</div><div>选举日期</div><div>选举方式</div><div>状态</div><div>操作</div>
+                    </div>
+                    {[
+                      { name: '凤凰社区换届选举', village: '凤凰社区', date: '2025-04-10', method: '直接选举', status: '进行中', selected: true },
+                      { name: '龙桥村换届选举', village: '龙桥村', date: '2025-04-15', method: '差额选举', status: '待开始' },
+                      { name: '霞林社区换届选举', village: '霞林社区', date: '2025-04-20', method: '直接选举', status: '待开始' },
+                    ].map((row) => (
+                      <div key={row.name} className={`grid grid-cols-6 gap-1 px-2 py-1.5 border-b border-gray-50 text-[8px] text-gray-600 ${row.selected ? 'bg-teal-50' : ''}`}>
+                        <div className="truncate font-medium">{row.name}</div><div>{row.village}</div>
+                        <div className="text-amber-600 font-medium">{row.date}</div><div>{row.method}</div>
+                        <div><span className={`px-1 rounded ${row.status === '进行中' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>{row.status}</span></div>
+                        <div className="flex gap-1"><span className="text-blue-500 cursor-pointer">详情</span><span className="text-blue-500 cursor-pointer">编辑</span></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="w-[55%] bg-white overflow-auto">
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
+                      <div className="text-[10px] font-bold text-gray-800">编辑选举活动 — 凤凰社区换届选举</div>
+                      <span className="text-[8px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded">进行中</span>
+                    </div>
+                    <div className="space-y-2 mb-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div><div className="text-[8px] text-gray-500 mb-0.5">选举名称</div><div className="border border-gray-200 rounded px-2 py-1 text-[8px] text-gray-700 bg-gray-50">凤凰社区换届选举</div></div>
+                        <div><div className="text-[8px] text-gray-500 mb-0.5">所属村(社区)</div><div className="border border-gray-200 rounded px-2 py-1 text-[8px] text-gray-700 bg-gray-50 flex items-center justify-between"><span>凤凰社区</span><span className="text-gray-400">▼</span></div></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div><div className="text-[8px] text-gray-500 mb-0.5">选举日期</div><div className="border border-gray-200 rounded px-2 py-1 text-[8px] text-gray-700 bg-gray-50">2025-04-10</div></div>
+                        <div><div className="text-[8px] text-gray-500 mb-0.5">选举方式</div><div className="border border-gray-200 rounded px-2 py-1 text-[8px] text-gray-700 bg-gray-50 flex items-center justify-between"><span>直接选举</span><span className="text-gray-400">▼</span></div></div>
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <div className="text-[9px] font-bold text-gray-700 mb-1.5">📝 图文明细编辑</div>
+                      <div className="border border-gray-200 rounded overflow-hidden">
+                        <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 border-b border-gray-200">
+                          <span className="text-[9px] font-bold text-gray-600 w-4 h-4 flex items-center justify-center rounded hover:bg-gray-200 cursor-pointer">B</span>
+                          <span className="text-[9px] italic text-gray-600 w-4 h-4 flex items-center justify-center rounded hover:bg-gray-200 cursor-pointer">I</span>
+                          <span className="text-[8px] text-gray-500 w-4 h-4 flex items-center justify-center rounded hover:bg-gray-200 cursor-pointer">🖼</span>
+                        </div>
+                        <div className="bg-gray-50 px-3 py-2 min-h-[60px]">
+                          <div className="text-[8px] font-bold text-gray-700 mb-1">凤凰社区换届选举活动</div>
+                          <div className="text-[8px] text-gray-600">根据相关法律法规，凤凰社区将于2025年4月10日举行换届选举。</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                      <button className="text-[8px] bg-gray-100 text-gray-700 px-3 py-1.5 rounded border border-gray-200">保存草稿</button>
+                      <button className="text-[8px] bg-teal-500 text-white px-3 py-1.5 rounded">发布</button>
+                      <button className="text-[8px] text-gray-500 px-3 py-1.5 rounded">取消</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </BrowserFrame>
+      );
+    }
+
+    /* ============ PC: 职位管理 ============ */
+    function PcPositionPage() {
+      return (
+        <BrowserFrame title="职位管理">
+          <div className="h-full flex flex-col bg-gray-50">
+            <TopBar />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar active="职位管理" />
+              <div className="flex-1 p-3 overflow-auto">
+                <div className="flex items-center justify-between mb-2">
+                  <button className="text-[9px] bg-teal-500 text-white px-2 py-1 rounded">+ 新增职位</button>
+                  <div className="border border-gray-200 rounded px-2 py-1 text-[9px] text-gray-400 cursor-pointer">搜索职位...</div>
+                </div>
+                <div className="bg-white rounded border border-gray-200">
+                  <div className="grid grid-cols-5 gap-1 px-2 py-1.5 bg-gray-50 border-b border-gray-200 text-[8px] font-bold text-gray-600">
+                    <div>职位名称</div><div>所属选举</div><div>名额</div><div>状态</div><div>操作</div>
+                  </div>
+                  {[
+                    { name: '社区主任', election: '凤凰社区换届选举', count: '1名', status: '开放' },
+                    { name: '社区副主任', election: '凤凰社区换届选举', count: '2名', status: '开放' },
+                    { name: '社区委员', election: '凤凰社区换届选举', count: '4名', status: '开放' },
+                    { name: '村委会主任', election: '龙桥村换届选举', count: '1名', status: '待开放' },
+                  ].map((row) => (
+                    <div key={row.name + row.election} className="grid grid-cols-5 gap-1 px-2 py-1.5 border-b border-gray-50 text-[8px] text-gray-600">
+                      <div className="font-medium">{row.name}</div><div>{row.election}</div><div>{row.count}</div>
+                      <div><span className={`px-1 rounded ${row.status === '开放' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>{row.status}</span></div>
+                      <div className="flex gap-1"><span className="text-blue-500 cursor-pointer">编辑</span><span className="text-red-500 cursor-pointer">删除</span></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </BrowserFrame>
+      );
+    }
+
+    /* ============ PC: 候选人管理 ============ */
+    function PcCandidatePage() {
+      return (
+        <BrowserFrame title="候选人管理">
+          <div className="h-full flex flex-col bg-gray-50">
+            <TopBar />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar active="候选人管理" />
+              <div className="flex-1 p-3 overflow-auto">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex gap-2">
+                    <button className="text-[9px] bg-teal-500 text-white px-2 py-1 rounded">+ 新增候选人</button>
+                    <button className="text-[9px] bg-gray-100 text-gray-600 px-2 py-1 rounded">批量导入</button>
+                  </div>
+                  <div className="border border-gray-200 rounded px-2 py-1 text-[9px] text-gray-400 cursor-pointer">搜索候选人...</div>
+                </div>
+                <div className="bg-white rounded border border-gray-200">
+                  <div className="grid grid-cols-6 gap-1 px-2 py-1.5 bg-gray-50 border-b border-gray-200 text-[8px] font-bold text-gray-600">
+                    <div>姓名</div><div>竞选职位</div><div>所属村（社区）</div><div>审核状态</div><div>提交时间</div><div>操作</div>
+                  </div>
+                  {[
+                    { name: '张明远', pos: '社区主任', village: '凤凰社区', status: '已通过', date: '2025-03-10' },
+                    { name: '李秀芳', pos: '社区主任', village: '凤凰社区', status: '已通过', date: '2025-03-10' },
+                    { name: '王建国', pos: '社区副主任', village: '凤凰社区', status: '待审核', date: '2025-03-12' },
+                    { name: '陈丽华', pos: '社区委员', village: '凤凰社区', status: '待审核', date: '2025-03-12' },
+                  ].map((row) => (
+                    <div key={row.name} className="grid grid-cols-6 gap-1 px-2 py-1.5 border-b border-gray-50 text-[8px] text-gray-600">
+                      <div className="font-medium">{row.name}</div><div>{row.pos}</div><div>{row.village}</div>
+                      <div><span className={`px-1 rounded ${row.status === '已通过' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>{row.status}</span></div>
+                      <div>{row.date}</div>
+                      <div className="flex gap-1"><span className="text-blue-500 cursor-pointer">审核</span><span className="text-blue-500 cursor-pointer">编辑</span></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </BrowserFrame>
+      );
+    }
+
+    /* ============ PC: 材料管理 ============ */
+    const MATERIAL_DATA = [
+      { name: '候选人提名表.pdf', submitter: '张明远', type: '提名材料', announcement: '换届选举公告', date: '2025-03-10', status: '已通过', description: '凤凰社区2025年换届选举候选人提名表，包含候选人基本信息、提名理由等。', attachments: [{ icon: '📄', name: '候选人提名表.pdf', size: '2.3 MB' }, { icon: '🖼️', name: '提名现场照片.jpg', size: '4.1 MB' }] },
+      { name: '个人简历.docx', submitter: '王建国', type: '个人资料', announcement: '候选人提名公告', date: '2025-03-12', status: '待审核', description: '王建国个人简历，包含个人基本信息、学历、工作经历等。', attachments: [{ icon: '📄', name: '个人简历.docx', size: '1.5 MB' }] },
+      { name: '竞选承诺书.pdf', submitter: '陈丽华', type: '承诺材料', announcement: '候选人提名公告', date: '2025-03-12', status: '待审核', description: '陈丽华竞选承诺书，承诺若当选将遵守相关法律法规。', attachments: [{ icon: '📄', name: '竞选承诺书.pdf', size: '0.9 MB' }] },
+    ];
+
+    function PcMaterialPage() {
+      const [selectedIdx, setSelectedIdx] = useState(0);
+      const selected = MATERIAL_DATA[selectedIdx];
+      return (
+        <BrowserFrame title="材料管理">
+          <div className="h-full flex flex-col bg-gray-50">
+            <TopBar />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar active="材料管理" />
+              <div className="flex flex-1 overflow-hidden">
+                <div className="w-[50%] p-3 overflow-auto border-r border-gray-200">
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {[{ label: '待审核', value: '8', color: 'text-yellow-600' }, { label: '已通过', value: '24', color: 'text-green-600' }, { label: '已退回', value: '3', color: 'text-red-600' }].map((card) => (
+                      <div key={card.label} className="bg-white rounded border border-gray-100 p-2"><div className={`text-sm font-bold ${card.color}`}>{card.value}</div><div className="text-[8px] text-gray-500 mt-0.5">{card.label}</div></div>
+                    ))}
+                  </div>
+                  <div className="bg-white rounded border border-gray-200">
+                    <div className="grid grid-cols-6 gap-1 px-2 py-1.5 bg-gray-50 border-b border-gray-200 text-[8px] font-bold text-gray-600">
+                      <div>材料名称</div><div>提交人</div><div>关联公告</div><div>材料类型</div><div>提交时间</div><div>审核状态</div>
+                    </div>
+                    {MATERIAL_DATA.map((row, idx) => (
+                      <div key={row.name + row.submitter} className={`grid grid-cols-6 gap-1 px-2 py-1.5 border-b border-gray-50 text-[8px] text-gray-600 cursor-pointer ${idx === selectedIdx ? 'bg-teal-50' : 'hover:bg-gray-50'}`} onClick={() => setSelectedIdx(idx)}>
+                        <div className="truncate font-medium">{row.name}</div><div>{row.submitter}</div>
+                        <div className="truncate"><span className="bg-orange-50 text-orange-600 px-1 rounded text-[7px]">{row.announcement}</span></div>
+                        <div><span className="bg-blue-50 text-blue-600 px-1 rounded">{row.type}</span></div>
+                        <div>{row.date}</div>
+                        <div><span className={`px-1 rounded ${row.status === '已通过' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>{row.status}</span></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="w-[50%] bg-white overflow-auto">
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
+                      <div className="text-[10px] font-bold text-gray-800">提交详情 — {selected.name}</div>
+                      <span className={`text-[8px] px-1.5 py-0.5 rounded ${selected.status === '已通过' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>{selected.status}</span>
+                    </div>
+                    <div className="mb-3">
+                      <div className="text-[9px] font-bold text-gray-700 mb-1.5">📋 提交信息</div>
+                      <div className="border border-gray-200 rounded p-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div><div className="text-[7px] text-gray-400">提交人</div><div className="text-[8px] text-gray-700 font-medium">{selected.submitter}</div></div>
+                          <div><div className="text-[7px] text-gray-400">材料类型</div><div className="text-[8px]"><span className="bg-blue-50 text-blue-600 px-1 rounded">{selected.type}</span></div></div>
+                          <div className="col-span-2"><div className="text-[7px] text-gray-400">关联公告</div><div className="text-[8px]"><span className="bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded font-medium">📢 {selected.announcement}</span></div></div>
+                          <div><div className="text-[7px] text-gray-400">提交时间</div><div className="text-[8px] text-gray-700">{selected.date}</div></div>
+                          <div><div className="text-[7px] text-gray-400">审核状态</div><div className="text-[8px]"><span className={`px-1 rounded ${selected.status === '已通过' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>{selected.status}</span></div></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <div className="text-[9px] font-bold text-gray-700 mb-1.5">📝 材料说明</div>
+                      <div className="border border-gray-200 rounded p-2 bg-gray-50"><div className="text-[8px] text-gray-600 leading-relaxed">{selected.description}</div></div>
+                    </div>
+                    <div className="mb-3">
+                      <div className="text-[9px] font-bold text-gray-700 mb-1.5">📎 提交附件</div>
+                      <div className="border border-gray-200 rounded p-2 space-y-1">
+                        {selected.attachments.map((att, idx) => (
+                          <div key={idx} className="flex items-center gap-2 bg-gray-50 rounded px-2 py-1.5">
+                            <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center shrink-0"><span className="text-[10px]">{att.icon}</span></div>
+                            <div className="flex-1 min-w-0"><div className="text-[8px] text-gray-700 font-medium truncate">{att.name}</div><div className="text-[7px] text-gray-400">{att.size}</div></div>
+                            <div className="flex items-center gap-2 shrink-0"><span className="text-[8px] text-blue-500 cursor-pointer">查看</span><span className="text-[8px] text-blue-500 cursor-pointer">下载</span></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {selected.status === '待审核' && (
+                      <div className="mb-3">
+                        <div className="text-[9px] font-bold text-gray-700 mb-1.5">✅ 审核操作</div>
+                        <div className="border border-gray-200 rounded p-2">
+                          <div className="mb-2"><div className="text-[8px] text-gray-500 mb-1">审核意见</div><div className="border border-gray-200 rounded px-2 py-1.5 text-[8px] text-gray-400 bg-white min-h-[40px]">请输入审核意见...</div></div>
+                          <div className="flex items-center gap-2"><button className="text-[8px] bg-green-500 text-white px-3 py-1.5 rounded">通过</button><button className="text-[8px] bg-red-500 text-white px-3 py-1.5 rounded">退回</button></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </BrowserFrame>
+      );
+    }
+
+    /* ============ PC: 通知管理 ============ */
+    function PcNoticePage() {
+      return (
+        <BrowserFrame title="通知管理">
+          <div className="h-full flex flex-col bg-gray-50">
+            <TopBar />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar active="通知管理" />
+              <div className="flex-1 p-3 overflow-auto">
+                <div className="flex items-center justify-between mb-2">
+                  <button className="text-[9px] bg-teal-500 text-white px-2 py-1 rounded">+ 发送通知</button>
+                  <div className="flex gap-2">
+                    <span className="text-[9px] bg-teal-50 text-teal-600 px-2 py-1 rounded cursor-pointer">全部</span>
+                    <span className="text-[9px] bg-gray-100 text-gray-600 px-2 py-1 rounded cursor-pointer">系统通知</span>
+                    <span className="text-[9px] bg-gray-100 text-gray-600 px-2 py-1 rounded cursor-pointer">审核通知</span>
+                  </div>
+                </div>
+                <div className="bg-white rounded border border-gray-200">
+                  <div className="grid grid-cols-5 gap-1 px-2 py-1.5 bg-gray-50 border-b border-gray-200 text-[8px] font-bold text-gray-600">
+                    <div>通知标题</div><div>类型</div><div>接收人</div><div>发送时间</div><div>状态</div>
+                  </div>
+                  {[
+                    { title: '材料审核结果通知', type: '审核通知', to: '张明远', date: '2025-03-11', status: '已读' },
+                    { title: '选举时间变更通知', type: '系统通知', to: '全体选民', date: '2025-03-10', status: '已发送' },
+                    { title: '候选人资格审核通知', type: '审核通知', to: '王建国', date: '2025-03-12', status: '未读' },
+                  ].map((row) => (
+                    <div key={row.title + row.to} className="grid grid-cols-5 gap-1 px-2 py-1.5 border-b border-gray-50 text-[8px] text-gray-600">
+                      <div className="truncate">{row.title}</div>
+                      <div><span className="bg-purple-50 text-purple-600 px-1 rounded">{row.type}</span></div>
+                      <div>{row.to}</div><div>{row.date}</div>
+                      <div><span className={`px-1 rounded ${row.status === '已读' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>{row.status}</span></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </BrowserFrame>
+      );
+    }
+
+    /* ============ PC: 档案管理 ============ */
+    function PcArchivePage() {
+      return (
+        <BrowserFrame title="档案管理">
+          <div className="h-full flex flex-col bg-gray-50">
+            <TopBar />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar active="档案管理" />
+              <div className="flex-1 p-3 overflow-auto">
+                <div className="flex gap-2 mb-3">
+                  {['全部', '2025年', '2022年', '2019年'].map((year, i) => (
+                    <span key={year} className={`text-[9px] px-2 py-1 rounded cursor-pointer ${i === 0 ? 'bg-teal-500 text-white' : 'bg-gray-100 text-gray-600'}`}>{year}</span>
+                  ))}
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { name: '2022年凤凰社区选举档案', count: '23份文件', date: '2022-06-15' },
+                    { name: '2022年龙桥村选举档案', count: '18份文件', date: '2022-06-20' },
+                    { name: '2022年霞林社区选举档案', count: '21份文件', date: '2022-06-18' },
+                    { name: '2022年候选人资格档案', count: '32份文件', date: '2022-05-20' },
+                    { name: '2022年选民登记档案', count: '45份文件', date: '2022-04-10' },
+                  ].map((folder) => (
+                    <div key={folder.name} className="bg-white rounded border border-gray-200 p-2">
+                      <div className="flex items-center gap-1.5"><span className="text-sm">📁</span><div className="text-[9px] font-medium text-gray-700">{folder.name}</div></div>
+                      <div className="flex items-center justify-between mt-1"><span className="text-[8px] text-gray-400">{folder.count}</span><span className="text-[8px] text-gray-400">{folder.date}</span></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </BrowserFrame>
+      );
+    }
+
+    /* ============ PC: 管理员设置 ============ */
+    function PcAdminSettingPage() {
+      return (
+        <BrowserFrame title="管理员设置">
+          <div className="h-full flex flex-col bg-gray-50">
+            <TopBar />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar active="管理员设置" />
+              <div className="flex-1 p-3 overflow-auto">
+                <div className="flex items-center justify-between mb-2">
+                  <button className="text-[9px] bg-teal-500 text-white px-2 py-1 rounded">+ 新建账号</button>
+                  <div className="border border-gray-200 rounded px-2 py-1 text-[9px] text-gray-400 cursor-pointer">搜索管理员...</div>
+                </div>
+                <div className="bg-white rounded border border-gray-200">
+                  <div className="grid grid-cols-5 gap-1 px-2 py-1.5 bg-gray-50 border-b border-gray-200 text-[8px] font-bold text-gray-600">
+                    <div>姓名</div><div>角色</div><div>手机号</div><div>状态</div><div>操作</div>
+                  </div>
+                  {[
+                    { name: '张三', role: '超级管理员', phone: '138****1234', status: '正常' },
+                    { name: '李四', role: '审核员', phone: '139****5678', status: '正常' },
+                    { name: '王五', role: '录入员', phone: '137****9012', status: '已禁用' },
+                  ].map((row) => (
+                    <div key={row.name} className="grid grid-cols-5 gap-1 px-2 py-1.5 border-b border-gray-50 text-[8px] text-gray-600">
+                      <div className="font-medium">{row.name}</div><div>{row.role}</div><div>{row.phone}</div>
+                      <div><span className={`px-1 rounded ${row.status === '正常' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>{row.status}</span></div>
+                      <div className="flex gap-1"><span className="text-blue-500 cursor-pointer">编辑</span>{row.status === '正常' && <span className="text-red-500 cursor-pointer">禁用</span>}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </BrowserFrame>
+      );
+    }
+
+    /* ============ PC: 角色设置 ============ */
+    function PcRoleSettingPage() {
+      return (
+        <BrowserFrame title="角色设置">
+          <div className="h-full flex flex-col bg-gray-50">
+            <TopBar />
+            <div className="flex flex-1 overflow-hidden">
+              <Sidebar active="角色设置" />
+              <div className="flex-1 p-3 overflow-auto">
+                <div className="flex items-center justify-between mb-2">
+                  <button className="text-[9px] bg-teal-500 text-white px-2 py-1 rounded">+ 新增角色</button>
+                </div>
+                <div className="bg-white rounded border border-gray-200">
+                  <div className="grid grid-cols-4 gap-1 px-2 py-1.5 bg-gray-50 border-b border-gray-200 text-[8px] font-bold text-gray-600">
+                    <div>角色名称</div><div>描述</div><div>人数</div><div>操作</div>
+                  </div>
+                  {[
+                    { name: '超级管理员', desc: '拥有所有权限', count: 1 },
+                    { name: '审核员', desc: '审核候选人、材料等', count: 3 },
+                    { name: '录入员', desc: '录入数据、发布通知', count: 5 },
+                    { name: '查看员', desc: '只读查看权限', count: 8 },
+                  ].map((row) => (
+                    <div key={row.name} className="grid grid-cols-4 gap-1 px-2 py-1.5 border-b border-gray-50 text-[8px] text-gray-600">
+                      <div className="font-medium">{row.name}</div><div>{row.desc}</div><div>{row.count}人</div>
+                      <div className="flex gap-1"><span className="text-blue-500 cursor-pointer">编辑</span><span className="text-blue-500 cursor-pointer">权限</span><span className="text-red-500 cursor-pointer">删除</span></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </BrowserFrame>
+      );
+    }
+
+    /* ================================================================
+       Main App
+       ================================================================ */
+    function App() {
+      return (
+        <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-100 to-gray-50">
+          <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+            <div className="max-w-[1600px] mx-auto px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center shadow-sm">
+                  <span className="text-white text-lg font-bold">选</span>
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-gray-900">城厢区村居换届选举系统</h1>
+                  <p className="text-xs text-gray-500">UI 设计稿全景展示 · 小程序端 + PC管理端</p>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-8 space-y-12">
+            <section>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center"><span className="text-white text-sm">📱</span></div>
+                <div>
+                  <h2 className="text-base font-bold text-gray-800">小程序端（微信小程序）</h2>
+                  <p className="text-xs text-gray-500">面向选民和居民，提供公告查看、选举参与、候选人了解等功能</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+                <div className="flex flex-col items-center gap-2"><MiniHomePage /><p className="text-xs text-gray-500 text-center max-w-[280px]">首页 — 公告速览、选举预告、快捷入口</p></div>
+                <div className="flex flex-col items-center gap-2"><MiniNoticePage /><p className="text-xs text-gray-500 text-center max-w-[280px]">公告通知 — 三栏Tab查看公告/预告/历史</p></div>
+                <div className="flex flex-col items-center gap-2"><MiniElectionPage /><p className="text-xs text-gray-500 text-center max-w-[280px]">选举方式 — 直接选举/差额选举/流程说明</p></div>
+                <div className="flex flex-col items-center gap-2"><MiniCandidatePage /><p className="text-xs text-gray-500 text-center max-w-[280px]">候选人展示 — 档期/往期Tab + 选举分类 + 筛选</p></div>
+                <div className="flex flex-col items-center gap-2"><MiniMaterialPage /><p className="text-xs text-gray-500 text-center max-w-[280px]">材料提交 — 拍照上传、下拉关联公告+类型、提交记录</p></div>
+                <div className="flex flex-col items-center gap-2"><MiniHistoryPage /><p className="text-xs text-gray-500 text-center max-w-[280px]">历史公示 — 按年度查看选举结果归档</p></div>
+              </div>
+            </section>
+
+            <div className="flex items-center gap-4">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400 font-medium">PC 管理端</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+
+            <section>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center"><span className="text-white text-sm">🖥️</span></div>
+                <div>
+                  <h2 className="text-base font-bold text-gray-800">PC管理端（后台管理系统）</h2>
+                  <p className="text-xs text-gray-500">面向管理员，提供公告发布、选举管理、候选人审核、材料审核等后台功能</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 justify-items-center">
+                <div className="flex flex-col items-center gap-2"><PcLoginPage /><p className="text-xs text-gray-500 text-center max-w-[560px]">系统登录</p></div>
+                <div className="flex flex-col items-center gap-2"><PcAnnouncementPage /><p className="text-xs text-gray-500 text-center max-w-[560px]">公告管理</p></div>
+                <div className="flex flex-col items-center gap-2"><PcElectionPage /><p className="text-xs text-gray-500 text-center max-w-[560px]">选举管理</p></div>
+                <div className="flex flex-col items-center gap-2"><PcPositionPage /><p className="text-xs text-gray-500 text-center max-w-[560px]">职位管理</p></div>
+                <div className="flex flex-col items-center gap-2"><PcCandidatePage /><p className="text-xs text-gray-500 text-center max-w-[560px]">候选人管理</p></div>
+                <div className="flex flex-col items-center gap-2"><PcMaterialPage /><p className="text-xs text-gray-500 text-center max-w-[560px]">材料管理</p></div>
+                <div className="flex flex-col items-center gap-2"><PcNoticePage /><p className="text-xs text-gray-500 text-center max-w-[560px]">通知管理</p></div>
+                <div className="flex flex-col items-center gap-2"><PcArchivePage /><p className="text-xs text-gray-500 text-center max-w-[560px]">档案管理</p></div>
+                <div className="flex flex-col items-center gap-2"><PcAdminSettingPage /><p className="text-xs text-gray-500 text-center max-w-[560px]">管理员设置</p></div>
+                <div className="flex flex-col items-center gap-2"><PcRoleSettingPage /><p className="text-xs text-gray-500 text-center max-w-[560px]">角色设置</p></div>
+              </div>
+            </section>
+
+            <section className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+              <h3 className="text-sm font-bold text-gray-800 mb-4">📋 甲方重点需求标注</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                  <div className="text-xs font-bold text-teal-700 mb-2">🔔 公告通知三栏Tab</div>
+                  <p className="text-[11px] text-teal-600 leading-relaxed">最新公告 | 近期预告 | 历史公示<br />每个公告可点击查看详情<br /><strong className="text-teal-800">醒目小字提示</strong>可点击提交材料</p>
+                </div>
+                <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                  <div className="text-xs font-bold text-teal-700 mb-2">📖 弹窗详情 + 图文参选指引</div>
+                  <p className="text-[11px] text-teal-600 leading-relaxed">公告点击「查看详情」弹出详情弹窗<br />弹窗包含<strong>图文参选指引</strong><br />快捷提交材料按钮 + <strong>醒目小字提示可点击</strong></p>
+                </div>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="text-xs font-bold text-orange-700 mb-2">📋 材料提交下拉关联公告</div>
+                  <p className="text-[11px] text-orange-600 leading-relaxed">材料提交页增加<strong>下拉关联公告</strong>选择<br />选择公告后显示<strong className="text-amber-600">参选时间</strong>提醒<br />关联公告+材料类型均为<strong>必填项</strong></p>
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="text-xs font-bold text-green-700 mb-2">👤 候选人展示分级</div>
+                  <p className="text-[11px] text-green-600 leading-relaxed">增加<strong>一级分类</strong>：选择选举活动<br /><strong>档期|往期历史</strong>Tab切换<br />当前档期 vs 往期历史候选人分开展示</p>
+                </div>
+              </div>
+            </section>
+          </main>
+
+          <footer className="bg-white border-t border-gray-200 mt-auto">
+            <div className="max-w-[1600px] mx-auto px-6 py-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">城厢区村居换届选举系统 · UI设计稿展示</span>
+                <span className="text-xs text-gray-400">技术栈：uni-app + Vue3 + Element Plus + Node.js + MySQL</span>
+              </div>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

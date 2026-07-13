@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>城厢区换届选举系统 · 登录</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#B22222;--red-hover:#961C1C;--red-bg:#FDE8E8;--red-bg-soft:#FFF5F5;
+  --gold:#C8A45C;--gold-hover:#B08E3A;--gold-light:#E8D5A0;--gold-bg:#FDF6E3;
+  --text-primary:#1A1A1A;--text-secondary:#4A4A4A;--text-muted:#7A7A7A;
+  --border-light:#E8E5E0;--border:#D4D0CA;
+  --bg-page:#FAF8F5;--bg-container:#FFFFFF;
+  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-sans);color:var(--text-primary);min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(ellipse at top,rgba(200,164,92,.10),transparent 60%),
+    radial-gradient(ellipse at bottom,rgba(178,34,34,.06),transparent 55%),
+    var(--bg-page);
+  position:relative;overflow:hidden;}
+/* 背景印章纹样 */
+body::before{content:'選';position:fixed;font-family:var(--font-serif);font-size:520px;font-weight:900;
+  color:rgba(178,34,34,.03);right:-60px;bottom:-120px;line-height:1;pointer-events:none;user-select:none;}
+.login-card{position:relative;z-index:1;width:420px;max-width:92vw;background:var(--bg-container);
+  border-radius:18px;box-shadow:0 20px 60px rgba(60,40,20,.14),0 2px 8px rgba(0,0,0,.04);
+  border:1px solid var(--border-light);overflow:hidden;}
+/* 顶部红金头 */
+.login-head{background:linear-gradient(135deg,var(--red),#8E1B1B);color:#fff;padding:34px 36px 26px;text-align:center;position:relative;}
+.login-head::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.login-logo{width:58px;height:58px;margin:0 auto 12px;border-radius:50%;background:rgba(255,255,255,.14);
+  border:2px solid var(--gold-light);display:flex;align-items:center;justify-content:center;font-size:28px;}
+.login-head h2{font-family:var(--font-serif);font-size:21px;font-weight:700;letter-spacing:1px;margin-bottom:6px;}
+.login-head .sub{font-size:12.5px;color:rgba(255,255,255,.8);font-weight:300;letter-spacing:.5px;}
+/* 表单 */
+.login-body{padding:30px 36px 34px;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:13px;color:var(--text-secondary);font-weight:600;margin-bottom:7px;}
+.field label .req{color:var(--red);margin-left:2px;}
+.login-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;
+  font-family:inherit;color:var(--text-primary);background:#FCFBF9;transition:all .18s;}
+.login-input:focus{outline:none;border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(200,164,92,.15);}
+select.login-input{cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23B08E3A' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:34px;}
+.loc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.scope-hint{font-size:12px;color:var(--gold-hover);background:var(--gold-bg);border-radius:8px;padding:9px 12px;margin-bottom:16px;line-height:1.5;
+  border-left:3px solid var(--gold);}
+.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--red),#9E1E1E);color:#fff;border:none;border-radius:10px;
+  font-size:15px;font-weight:600;font-family:var(--font-serif);letter-spacing:4px;cursor:pointer;transition:all .18s;margin-top:4px;}
+.login-btn:hover{background:linear-gradient(135deg,var(--red-hover),#8E1B1B);box-shadow:0 8px 20px rgba(178,34,34,.28);transform:translateY(-1px);}
+.login-err{color:var(--red);font-size:13px;text-align:center;margin-top:12px;min-height:18px;}
+.login-foot{text-align:center;font-size:12px;color:var(--text-muted);margin-top:16px;padding-top:16px;border-top:1px dashed var(--border-light);}
+.hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="login-card">
+  <div class="login-head">
+    <div class="login-logo">🏛️</div>
+    <h2>城厢区换届选举系统</h2>
+    <div class="sub">村（居）委会换届 · 登录进入本村工作台</div>
+  </div>
+  <div class="login-body">
+    <div class="field">
+      <label>登录身份<span class="req">*</span></label>
+      <select id="loginRole" class="login-input" onchange="onRoleChange()">
+        <option value="经办">村（社区）经办 · 本村工作台</option>
+        <option value="超级管理">区级管理 · 全区汇总</option>
+        <option value="审核">审核员 · 材料候选人审核</option>
+        <option value="运营">运营 · 公告归档</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>手机号<span class="req">*</span></label>
+      <input type="text" id="loginUser" class="login-input" placeholder="请输入登录手机号" value="15000000000">
+    </div>
+    <div class="field">
+      <label>密码<span class="req">*</span></label>
+      <input type="password" id="loginPass" class="login-input" placeholder="请输入密码" value="123456">
+    </div>
+    <div id="locBlock">
+      <div class="field">
+        <label>归属地<span class="req">*</span></label>
+        <div class="loc-grid">
+          <select id="loginType" class="login-input" onchange="onTypeChange()">
+            <option value="">选择类型</option>
+            <option value="village">🏡 行政村</option>
+            <option value="community">🏙️ 社区</option>
+          </select>
+          <select id="loginLocation" class="login-input">
+            <option value="">先选类型</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="scopeHint" class="scope-hint">经办登录后自动锁定所选村／社区，只处理本村换届事务。</div>
+    <button class="login-btn" onclick="doLogin()">进 入 系 统</button>
+    <div id="loginErr" class="login-err"></div>
+    <div class="login-foot">演示账号：15000000000　密码：123456</div>
+  </div>
+</div>
+<script>
+// 2026-07-14 产品根分叉：真实登录由账号关联的 villages 记录返回 villageId + organizationType，
+// 普通村居用户不得靠前端下拉自行改变类型。village 仅允许村委会全民直选母版；
+// community 每届在居委会全民直选/户代表/居民代表三种方式中选一，并分流对应母版。
+// 一期岗位只做主任/副主任/委员。下方类型/归属地下拉仅用于静态演示，不是授权真相。
+// 演示归属地（真实系统由 villages 表带出）
+var COMMUNITY_LOCATIONS=['涧口社区','前黄社区','华亭社区'];
+var VILLAGE_LOCATIONS=['园头村','西湖村','油潭村'];
+
+// 选身份 → 超管自动放开归属地（骨照搬 codex 逻辑）
+function onRoleChange(){
+  var role=document.getElementById('loginRole').value;
+  var needLoc=role!=='超级管理';
+  document.getElementById('locBlock').classList.toggle('hidden',!needLoc);
+  document.getElementById('scopeHint').textContent=needLoc
+    ? '登录后自动锁定所选村／社区，只处理本村换届事务；区级管理下钻后共用同一套页面。'
+    : '区级管理不绑定单个村／社区，登录后先看全区汇总列表，可下钻任意村。';
+}
+// 选类型 → 联动具体归属地
+function onTypeChange(){
+  var type=document.getElementById('loginType').value;
+  var sel=document.getElementById('loginLocation');
+  sel.innerHTML='<option value="">请选择具体归属地</option>';
+  var locs=type==='village'?VILLAGE_LOCATIONS:type==='community'?COMMUNITY_LOCATIONS:[];
+  locs.forEach(function(l){var o=document.createElement('option');o.value=l;o.textContent=l;sel.appendChild(o);});
+}
+// 角色存储值 → 前端显示名（仅村级角色；超级管理登录后走总台，不在此列）
+var ROLE_DISPLAY={'经办':'经办','运营':'运营编辑','审核':'审核'};
+// 手机号脱敏：150****0000
+function maskPhone(p){return p.length===11?p.slice(0,3)+'****'+p.slice(7):p;}
+// 登录（demo 固定账号；真实系统接 POST /auth-v2/login）
+function doLogin(){
+  var u=document.getElementById('loginUser').value.trim();
+  var p=document.getElementById('loginPass').value.trim();
+  var role=document.getElementById('loginRole').value;
+  var err=document.getElementById('loginErr');
+  if(!((u==='15000000000'||u==='13800000001')&&p==='123456')){
+    err.textContent='❌ 手机号或密码错误'; return;
+  }
+  var t='',loc='';
+  if(role!=='超级管理'){
+    t=document.getElementById('loginType').value;
+    loc=document.getElementById('loginLocation').value;
+    if(!t||!loc){err.textContent='请选择该账号所属的村／社区'; return;}
+  }
+  err.textContent='';
+  // 身份往下传：存 localStorage，仪表盘读了填顶部信息条+跑固定枚举链
+  var session={
+    role:role,                       // 存储值（超级管理/经办/运营/审核）
+    roleDisplay:ROLE_DISPLAY[role]||role, // 显示名（子管理/经办/运营编辑/审核）
+    phone:u,
+    phoneMask:maskPhone(u),
+    villageType:t,                   // village=村委会 / community=居委会（第一分叉开关）
+    village:loc                      // 具体归属地
+  };
+  localStorage.setItem('election_session',JSON.stringify(session));
+  // 超管先进总台看全区；其余进本村工作台
+  window.location.href = role==='超级管理' ? '页面-总台.html' : '村长仪表盘-美化版.html';
+}
+// 默认预选社区，方便演示直接进
+document.getElementById('loginType').value='community';
+onTypeChange();
+document.getElementById('loginLocation').value='涧口社区';
+</script>
+</body>
+</html>
