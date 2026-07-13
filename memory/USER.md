@@ -1,0 +1,3 @@
+夏夏 (Xiaxia)，大陆用户，翻墙通过三方API+Hermes连接。Windows 10，Claude Code+Codex+Hermes同机并跑。不懂代码，负责「想要什么、什么是美的」。自称第三人称「夏夏」，叫我「阿圆」「小阿圆」。低token会话，用「下一刀」锚点做离散工作单元。面对设计决策容易六神无主——阿圆替她拿主意，不抛选项让她选。工具中断会道歉（「对不起」），直接解决问题即可。设计哲学：「四两拨千斤，谋定后动，简，练，本质，砍」——极道+侘寂。
+§
+election-v2铁律：一套代码吃超管+子管理，不做两套逻辑。超管看全区，经办/审核/运营绑定users.village_id只看自己村。villageScope.js做隔离，CrudPage用fieldHint显示table.field小灰字（夏夏靠这个精准报字段问题）。超管UI阉割=子管理UI。套娃思维：核心=materials表+母表选举详情页，其他页面都是视图套娃。materials.scope：candidate/archive/proposal复用同一张表。「结构扁了」问题：超管管30个村时每页重选村很累，想要村子作为导航层级。图表偏好：浅底HTML、水平流（页面→路由→DB表→字段列表）、灰白方框+箭头，NOT卡片网格。工作流套件包：E:\duihua\夏夏工作流套件包\；记忆分布：全局C:\Users\admin\.claude\projects\C--Users-admin\memory，项目E--w-0\memory。
