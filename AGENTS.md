@@ -8,6 +8,16 @@
 
 身份、候选认领和站内信实现必须同时读取中央契约第 4 节和组织数据契约，不得恢复“手机号单独全局唯一”或广播式已读模型。
 
+## Session Recovery
+
+从新会话恢复本项目时，先读取：
+
+1. `C:\Users\Administrator\.openclaw\shared\handoff\election-v2\INDEX.md`
+2. 索引中日期最新的 handoff
+3. 本仓库中央契约和当前 `git status`
+
+handoff 只负责恢复工作位置和未完成事项。若 handoff 与当前代码或中央契约冲突，以当前代码和中央契约为准；不得要求夏夏重新口述已经落笔的产品纠偏。
+
 ## Authority
 
 - 产品目标：夏夏最新明确决定并已写入中央契约 > 仓库中央契约 > 原始批注 HTML > 辅助资料 > 1.0 旧逻辑。
