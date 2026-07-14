@@ -14,7 +14,8 @@
 
 1. `C:\Users\Administrator\.openclaw\shared\handoff\election-v2\INDEX.md`
 2. 索引中日期最新的 handoff
-3. 本仓库中央契约和当前 `git status`
+3. `context_m_jx/context_summary.md`
+4. 本仓库中央契约和当前 `git status`
 
 handoff 只负责恢复工作位置和未完成事项。若 handoff 与当前代码或中央契约冲突，以当前代码和中央契约为准；不得要求夏夏重新口述已经落笔的产品纠偏。
 
