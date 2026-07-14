@@ -45,3 +45,18 @@
 38. 成功 - 反方复核无错误分类、安全遗漏或中央契约冲突
 39. [Git Commit] `05ca1e7c257688adbf3e61af6daba75c106bb6d5` | 提交审计收口文档
 40. 成功 - `base/` 与 `.claude/` 保留本机但不误提交，2.0 工作树恢复干净
+
+## 凝练批次 - 2026-07-14（从编号 41 起）
+
+41. [Git Verify] `E:\w\0\election-v2-2.0` | 核对接力后的分支、HEAD 和工作树
+42. 成功 - 分支为 `rebuild/election-v2-20260714`，HEAD 为 `e7d1253a6c99be3c35200bf4e28a7be256d6ab8b`，开始本批次时工作树干净
+43. [Read] `AGENTS.md`、中央契约、组织数据契约、最新 handoff | 恢复实现门禁和后端比较范围
+44. 成功 - 仅允许后端模板比较、责任卡和接口候选；业务代码、schema、迁移、种子、服务与数据库继续 BLOCK
+45. [Clone/Read-only] Windows 临时目录下三个公开后端候选 | 比较 NestJS Boilerplate、nest-admin、cool-admin-midway
+46. 成功 - 候选未进入 2.0 工作树，未连接数据库；三名小代理分别执行认证、事务和基础设施证据审计
+47. [Product Clarification] `base/` 与后端候选的边界 | 防止后端比较被误解为重新选择前端
+48. 成功 - 再次确认 `base/` 是 isdream 前端只读母本，`apps/admin-web/` 是实际前端开发目录，后端尚未选定
+49. [Context Condense] `context_m_jx/context_summary.md`、`context_m_jx/execution_tree.md` | 启动小史官珍珠协议并固化本轮上下文
+50. 成功 - 珍珠触发点、A/B 双轨内容和小史官权限边界已写入恢复材料
+51. [Skill] `headroom` | 控制大段工具输出、搜索结果、日志和回复体积
+52. 成功 - 采用超过约 200 tokens 即压缩、错误完整保留、用户原话不删除和最近对话不裁剪的规则
