@@ -15,5 +15,7 @@ stats.html
 Thumbs.db
 .idea/
 .vscode/
+/.claude/
+/base/
 reference-assets/approved/*
 !reference-assets/approved/.gitkeep

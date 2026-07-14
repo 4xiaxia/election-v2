@@ -15,6 +15,14 @@
 
 旧目录只作证据与能力打捞源。不得把旧页面、状态枚举、API adapter、`materials.scope=archive`、公开上传或 demo 数据直接复制进 2.0。
 
+只读打捞已在 `docs/responsibility-cards/legacy-1.0-infrastructure-salvage.md` 收口。后续禁止广泛浏览旧树；只有责任卡点名且中央契约/新基座无法回答时才定向回看。
+
+## Local Clean Baseline Reference
+
+- 夏夏本机完整下载母本：`E:\w\0\election-v2-2.0\base`
+- 唯一运行源码：`apps/admin-web`
+- 决定与比较证据：`docs/decisions/2026-07-14-admin-baseline.md`
+
 ## Clean Admin Upstream
 
 - Repository: `https://github.com/isdreamcn/isdream-vue-admin.git`
