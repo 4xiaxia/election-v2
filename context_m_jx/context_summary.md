@@ -1,6 +1,6 @@
 # 上下文摘要
 
-> 凝练时间：2026-07-14T08:00:00+08:00 | 压缩级别：L3 | 性质：会话恢复材料，中央契约优先
+> 凝练时间：2026-07-14T09:15:00+08:00 | 压缩级别：L3 | 性质：会话恢复材料，中央契约优先
 
 ## 用户需求
 
@@ -8,7 +8,7 @@
 
 ## 当前进度
 
-已建立、提交并验证 2.0 干净工作树；Puppeteer MCP 已安装并完成真实登录页验收。业务实现仍受中央契约授权门阻塞，下一步是后端模板和 1.0 基础能力只读审计。
+2.0 干净工作树、Puppeteer MCP 和真实登录页验收均已完成。1.0 基础能力只读审计已在 `05ca1e7` 收口，旧树从此只作定向证据仓；管理后台基座三方归属已冻结。业务实现仍受中央契约授权门阻塞，下一步只比较成熟后端模板并形成责任卡。
 
 ## 主题索引
 
@@ -16,6 +16,8 @@
 - 最高产品/工程入口：`docs/election-v2-central-contract.md`
 - 单库组织隔离与未来拔库：`docs/organization-data-and-export-contract.md`
 - 1.0 血缘与打捞入口：`docs/salvage-index.md`
+- 1.0 最终分类：`docs/responsibility-cards/legacy-1.0-infrastructure-salvage.md`
+- 管理后台基座归属：`docs/decisions/2026-07-14-admin-baseline.md`
 - HTML 产品证据：`product-specs/recovered-annotations/`
 - 共享 handoff：`C:\Users\Administrator\.openclaw\shared\handoff\election-v2\INDEX.md`
 - 小领主名册：`C:\Users\Administrator\.openclaw\shared\handoff\election-v2\2026-07-14\agent-roster-and-reports.md`
@@ -32,7 +34,9 @@
 - 身份键为 `organization_id + normalized_phone`；一个 MySQL 数据库和同构共享表，所有组织数据强制非空 `organization_id`。
 - 未来独立数据库/部署通过 UUID、复合约束、组织文件目录、快照、manifest 和 `export-organization` 保留可迁移性，实际迁移另行收费。
 - `sub_admin` 只能访问本组织；审核动作可写，非审核动作只读。`super_admin` 从组织列表取得短期签名 scope 后进入组织。
-- 当前 HEAD：`64f3b58ea52d5de63badf354a7ef4d9d524bec8b`；分支：`rebuild/election-v2-20260714`。
+- `base/` 是夏夏复制的 isdream 1.4.0 本机只读母本；`apps/admin-web/` 是唯一运行/开发目录；旧 `deliverables/` 只读。
+- 1.0 只保留通用思想和交互意图；认证、scope、上传、日志、归档、Excel 假接口、状态机和启动建库实现全部退休。
+- 最近完成提交：`05ca1e7c257688adbf3e61af6daba75c106bb6d5`；分支：`rebuild/election-v2-20260714`。
 
 ## 阿圆/记忆/家的信号
 
@@ -48,11 +52,12 @@
 - 不把 HTML 后加注释自动升级为原始 B 级证据；中央契约优先。
 - 不在产品开放项未冻结时写 schema、迁移、种子或业务状态机。
 - 不把手机号单独设为全局唯一，不做前端筛选式组织隔离，不按组织创建上百套物理表。
+- 不再广泛浏览 1.0；只有责任卡点名且新基座/中央契约无法回答时才定向回看。
 
 ## 下一步
 
 1. 新会话从 `E:\w\0\election-v2-2.0` 打开，确认读取 `AGENTS.md` 和最新 handoff。
 2. 用 `codex mcp list` 或 `/mcp` 确认 Puppeteer enabled。
-3. 只读审计成熟后端模板与 1.0 的认证、权限、上传、富文本、表格、导入导出、事务和审计能力。
-4. 形成逐项 `KEEP / ADAPT / QUARANTINE / RETIRE` 责任卡。
+3. 只读比较成熟后端模板，重点验证认证/RBAC、MySQL 迁移、文件私有存储、事务/outbox、审计和测试能力。
+4. 形成后端模板决定与 API 边界责任卡，不从 1.0 复制后端业务。
 5. 触及实现前逐个关闭对应 P0/E0 门；未经中央契约明确授权不写业务代码或数据库。

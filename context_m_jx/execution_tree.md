@@ -32,3 +32,16 @@
 28. 成功 - `codex mcp list` 显示 puppeteer enabled
 29. [Handoff] 共享 handoff index、2.0 基线接力文件、根 `AGENTS.md` | 固化新目录恢复路径
 30. 成功 - 提交 `64f3b58ea52d5de63badf354a7ef4d9d524bec8b`，新会话必须读最新 handoff
+
+## 凝练批次 - 2026-07-14（从编号 31 起）
+
+31. [Read] 2.0 中央契约、共享 handoff、1.0 隔离工作树 | 恢复门禁并启动有限只读打捞
+32. 成功 - 确认只允许责任卡/模板比较，业务代码与数据库继续 BLOCK
+33. [Subagent Audit] 认证权限、文件 UI、事务审计三条只读线 | 验证 1.0 可捞能力与 P0 风险
+34. 成功 - 1.0 仅保留通用思想/交互意图；认证、scope、公开上传、日志、假 Excel、状态机和启动建库退休
+35. [Compare] `base/` vs `apps/admin-web/` vs 旧 `deliverables/` | 冻结管理后台基座归属
+36. 成功 - 323 个共有文件核心源码语义一致；`apps/admin-web` 为唯一运行目录，`base` 为只读母本
+37. [Docs] 基座决定、1.0 打捞责任卡、来源索引和 ignore | 关闭广泛旧树审计
+38. 成功 - 反方复核无错误分类、安全遗漏或中央契约冲突
+39. [Git Commit] `05ca1e7c257688adbf3e61af6daba75c106bb6d5` | 提交审计收口文档
+40. 成功 - `base/` 与 `.claude/` 保留本机但不误提交，2.0 工作树恢复干净
